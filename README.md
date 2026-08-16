@@ -2,6 +2,11 @@
 
 Draft decision engine tools. See [ROADMAP.md](ROADMAP.md) for the full plan.
 
+**Working across multiple machines (or starting a new session)?** Read
+[STATUS.md](STATUS.md) first — it's the living current-state snapshot (headline
+results, what's running, what's next), kept up to date specifically so a session on
+a different machine doesn't have to re-derive context from scratch.
+
 ## Setup
 
 ```
