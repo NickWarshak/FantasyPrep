@@ -39,7 +39,7 @@ import random
 import statistics
 from dataclasses import dataclass
 
-from fantasyprep.draft_sim.opponent import pick_weight, sample_pick
+from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
 from fantasyprep.draft_sim.simulate import (
@@ -235,7 +235,9 @@ def compare_now_vs_wait(
     )
 
 
-def _model_driven_strategy(live_pool, teams, my_slot, settings, points_model, num_sims, seed):
+def _model_driven_strategy(
+    live_pool, teams, my_slot, settings, points_model, num_sims, seed, opponent_weight_fn=pick_weight,
+):
     """A recommend_positions-driven strategy for run_full_draft -- the
     same logic backtest.py's model condition uses, factored out here so
     validate_against_real_outcomes can build on/override it for specific
@@ -247,7 +249,8 @@ def _model_driven_strategy(live_pool, teams, my_slot, settings, points_model, nu
         pick_num = len(picks) + 1
         sub_state = state_from_picks(teams, my_slot, picks)
         rows = recommend_positions(
-            live_pool, sub_state, settings, points_model, num_sims, random.Random(seed + pick_num)
+            live_pool, sub_state, settings, points_model, num_sims, random.Random(seed + pick_num),
+            opponent_weight_fn=opponent_weight_fn,
         )
         if not rows:
             return baseline_pick(undrafted, my_positions, settings)
@@ -271,6 +274,7 @@ def validate_against_real_outcome(
     actual_points: dict[str, float],
     num_sims: int,
     seed: int,
+    opponent_weight_fn=pick_weight,
 ) -> tuple[float, float]:
     """Runs the 'always take target_position now' and 'wait once, target
     target_position at my next pick' strategies as REAL, complete draft
@@ -279,7 +283,13 @@ def validate_against_real_outcome(
     picking after the decision (and its follow-up, for 'wait') is made.
     This is what actually validates the diagnostic's pre-decision
     prediction against what really happened, not just structural
-    sanity-checking. Returns (now_real_points, wait_real_points)."""
+    sanity-checking. Returns (now_real_points, wait_real_points).
+
+    `opponent_weight_fn` controls both the post-decision recommend_positions
+    calls AND the opponents' own picks in the replay -- pass
+    `opponent.pick_weight_with_tail_floor` to validate against the same
+    opponent model the live tool actually uses, rather than the plain
+    Gaussian this defaults to (matching every other call in this module)."""
     from fantasyprep.draft_sim.backtest import run_full_draft, score_roster
 
     teams = state.teams
@@ -289,7 +299,10 @@ def validate_against_real_outcome(
     next_pick = my_picks[1] if len(my_picks) > 1 else None
 
     def make_strategy(first_pick_position, next_pick_target):
-        base_strategy = _model_driven_strategy(live_pool, teams, my_slot, settings, points_model, num_sims, seed)
+        base_strategy = _model_driven_strategy(
+            live_pool, teams, my_slot, settings, points_model, num_sims, seed,
+            opponent_weight_fn=opponent_weight_fn,
+        )
 
         def strategy(undrafted, my_positions, picks):
             pick_num = len(picks) + 1
@@ -308,12 +321,12 @@ def validate_against_real_outcome(
     now_result = run_full_draft(
         live_pool, teams, my_slot, total_rounds, settings,
         my_pick_strategy=make_strategy(target_position, None),
-        opponent_rng=random.Random(seed),
+        opponent_rng=random.Random(seed), opponent_weight_fn=opponent_weight_fn,
     )
     wait_result = run_full_draft(
         live_pool, teams, my_slot, total_rounds, settings,
         my_pick_strategy=make_strategy(wait_alternative_position, target_position),
-        opponent_rng=random.Random(seed),  # same seed -> CRN
+        opponent_rng=random.Random(seed), opponent_weight_fn=opponent_weight_fn,  # same seed -> CRN
     )
 
     now_points, _ = score_roster(now_result.my_players, actual_points, settings)
@@ -321,7 +334,7 @@ def validate_against_real_outcome(
     return now_points, wait_points
 
 
-def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir) -> None:
+def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir, opponent_weight_fn=pick_weight) -> None:
     """Standalone CLI: evaluate a real draft state at a given pick,
     compare the top-ranked position (take now) against the 2nd-ranked
     (wait, target the top pick next time)."""
@@ -345,7 +358,10 @@ def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir) -> None:
     state = state_from_picks(settings.teams, my_slot, picks)
     print(f"Evaluating pick {pick} (team {my_slot}) after a realistic {len(picks)}-pick partial draft")
 
-    rows = recommend_positions(live_pool, state, settings, points_model, num_sims, _random.Random(seed))
+    rows = recommend_positions(
+        live_pool, state, settings, points_model, num_sims, _random.Random(seed),
+        opponent_weight_fn=opponent_weight_fn,
+    )
     if len(rows) < 2:
         print("Not enough candidate positions to compare -- nothing to do.")
         return
@@ -353,7 +369,8 @@ def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir) -> None:
 
     top_position, alt_position = rows[0][0], rows[1][0]
     result = compare_now_vs_wait(
-        top_position, alt_position, live_pool, state, settings, points_model, num_sims, _random.Random(seed)
+        top_position, alt_position, live_pool, state, settings, points_model, num_sims, _random.Random(seed),
+        opponent_weight_fn=opponent_weight_fn,
     )
     if result is None:
         print("Comparison unavailable (no next pick to target with, or no candidates left).")
@@ -377,12 +394,21 @@ DEFAULT_VALIDATION_SAMPLES = [
 ]
 
 
-def _cli_validate(samples: list[tuple[int, int, int]], num_sims: int, data_dir) -> None:
+def _cli_validate(
+    samples: list[tuple[int, int, int]], num_sims: int, data_dir, opponent_weight_fn=pick_weight,
+) -> None:
     """Runs `validate_against_real_outcome` across several real decision
     points and reports how often the pre-decision predicted direction
     ('now' vs 'wait') matches which one actually scored better in real
     points -- the check this diagnostic needs to pass before it should
-    ever influence a live recommendation (see module docstring)."""
+    ever influence a live recommendation (see module docstring).
+
+    `opponent_weight_fn` defaults to the plain Gaussian for reproducibility
+    with earlier runs -- pass `opponent.pick_weight_with_tail_floor` to
+    validate against the same opponent model the live tool actually uses
+    (the live tool has used the tail-floor fix since 2026-08-16; this
+    default hasn't been swapped, matching the opt-in convention everywhere
+    else in this project)."""
     import random as _random
 
     from fantasyprep.draft_sim.backtest import leakage_safe_distributions
@@ -411,21 +437,26 @@ def _cli_validate(samples: list[tuple[int, int, int]], num_sims: int, data_dir) 
         my_slot = pick_owner(settings.teams, pick)
         state = state_from_picks(settings.teams, my_slot, picks)
 
-        rows = recommend_positions(live_pool, state, settings, points_model, num_sims, _random.Random(seed))
+        rows = recommend_positions(
+            live_pool, state, settings, points_model, num_sims, _random.Random(seed),
+            opponent_weight_fn=opponent_weight_fn,
+        )
         if len(rows) < 2:
             print(f"{year} pick {pick}: skipped, not enough candidates")
             continue
         top_position, alt_position = rows[0][0], rows[1][0]
 
         prediction = compare_now_vs_wait(
-            top_position, alt_position, live_pool, state, settings, points_model, num_sims, _random.Random(seed)
+            top_position, alt_position, live_pool, state, settings, points_model, num_sims, _random.Random(seed),
+            opponent_weight_fn=opponent_weight_fn,
         )
         if prediction is None:
             print(f"{year} pick {pick}: skipped, no prediction available")
             continue
 
         now_real, wait_real = validate_against_real_outcome(
-            top_position, alt_position, pick, live_pool, state, settings, points_model, actual_points, num_sims, seed
+            top_position, alt_position, pick, live_pool, state, settings, points_model, actual_points, num_sims, seed,
+            opponent_weight_fn=opponent_weight_fn,
         )
         real_delta = now_real - wait_real
         predicted_sign = "now" if prediction.cost_of_waiting > 0 else "wait"
@@ -459,12 +490,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--num-sims", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
+    parser.add_argument(
+        "--opponent-model", choices=["gaussian", "gaussian-tail-floor"], default="gaussian",
+        help="gaussian matches every earlier run of this CLI (default, for reproducibility); "
+        "gaussian-tail-floor matches what the live tool actually uses since 2026-08-16",
+    )
     args = parser.parse_args(argv)
+    opponent_weight_fn = pick_weight_with_tail_floor if args.opponent_model == "gaussian-tail-floor" else pick_weight
 
     if args.validate:
-        _cli_validate(DEFAULT_VALIDATION_SAMPLES, args.num_sims, args.data_dir)
+        _cli_validate(DEFAULT_VALIDATION_SAMPLES, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn)
     elif args.year is not None and args.pick is not None:
-        _cli_run(args.year, args.pick, args.num_sims, args.seed, args.data_dir)
+        _cli_run(args.year, args.pick, args.num_sims, args.seed, args.data_dir, opponent_weight_fn=opponent_weight_fn)
     else:
         parser.error("either pass --year and --pick, or --validate")
 

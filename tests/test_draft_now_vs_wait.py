@@ -220,6 +220,58 @@ def test_compare_now_vs_wait_threads_custom_opponent_weight_fn_everywhere():
 # --- validate_against_real_outcome ---------------------------------------------------
 
 
+def test_validate_against_real_outcome_defaults_to_plain_gaussian_opponent_model():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {normalize_name(p.name): 5.0 + i for i, p in enumerate(pool)}
+
+    seen: list = []
+
+    def spy(p, pick_number, rng=None, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
+
+    # Opponent sampling for a real replay happens through THREE places:
+    # backtest.run_full_draft's own opponent picks, and (via the post-decision
+    # model-driven strategy) simulate.py's recommend_positions -- all three
+    # need to see the same weight_fn, not just the ones this module calls
+    # directly, or a validation run would silently mix opponent models.
+    with patch("fantasyprep.draft_sim.backtest.sample_pick", side_effect=spy), \
+         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+        validate_against_real_outcome(
+            "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+            points_model=points_model, actual_points=actual_points, num_sims=5, seed=1,
+        )
+
+    assert seen
+    assert all(fn is pick_weight for fn in seen)
+
+
+def test_validate_against_real_outcome_threads_custom_opponent_weight_fn_everywhere():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {normalize_name(p.name): 5.0 + i for i, p in enumerate(pool)}
+
+    seen: list = []
+
+    def spy(p, pick_number, rng=None, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
+
+    with patch("fantasyprep.draft_sim.backtest.sample_pick", side_effect=spy), \
+         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+        validate_against_real_outcome(
+            "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+            points_model=points_model, actual_points=actual_points, num_sims=5, seed=1,
+            opponent_weight_fn=pick_weight_with_tail_floor,
+        )
+
+    assert seen
+    assert all(fn is pick_weight_with_tail_floor for fn in seen)
+
+
 def test_validate_against_real_outcome_returns_two_real_scores():
     pool = _pool()
     state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
