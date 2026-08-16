@@ -9,6 +9,17 @@ either tool can pick up where the other left off. Any grid cell can be
 assigned a player: the current pick for live drafting, or any future cell
 for a keeper (pre-assigned before the live draft reaches it) -- same
 mechanism either way.
+
+Recommendations and simulated opponent picks both use
+`opponent.pick_weight_with_tail_floor` (2026-08-16), not the plain Gaussian
+`pick_weight` -- fixes the "stuck player" bug where a player fallen many
+standard deviations past ADP incorrectly became near-impossible to draft
+instead of near-certain. This is the one piece of tonight's backtest work
+that's an actual model-behavior fix rather than an evaluation-only change
+(VOR, the derived replacement cutoffs, waiver-adjusted scoring, and the CI
+clustering fix all live in the backtest harness and don't affect what this
+tool recommends -- VOR in particular is a baseline the model is compared
+against, not a component of the model itself).
 """
 from __future__ import annotations
 
@@ -20,7 +31,7 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 
 from fantasyprep.draft_sim.auto_pick import espn_pool_for_auto_pick
-from fantasyprep.draft_sim.opponent import sample_pick
+from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor, sample_pick
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.simulate import (
     current_pick_number,
@@ -262,7 +273,10 @@ def create_app(
         rng = random.Random(seed)
 
         points_model = get_points_model(points_source)
-        rows = recommend_positions(live_pool, state, settings, points_model, sims, rng)
+        rows = recommend_positions(
+            live_pool, state, settings, points_model, sims, rng,
+            opponent_weight_fn=pick_weight_with_tail_floor,
+        )
         return jsonify(
             [{"position": pos, "expected": mean, "p25": p25, "p75": p75} for pos, mean, p25, p75 in rows]
         )
@@ -296,7 +310,7 @@ def create_app(
         pool = espn_pool_for_auto_pick(get_espn_players(), randomness)
         undrafted = [p for p in pool if normalize_name(p.name) not in state.drafted_names]
         if undrafted:
-            chosen = sample_pick(undrafted, state.current_pick, random.Random(seed))
+            chosen = sample_pick(undrafted, state.current_pick, random.Random(seed), weight_fn=pick_weight_with_tail_floor)
             session.set_pick(state.current_pick, chosen.name)
         return jsonify(session.to_dict())
 
