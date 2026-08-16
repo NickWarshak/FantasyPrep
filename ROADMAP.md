@@ -644,6 +644,40 @@ before adding features," agreed with)
     anomaly-correction rule), not attempted tonight since it's a change
     to shared, already-validated infrastructure that deserves careful,
     unhurried design — flagged here rather than rushed.
+  - ✅ **Wired into the live tool** (2026-08-16, commit `85356cd`):
+    `/api/now-vs-wait` fires automatically after the main recommendation
+    loads. Threading `pick_weight_with_tail_floor` through at the same
+    time is what surfaced the next finding.
+  - 🔴 **The 6/8 (75%) validation number above was measuring the wrong
+    opponent model, and the corrected number is exactly coin-flip**
+    (2026-08-16, same session as the QB scoring change below). Root
+    cause: `validate_against_real_outcome` (and `_cli_validate`/`_cli_run`)
+    always sampled opponent picks with plain `pick_weight`, even after
+    the live tool switched to `pick_weight_with_tail_floor` — so the one
+    number meant to answer "does this feature's advice track reality"
+    was silently validating a *different* model than the one giving live
+    advice. Fixed (`opponent_weight_fn` now threads through the whole
+    validation path; new `--opponent-model` CLI flag, default stays
+    `gaussian` for reproducibility with every earlier run — commit
+    `95818d3`). Rerunning the same 8 samples under the live-matching
+    model (`gaussian-tail-floor`), immediately after also changing QB
+    scoring to 6-point passing TDs (see Scoring section below — both
+    changes landed in the same session): **4/8 (50%)**, exactly the
+    coin-flip baseline. Both disagreements involve QB decisions with
+    large real deltas (pick 25 2023, +277.8; pick 70 2024, +191.2 —
+    both predicted "wait," both should have been "draft now") — a
+    plausible pattern (elite-QB scarcity under-weighted, or an effect of
+    the same-session scoring change) but n=2 QB samples isn't evidence of
+    a mechanism. Full writeup, table, and a separately-confirmed noise
+    finding (the verdict's sign flips across RNG seeds at practical sim
+    counts near a true toss-up) published as an Artifact during this
+    session. **Status downgraded**: this feature's structural mechanics
+    work correctly and consistently (verified via live spot-checks and
+    unit tests), but its real-world predictive accuracy is currently
+    unvalidated at best, not the "promising, above coin-flip" signal
+    previously recorded. Needs a real-scale validation sweep (the
+    hardcoded 8-sample `DEFAULT_VALIDATION_SAMPLES` list is not that)
+    before trusting or distrusting the live advice it gives.
 
 **Phase 6 — Historical Model Tournament**
 - Parameter sweep, not one-off tweaks: bucket width/rolling/distance-
