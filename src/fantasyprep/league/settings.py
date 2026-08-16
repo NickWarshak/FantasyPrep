@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class ScoringSettings:
     pass_yard: float = 0.04  # 1 pt / 25 yards
-    pass_td: float = 4.0
+    pass_td: float = 6.0
     interception: float = -2.0
     rush_yard: float = 0.1  # 1 pt / 10 yards
     rush_td: float = 6.0
