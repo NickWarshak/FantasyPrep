@@ -30,7 +30,9 @@ import statistics
 from dataclasses import dataclass
 from pathlib import Path
 
-from fantasyprep.draft_sim.opponent import pick_weight, sample_pick
+import numpy as np
+
+from fantasyprep.draft_sim.opponent import pick_weight, sample_pick_index
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
 from fantasyprep.historical.outcomes import build_outcome_distributions
@@ -135,20 +137,29 @@ def simulate_position_choice(
     # keepers alike -- contributes deterministically, not via sampling.
     already_mine = [by_name[name] for name in state.my_names if name in by_name]
 
+    # Fixed indexed pool representation, built once for this whole call and
+    # reused across every sim and every simulated pick -- not rebuilt into
+    # numpy arrays from Python objects on every single pick (profiling
+    # 2026-08-16 found that rebuild was ~78% of runtime even after
+    # vectorizing the weight math itself; see sample_pick_index).
+    pool = [p for p in undrafted if p is not my_pick_now]
+    pool_adp = np.array([p.adp for p in pool])
+    pool_stdev = np.array([p.stdev for p in pool])
+
     results = []
     for _ in range(num_sims):
-        remaining = [p for p in undrafted if p is not my_pick_now]
+        available = np.ones(len(pool), dtype=bool)
         my_team = list(already_mine) + [my_pick_now]
 
         for pick_num in range(state.current_pick + 1, last_relevant_pick + 1):
             if pick_num in state.assigned:
                 continue  # already fixed (a keeper) -- no sampling, already counted if mine
-            if not remaining:
+            if not available.any():
                 break
-            chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
-            remaining.remove(chosen)
+            idx = sample_pick_index(pool_adp, pool_stdev, available, pick_num, rng, weight_fn=opponent_weight_fn)
+            available[idx] = False
             if pick_num in my_pick_set:
-                my_team.append(chosen)
+                my_team.append(pool[idx])
 
         drafted = [
             DraftedPlayer(

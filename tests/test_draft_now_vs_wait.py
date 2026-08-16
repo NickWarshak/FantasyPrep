@@ -13,6 +13,7 @@ from fantasyprep.draft_sim.draft_now_vs_wait import (
 )
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
 from fantasyprep.draft_sim.opponent import sample_pick as real_sample_pick
+from fantasyprep.draft_sim.opponent import sample_pick_index as real_sample_pick_index
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel
 from fantasyprep.draft_sim.simulate import state_from_picks
 from fantasyprep.historical.outcomes import OutcomeDistribution
@@ -182,13 +183,18 @@ def test_compare_now_vs_wait_defaults_to_plain_gaussian_opponent_model():
         seen.append(weight_fn)
         return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
 
+    def spy_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
+
     # compare_now_vs_wait's opponent sampling happens through two different
-    # modules (its own simulate_wait_and_target/survival_probability, and
-    # simulate.py's simulate_position_choice for the "now" branch) -- both
-    # need to be spied on to confirm the argument actually reaches every
-    # opponent pick, not just the ones this module calls directly.
+    # modules (its own simulate_wait_and_target/survival_probability, using
+    # sample_pick; and simulate.py's simulate_position_choice for the "now"
+    # branch, using the vectorized sample_pick_index) -- both need to be
+    # spied on to confirm the argument actually reaches every opponent
+    # pick, not just the ones this module calls directly.
     with patch("fantasyprep.draft_sim.draft_now_vs_wait.sample_pick", side_effect=spy), \
-         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+         patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_index):
         result = compare_now_vs_wait(
             "RB", "WR", pool, state, SETTINGS, points_model, num_sims=10, rng=random.Random(1)
         )
@@ -209,8 +215,12 @@ def test_compare_now_vs_wait_threads_custom_opponent_weight_fn_everywhere():
         seen.append(weight_fn)
         return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
 
+    def spy_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
+
     with patch("fantasyprep.draft_sim.draft_now_vs_wait.sample_pick", side_effect=spy), \
-         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+         patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_index):
         result = compare_now_vs_wait(
             "RB", "WR", pool, state, SETTINGS, points_model, num_sims=10, rng=random.Random(1),
             opponent_weight_fn=pick_weight_with_tail_floor,
@@ -236,13 +246,18 @@ def test_validate_against_real_outcome_defaults_to_plain_gaussian_opponent_model
         seen.append(weight_fn)
         return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
 
+    def spy_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
+
     # Opponent sampling for a real replay happens through THREE places:
-    # backtest.run_full_draft's own opponent picks, and (via the post-decision
-    # model-driven strategy) simulate.py's recommend_positions -- all three
-    # need to see the same weight_fn, not just the ones this module calls
-    # directly, or a validation run would silently mix opponent models.
+    # backtest.run_full_draft's own opponent picks (sample_pick), and (via
+    # the post-decision model-driven strategy) simulate.py's
+    # recommend_positions (sample_pick_index) -- both need to see the same
+    # weight_fn, not just the ones this module calls directly, or a
+    # validation run would silently mix opponent models.
     with patch("fantasyprep.draft_sim.backtest.sample_pick", side_effect=spy), \
-         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+         patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_index):
         validate_against_real_outcome(
             "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
             points_model=points_model, actual_points=actual_points, num_sims=5, seed=1,
@@ -264,8 +279,12 @@ def test_validate_against_real_outcome_threads_custom_opponent_weight_fn_everywh
         seen.append(weight_fn)
         return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
 
+    def spy_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
+
     with patch("fantasyprep.draft_sim.backtest.sample_pick", side_effect=spy), \
-         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+         patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_index):
         validate_against_real_outcome(
             "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
             points_model=points_model, actual_points=actual_points, num_sims=5, seed=1,

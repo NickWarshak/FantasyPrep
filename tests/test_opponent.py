@@ -1,7 +1,17 @@
 import random
 from collections import Counter
 
-from fantasyprep.draft_sim.opponent import TAIL_Z, pick_weight, pick_weight_with_tail_floor, sample_pick
+import numpy as np
+import pytest
+
+from fantasyprep.draft_sim.opponent import (
+    TAIL_Z,
+    _vectorized_pick_weight,
+    _vectorized_pick_weight_with_tail_floor,
+    pick_weight,
+    pick_weight_with_tail_floor,
+    sample_pick,
+)
 from fantasyprep.historical.sources.ffc import FfcPlayer
 
 
@@ -112,3 +122,203 @@ def test_sample_pick_accepts_custom_weight_fn():
         return counts["Stuck"]
 
     assert count_stuck(pick_weight_with_tail_floor) > count_stuck(pick_weight)
+
+
+# --- Vectorized weight-computation equivalence (2026-08-16 performance work) ---
+# sample_pick's internals were rewritten to compute weights for the whole
+# pool with numpy instead of one Python call per player (profiling showed
+# this was ~90-97% of runtime in both live recommendations and Draft Now
+# vs. Wait validation). These tests are the actual guarantee that the
+# vectorized path computes the same distribution as the original scalar
+# pick_weight/pick_weight_with_tail_floor -- not bit-for-bit identical
+# floats (numpy's summation/exp can round differently), but the same
+# distribution within a tight tolerance.
+
+def _random_players(rng, n):
+    players = []
+    for _ in range(n):
+        adp = rng.uniform(1.0, 200.0)
+        stdev = rng.choice([0.1, 0.3, 1.0, 3.0, 10.0, 30.0])  # tiny to large, including sub-MIN_STDEV
+        players.append(_p(f"P{len(players)}", adp=adp, stdev=stdev))
+    return players
+
+
+def test_vectorized_pick_weight_matches_scalar_across_random_players_and_picks():
+    rng = random.Random(12345)
+    players = _random_players(rng, 500)
+    pick_numbers = [rng.randint(1, 250) for _ in range(20)]  # spans Gaussian zone, boundary, and deep tail
+
+    adp = np.array([p.adp for p in players])
+    stdev = np.array([p.stdev for p in players])
+
+    for pick_number in pick_numbers:
+        vectorized = _vectorized_pick_weight(pick_number, adp, stdev)
+        scalar = np.array([pick_weight(p, pick_number) for p in players])
+        assert np.allclose(vectorized, scalar, rtol=1e-9, atol=1e-12)
+
+
+def test_vectorized_pick_weight_with_tail_floor_matches_scalar_across_random_players_and_picks():
+    rng = random.Random(54321)
+    players = _random_players(rng, 500)
+    # Deliberately include picks that land every player in each of the
+    # three regimes at some point: well before ADP, near ADP, and far past
+    # the TAIL_Z boundary into the rising-hazard tail.
+    pick_numbers = [1, 5, 25, 50, 100, 150, 200, 250]
+
+    adp = np.array([p.adp for p in players])
+    stdev = np.array([p.stdev for p in players])
+
+    for pick_number in pick_numbers:
+        vectorized = _vectorized_pick_weight_with_tail_floor(pick_number, adp, stdev)
+        scalar = np.array([pick_weight_with_tail_floor(p, pick_number) for p in players])
+        assert np.allclose(vectorized, scalar, rtol=1e-9, atol=1e-12)
+
+
+def test_vectorized_tail_floor_boundary_exact_agreement():
+    # The boundary itself (z == TAIL_Z exactly) is where a piecewise
+    # formula is most likely to disagree by an off-by-one regime error --
+    # test it explicitly, not just as one random draw among many.
+    player = _p("Boundary", adp=10.0, stdev=1.0)
+    pick_at_boundary = 10 + TAIL_Z  # z == TAIL_Z exactly
+    adp = np.array([player.adp])
+    stdev = np.array([player.stdev])
+
+    vectorized = _vectorized_pick_weight_with_tail_floor(pick_at_boundary, adp, stdev)[0]
+    scalar = pick_weight_with_tail_floor(player, pick_at_boundary)
+    assert vectorized == pytest.approx(scalar, rel=1e-9)
+
+
+# --- Sampling-distribution correctness (does sample_pick draw from the
+# distribution its own weights imply, not just "does it run") ---
+
+
+def test_sample_pick_empirical_frequencies_match_theoretical_weights():
+    rng = random.Random(999)
+    pool = [_p(f"P{i}", adp=float(1 + i * 3), stdev=2.0) for i in range(20)]
+    pick_number = 25
+
+    weights = [pick_weight(p, pick_number) for p in pool]
+    total = sum(weights)
+    expected = {p.name: w / total for p, w in zip(pool, weights)}
+
+    n_draws = 100_000
+    counts = Counter(sample_pick(pool, pick_number, rng=rng).name for _ in range(n_draws))
+    for name, expected_prob in expected.items():
+        observed_prob = counts.get(name, 0) / n_draws
+        # Generous tolerance (this is a stochastic test) -- still tight
+        # enough to catch a real distributional bug, not just noise.
+        assert observed_prob == pytest.approx(expected_prob, abs=0.01), (
+            f"{name}: expected {expected_prob:.4f}, observed {observed_prob:.4f}"
+        )
+
+
+# --- No double-draft: exhausting a pool via repeated sample_pick + removal
+# must never repeat a player. Not new behavior (callers, not sample_pick,
+# own the removal) -- confirming the vectorized rewrite didn't break the
+# contract callers rely on. ---
+
+
+def test_repeated_sample_and_remove_never_repeats_a_player():
+    rng = random.Random(2026)
+    pool = [_p(f"P{i}", adp=float(1 + i), stdev=rng.choice([0.5, 1.0, 5.0])) for i in range(80)]
+    remaining = list(pool)
+    drafted_names = []
+    pick_number = 1
+    while remaining:
+        chosen = sample_pick(remaining, pick_number, rng=rng)
+        assert chosen.name not in drafted_names
+        drafted_names.append(chosen.name)
+        remaining.remove(chosen)
+        pick_number += 1
+    assert len(drafted_names) == len(pool)
+    assert set(drafted_names) == {p.name for p in pool}
+
+
+# --- sample_pick_index: the deeper optimization -- fixed arrays built once,
+# an availability mask instead of rebuilding numpy arrays from Python
+# objects on every single pick (profiling showed THIS was ~78% of
+# remaining runtime even after vectorizing the weight math itself). ---
+
+from fantasyprep.draft_sim.opponent import sample_pick_index
+
+
+def _arrays(players):
+    return np.array([p.adp for p in players]), np.array([p.stdev for p in players])
+
+
+def test_sample_pick_index_empirical_frequencies_match_theoretical_weights():
+    rng = random.Random(999)
+    pool = [_p(f"P{i}", adp=float(1 + i * 3), stdev=2.0) for i in range(20)]
+    adp, stdev = _arrays(pool)
+    available = np.ones(len(pool), dtype=bool)
+    pick_number = 25
+
+    weights = [pick_weight(p, pick_number) for p in pool]
+    total = sum(weights)
+    expected = {i: w / total for i, w in enumerate(weights)}
+
+    n_draws = 100_000
+    counts = Counter(
+        sample_pick_index(adp, stdev, available, pick_number, rng) for _ in range(n_draws)
+    )
+    for idx, expected_prob in expected.items():
+        observed_prob = counts.get(idx, 0) / n_draws
+        assert observed_prob == pytest.approx(expected_prob, abs=0.01), (
+            f"index {idx}: expected {expected_prob:.4f}, observed {observed_prob:.4f}"
+        )
+
+
+def test_sample_pick_index_never_returns_an_unavailable_index():
+    rng = random.Random(2026)
+    pool = [_p(f"P{i}", adp=float(1 + i), stdev=1.0) for i in range(30)]
+    adp, stdev = _arrays(pool)
+    available = np.ones(len(pool), dtype=bool)
+
+    chosen_indices = []
+    for pick_number in range(1, len(pool) + 1):
+        idx = sample_pick_index(adp, stdev, available, pick_number, rng)
+        assert available[idx]
+        assert idx not in chosen_indices
+        chosen_indices.append(idx)
+        available[idx] = False
+
+    assert sorted(chosen_indices) == list(range(len(pool)))  # every index drafted exactly once
+    assert not available.any()
+
+
+def test_sample_pick_index_matches_sample_pick_distribution():
+    # sample_pick (shrinking Python list) and sample_pick_index (fixed
+    # arrays + mask) are two different implementations of the same
+    # sampling operation -- confirm they actually agree, not just that
+    # each independently looks reasonable in isolation.
+    rng_list = random.Random(42)
+    rng_index = random.Random(42)
+    pool = [_p(f"P{i}", adp=float(1 + i * 2), stdev=1.5) for i in range(15)]
+    pick_number = 10
+
+    list_counts = Counter(sample_pick(list(pool), pick_number, rng=rng_list).name for _ in range(50_000))
+
+    adp, stdev = _arrays(pool)
+    available = np.ones(len(pool), dtype=bool)
+    index_counts = Counter()
+    for _ in range(50_000):
+        idx = sample_pick_index(adp, stdev, available, pick_number, rng_index)
+        index_counts[pool[idx].name] += 1
+
+    for player in pool:
+        list_prob = list_counts.get(player.name, 0) / 50_000
+        index_prob = index_counts.get(player.name, 0) / 50_000
+        assert list_prob == pytest.approx(index_prob, abs=0.015)
+
+
+def test_sample_pick_index_zero_weight_fallback_picks_only_among_available():
+    # Every player anomalously far past pick_number=1 under plain Gaussian
+    # underflows to exactly 0 -- forces the zero-weight fallback path.
+    rng = random.Random(1)
+    pool = [_p(f"P{i}", adp=500.0, stdev=1.0) for i in range(5)]
+    adp, stdev = _arrays(pool)
+    available = np.array([True, False, True, False, True])
+
+    for _ in range(50):
+        idx = sample_pick_index(adp, stdev, available, pick_number=1, rng=rng, weight_fn=pick_weight)
+        assert available[idx]

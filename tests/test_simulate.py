@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
-from fantasyprep.draft_sim.opponent import sample_pick as real_sample_pick
+from fantasyprep.draft_sim.opponent import sample_pick_index as real_sample_pick_index
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel
 from fantasyprep.draft_sim.simulate import (
     build_points_model,
@@ -190,18 +190,18 @@ def test_simulate_position_choice_threads_custom_opponent_weight_fn_to_sample_pi
 
     seen_weight_fns = []
 
-    def spy_sample_pick(pool, pick_number, rng=None, weight_fn=pick_weight):
+    def spy_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
         seen_weight_fns.append(weight_fn)
-        return real_sample_pick(pool, pick_number, rng, weight_fn=weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
 
-    with patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy_sample_pick):
+    with patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_sample_pick_index):
         results = simulate_position_choice(
             "WR", LIVE_POOL, state, SETTINGS, HistoricalBootstrapModel(DISTRIBUTIONS),
             num_sims=1, rng=random.Random(1), opponent_weight_fn=pick_weight_with_tail_floor,
         )
 
     assert results is not None
-    assert seen_weight_fns  # sample_pick was actually invoked at least once
+    assert seen_weight_fns  # sample_pick_index was actually invoked at least once
     assert all(fn is pick_weight_with_tail_floor for fn in seen_weight_fns)
 
 
@@ -211,11 +211,11 @@ def test_recommend_positions_default_opponent_weight_fn_is_plain_gaussian():
 
     seen_weight_fns = []
 
-    def spy_sample_pick(pool, pick_number, rng=None, weight_fn=pick_weight):
+    def spy_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=pick_weight):
         seen_weight_fns.append(weight_fn)
-        return real_sample_pick(pool, pick_number, rng, weight_fn=weight_fn)
+        return real_sample_pick_index(adp, stdev, available, pick_number, rng, weight_fn=weight_fn)
 
-    with patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy_sample_pick):
+    with patch("fantasyprep.draft_sim.simulate.sample_pick_index", side_effect=spy_sample_pick_index):
         rows = recommend_positions(
             LIVE_POOL, state, SETTINGS, HistoricalBootstrapModel(DISTRIBUTIONS),
             num_sims=1, rng=random.Random(1),
