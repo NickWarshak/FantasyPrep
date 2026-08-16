@@ -85,8 +85,18 @@ function render(state) {
     renderGrid(state);
   }
 
-  document.getElementById("recommend-table").hidden = true;
-  document.getElementById("recommend-status").textContent = "";
+  if (hasSlot && state.next_pick_is_mine) {
+    // Constant recommendations: as soon as it's actually your turn, fetch
+    // and show them automatically -- no need to remember to click the
+    // button every pick. Still re-fetchable manually (e.g. after changing
+    // num_sims, or just to recompute).
+    loadRecommendations();
+  } else {
+    document.getElementById("recommend-table").hidden = true;
+    document.getElementById("recommend-status").textContent = hasSlot
+      ? "Recommendations appear automatically once it's your turn."
+      : "";
+  }
 }
 
 async function refresh() {
@@ -302,29 +312,42 @@ document.getElementById("simulate-stop-btn").addEventListener("click", () => {
   document.getElementById("simulate-status").textContent = "Stopped.";
 });
 
-document.getElementById("recommend-btn").addEventListener("click", async () => {
+let recommendInFlight = false;
+
+async function loadRecommendations() {
+  if (recommendInFlight) return;  // don't stack up requests (e.g. rapid state changes)
+  recommendInFlight = true;
+
   const status = document.getElementById("recommend-status");
   const table = document.getElementById("recommend-table");
   status.textContent = "Simulating... this takes several seconds.";
   table.hidden = true;
 
-  const res = await fetch("/api/recommend");
-  const rows = await res.json();
-  if (!res.ok) {
-    status.textContent = rows.error || "Error running simulation.";
-    return;
-  }
+  try {
+    const res = await fetch("/api/recommend");
+    const rows = await res.json();
+    if (!res.ok) {
+      status.textContent = rows.error || "Error running simulation.";
+      return;
+    }
 
-  status.textContent = "";
-  const tbody = table.querySelector("tbody");
-  tbody.innerHTML = "";
-  for (const row of rows) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row.position}</td><td>${row.expected.toFixed(1)}</td>` +
-      `<td>${row.p25.toFixed(1)}</td><td>${row.p75.toFixed(1)}</td>`;
-    tbody.appendChild(tr);
+    status.textContent = "";
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    for (const row of rows) {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td>${row.player}</td><td>${row.team || ""}</td><td>${row.position}</td>` +
+        `<td>${row.adp.toFixed(1)}</td><td>${row.expected.toFixed(1)}</td>` +
+        `<td>${row.p25.toFixed(1)}</td><td>${row.p75.toFixed(1)}</td>`;
+      tbody.appendChild(tr);
+    }
+    table.hidden = false;
+  } finally {
+    recommendInFlight = false;
   }
-  table.hidden = false;
-});
+}
+
+document.getElementById("recommend-btn").addEventListener("click", loadRecommendations);
 
 refresh();

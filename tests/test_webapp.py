@@ -197,6 +197,37 @@ def test_recommend_returns_all_positions_sorted(client):
     assert expecteds == sorted(expecteds, reverse=True)
 
 
+def test_recommend_resolves_each_position_to_its_best_adp_undrafted_player(client):
+    # Fixture pool has 3 players per position with distinct ADPs -- the
+    # recommendation should resolve to the *lowest*-ADP one at each
+    # position (One, not Two/Three), matching what the model would
+    # actually draft if it picked that position.
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    resp = client.get("/api/recommend?seed=1")
+    rows = resp.get_json()
+
+    by_position = {row["position"]: row for row in rows}
+    assert by_position["RB"]["player"] == "RB One"
+    assert by_position["RB"]["adp"] == 1.0
+    assert by_position["RB"]["team"] == "XXX"
+    assert by_position["WR"]["player"] == "WR One"
+    assert by_position["QB"]["player"] == "QB One"
+    assert by_position["TE"]["player"] == "TE One"
+
+
+def test_recommend_skips_a_player_already_drafted(client):
+    # RB One (lowest ADP) is already off the board -- the RB row should
+    # resolve to the next-best-ADP undrafted RB instead of disappearing
+    # or still pointing at a drafted player.
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+
+    resp = client.get("/api/recommend?seed=1")
+    rows = resp.get_json()
+    by_position = {row["position"]: row for row in rows}
+    assert by_position["RB"]["player"] == "RB Two"
+
+
 def test_recommend_rejects_invalid_points_source(client):
     client.post("/api/setup", json={"my_draft_slot": 1})
     resp = client.get("/api/recommend?points_source=made_up")

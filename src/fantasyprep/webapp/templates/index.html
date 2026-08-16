@@ -50,10 +50,13 @@
 
   <section id="recommend-section" hidden>
     <h2>Recommendation</h2>
-    <button id="recommend-btn">Get Recommendation (takes a few seconds)</button>
+    <p class="hint">Updates automatically on your turn. Ranked by position value; each row is the
+      specific best-ADP undrafted player at that position -- who you'd actually get, not just which
+      position to target.</p>
+    <button id="recommend-btn">Refresh Recommendation</button>
     <p id="recommend-status"></p>
     <table id="recommend-table" hidden>
-      <thead><tr><th>Position</th><th>Expected</th><th>P25</th><th>P75</th></tr></thead>
+      <thead><tr><th>Player</th><th>Team</th><th>Position</th><th>ADP</th><th>Expected</th><th>P25</th><th>P75</th></tr></thead>
       <tbody></tbody>
     </table>
   </section>

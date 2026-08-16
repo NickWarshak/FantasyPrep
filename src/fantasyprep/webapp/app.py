@@ -277,9 +277,25 @@ def create_app(
             live_pool, state, settings, points_model, sims, rng,
             opponent_weight_fn=pick_weight_with_tail_floor,
         )
-        return jsonify(
-            [{"position": pos, "expected": mean, "p25": p25, "p75": p75} for pos, mean, p25, p75 in rows]
-        )
+
+        # Resolve each recommended position down to the specific player the
+        # tool would actually draft there -- same rule the model itself uses
+        # live (backtest.py's model_strategy): best-ADP undrafted player at
+        # that position. Not a separate player-level model (that's real
+        # future work, not built yet) -- this is the existing position-level
+        # recommendation made concrete, not a new source of judgment.
+        undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
+        results = []
+        for pos, mean, p25, p75 in rows:
+            candidates = [p for p in undrafted if p.position == pos]
+            if not candidates:
+                continue
+            player = min(candidates, key=lambda p: p.adp)
+            results.append({
+                "position": pos, "expected": mean, "p25": p25, "p75": p75,
+                "player": player.name, "team": player.team, "adp": player.adp,
+            })
+        return jsonify(results)
 
     @app.post("/api/simulate/step")
     def simulate_step():

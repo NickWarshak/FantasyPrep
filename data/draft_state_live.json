@@ -4,35 +4,35 @@
   "picks": [
     {
       "pick": 1,
-      "player": "Ja'Marr Chase"
-    },
-    {
-      "pick": 2,
-      "player": "Christian McCaffrey"
-    },
-    {
-      "pick": 3,
-      "player": "Bijan Robinson"
-    },
-    {
-      "pick": 4,
-      "player": "Jahmyr Gibbs"
-    },
-    {
-      "pick": 5,
-      "player": "Puka Nacua"
-    },
-    {
-      "pick": 6,
       "player": "Jaxon Smith-Njigba"
     },
     {
-      "pick": 7,
+      "pick": 2,
+      "player": "Puka Nacua"
+    },
+    {
+      "pick": 3,
       "player": "Jonathan Taylor"
     },
     {
+      "pick": 4,
+      "player": "Amon-Ra St. Brown"
+    },
+    {
+      "pick": 5,
+      "player": "Jahmyr Gibbs"
+    },
+    {
+      "pick": 6,
+      "player": "Justin Jefferson"
+    },
+    {
+      "pick": 7,
+      "player": "CeeDee Lamb"
+    },
+    {
       "pick": 8,
-      "player": "De'Von Achane"
+      "player": "Ja'Marr Chase"
     }
   ]
 }
