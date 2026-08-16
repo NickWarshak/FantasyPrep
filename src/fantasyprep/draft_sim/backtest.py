@@ -445,7 +445,10 @@ def replay_one(
 
     def model_strategy(undrafted: list[FfcPlayer], my_positions: list[str], picks: list[dict]) -> FfcPlayer:
         state = state_from_picks(teams, my_slot, picks)
-        rows = recommend_positions(live_pool, state, settings, points_model, num_sims, recommend_rng)
+        rows = recommend_positions(
+            live_pool, state, settings, points_model, num_sims, recommend_rng,
+            opponent_weight_fn=opponent_weight_fn,
+        )
         if not rows:
             return baseline_pick(undrafted, my_positions, settings)
         blended, actual, _weight = confidence_weighted_pick_value(rows, undrafted, actual_points)
@@ -539,18 +542,18 @@ def run_backtest(
     across all 4 conditions within a replay (still CRN-paired), so this
     changes realism, not the fairness of the within-replay comparison.
 
-    KNOWN GAP: this only changes the *outer* real-draft opponents (the
-    `run_full_draft` calls below). The model condition's own internal
-    Monte Carlo lookahead (`recommend_positions` -> `simulate.py`'s
+    This now also drives the model condition's own internal Monte Carlo
+    lookahead (`recommend_positions` -> `simulate.py`'s
     `simulate_position_choice`, which simulates hypothetical future picks
-    to score each candidate position) still hardcodes the plain Gaussian
-    internally and isn't threaded through here -- so running
-    'gaussian-tail-floor' makes the outer opponents more realistic while
-    the model's own internal assumption about how the rest of the draft
-    goes stays stale/inconsistent with that. Fixing this fully would mean
-    threading a weight_fn through simulate.py too, which also touches the
-    live webapp's recommendation engine, not just this backtest -- a
-    bigger, separate change, not done here."""
+    to score each candidate position) via the same `opponent_weight_fn`
+    (fixed 2026-08-16 -- previously that internal lookahead hardcoded the
+    plain Gaussian regardless of what was passed here, so a
+    'gaussian-tail-floor' run made the outer opponents more realistic while
+    the model's own assumption about the rest of the draft stayed stale).
+    The live webapp's `recommend_positions` call (`webapp/app.py`) still
+    doesn't expose an opponent-model choice and keeps the plain-Gaussian
+    default -- unaffected by this backtest flag either way, since it's a
+    separate call site."""
     raw_dir = data_dir / "raw"
     results = []
     opponent_weight_fn = OPPONENT_WEIGHT_FN[opponent_model]

@@ -29,7 +29,7 @@ import statistics
 from dataclasses import dataclass
 from pathlib import Path
 
-from fantasyprep.draft_sim.opponent import sample_pick
+from fantasyprep.draft_sim.opponent import pick_weight, sample_pick
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
 from fantasyprep.historical.outcomes import build_outcome_distributions
@@ -109,6 +109,7 @@ def simulate_position_choice(
     points_model: PointsModel,
     num_sims: int,
     rng: random.Random,
+    opponent_weight_fn=pick_weight,
 ) -> list[float] | None:
     # Position rank reflects each player's fixed standing in the full live
     # ADP universe -- not shifting as the draft progresses -- since that's
@@ -143,7 +144,7 @@ def simulate_position_choice(
                 continue  # already fixed (a keeper) -- no sampling, already counted if mine
             if not remaining:
                 break
-            chosen = sample_pick(remaining, pick_num, rng)
+            chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
             remaining.remove(chosen)
             if pick_num in my_pick_set:
                 my_team.append(chosen)
@@ -168,11 +169,24 @@ def recommend_positions(
     points_model: PointsModel,
     num_sims: int,
     rng: random.Random,
+    opponent_weight_fn=pick_weight,
 ) -> list[tuple[str, float, float, float]]:
-    """Position, expected starting-lineup points, P25, P75 -- sorted best first."""
+    """Position, expected starting-lineup points, P25, P75 -- sorted best first.
+
+    `opponent_weight_fn` controls how the *internal* lookahead simulates
+    hypothetical future picks (both opponents' and "mine" beyond the
+    current decision) -- defaults to the plain Gaussian `pick_weight`, same
+    as `opponent.sample_pick`'s own default. Pass
+    `opponent.pick_weight_with_tail_floor` here to keep this internal
+    assumption consistent with an outer `--opponent-model
+    gaussian-tail-floor` backtest run (see `backtest.py`'s `run_full_draft`
+    docstring for why the two used to diverge)."""
     rows = []
     for position in CANDIDATE_POSITIONS:
-        results = simulate_position_choice(position, live_pool, state, settings, points_model, num_sims, rng)
+        results = simulate_position_choice(
+            position, live_pool, state, settings, points_model, num_sims, rng,
+            opponent_weight_fn=opponent_weight_fn,
+        )
         if results is None:
             continue
         mean = statistics.mean(results)

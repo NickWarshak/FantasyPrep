@@ -2,7 +2,10 @@ import json
 import random
 import statistics
 from pathlib import Path
+from unittest.mock import patch
 
+from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
+from fantasyprep.draft_sim.opponent import sample_pick as real_sample_pick
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel
 from fantasyprep.draft_sim.simulate import (
     build_points_model,
@@ -11,6 +14,7 @@ from fantasyprep.draft_sim.simulate import (
     my_pick_numbers,
     parse_args,
     pick_owner,
+    recommend_positions,
     simulate_position_choice,
     state_from_picks,
 )
@@ -170,6 +174,55 @@ def test_already_mine_player_contributes_to_roster_value():
     # My Keeper RB (300) must be included -- a roster with just WR(100)+QB(50)+TE(50)
     # style totals would never reach anywhere near 300+ without it.
     assert min(results) >= 300.0
+
+
+# --- opponent_weight_fn threading: regression for the gap documented in
+# backtest.py's run_backtest docstring -- the internal Monte Carlo lookahead
+# used to hardcode the plain Gaussian pick_weight regardless of what a caller
+# (e.g. backtest.py's opponent_model flag) wanted the rest of the draft to
+# assume. ---
+
+
+def test_simulate_position_choice_threads_custom_opponent_weight_fn_to_sample_pick():
+    picks = [{"pick": 1, "player": "My Keeper RB"}]
+    state = state_from_picks(teams=10, my_draft_slot=1, picks=picks)
+
+    seen_weight_fns = []
+
+    def spy_sample_pick(pool, pick_number, rng=None, weight_fn=pick_weight):
+        seen_weight_fns.append(weight_fn)
+        return real_sample_pick(pool, pick_number, rng, weight_fn=weight_fn)
+
+    with patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy_sample_pick):
+        results = simulate_position_choice(
+            "WR", LIVE_POOL, state, SETTINGS, HistoricalBootstrapModel(DISTRIBUTIONS),
+            num_sims=1, rng=random.Random(1), opponent_weight_fn=pick_weight_with_tail_floor,
+        )
+
+    assert results is not None
+    assert seen_weight_fns  # sample_pick was actually invoked at least once
+    assert all(fn is pick_weight_with_tail_floor for fn in seen_weight_fns)
+
+
+def test_recommend_positions_default_opponent_weight_fn_is_plain_gaussian():
+    picks = [{"pick": 1, "player": "My Keeper RB"}]
+    state = state_from_picks(teams=10, my_draft_slot=1, picks=picks)
+
+    seen_weight_fns = []
+
+    def spy_sample_pick(pool, pick_number, rng=None, weight_fn=pick_weight):
+        seen_weight_fns.append(weight_fn)
+        return real_sample_pick(pool, pick_number, rng, weight_fn=weight_fn)
+
+    with patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy_sample_pick):
+        rows = recommend_positions(
+            LIVE_POOL, state, SETTINGS, HistoricalBootstrapModel(DISTRIBUTIONS),
+            num_sims=1, rng=random.Random(1),
+        )
+
+    assert rows
+    assert seen_weight_fns
+    assert all(fn is pick_weight for fn in seen_weight_fns)
 
 
 # --- HistoricalBootstrapModel: real crash risk this session -- a position with

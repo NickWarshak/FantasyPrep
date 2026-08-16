@@ -1,7 +1,9 @@
 from collections import Counter
+from unittest.mock import patch
 
 import pytest
 
+from fantasyprep.draft_sim import backtest
 from fantasyprep.draft_sim.backtest import (
     DEFAULT_BACKTEST_YEARS,
     ReplayResult,
@@ -15,6 +17,7 @@ from fantasyprep.draft_sim.backtest import (
     replay_one,
     wilson_interval,
 )
+from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel
 from fantasyprep.historical.outcomes import OutcomeDistribution
 from fantasyprep.historical.sources.ffc import FfcPlayer
@@ -281,6 +284,38 @@ def test_replay_one_produces_full_comparable_rosters_scored_on_real_points():
     assert result.confidence_weighted_gap == pytest.approx(
         result.confidence_weighted_points - result.confidence_weighted_actual_points
     )
+
+
+def test_replay_one_threads_opponent_weight_fn_into_model_internal_lookahead():
+    # Regression (fixed 2026-08-16): replay_one's model_strategy used to call
+    # recommend_positions without opponent_weight_fn, so the model's own
+    # internal Monte Carlo lookahead silently kept assuming the plain
+    # Gaussian opponent model even when a non-default opponent_weight_fn
+    # (e.g. pick_weight_with_tail_floor) was passed in for the outer
+    # real-draft opponents -- see backtest.py's run_backtest docstring.
+    live_pool = _synthetic_pool()
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {
+        normalize_name(p.name): 10.0 + i
+        for i, p in enumerate(pl for pl in live_pool if pl.position != "DST")
+    }
+
+    seen_weight_fns = []
+    real_recommend_positions = backtest.recommend_positions
+
+    def spy(*args, **kwargs):
+        seen_weight_fns.append(kwargs.get("opponent_weight_fn"))
+        return real_recommend_positions(*args, **kwargs)
+
+    with patch("fantasyprep.draft_sim.backtest.recommend_positions", side_effect=spy):
+        replay_one(
+            year=2023, my_slot=1, settings=SETTINGS, live_pool=live_pool,
+            points_model=points_model, distributions=_distributions(), actual_points=actual_points,
+            num_sims=3, seed=7, opponent_weight_fn=pick_weight_with_tail_floor,
+        )
+
+    assert seen_weight_fns  # recommend_positions was actually invoked at least once
+    assert all(fn is pick_weight_with_tail_floor for fn in seen_weight_fns)
 
 
 # --- wilson_interval ---------------------------------------------------

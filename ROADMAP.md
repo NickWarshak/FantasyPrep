@@ -441,6 +441,25 @@ before adding features," agreed with)
   engine — bigger, separate change, not done here. Next: a controlled A/B
   (same pattern as the VOR-cutoff one) once there's a moment to spend
   the compute, ideally after also closing the simulate.py gap.
+- ✅ **Closed the tail-floor "known gap" above** (2026-08-16, Mac mini) —
+  threaded `opponent_weight_fn` through `simulate.py`'s
+  `simulate_position_choice`/`recommend_positions` (both default to the
+  original `pick_weight`, matching `opponent.sample_pick`'s own default,
+  so this is additive, not a behavior change for existing callers) and
+  wired `backtest.py`'s `replay_one`/`run_backtest` to pass its
+  `opponent_weight_fn` into the model condition's internal
+  `recommend_positions` call, not just the four `run_full_draft` calls.
+  A `gaussian-tail-floor` backtest run now has the model's own lookahead
+  agree with the outer opponents about how the rest of the draft
+  behaves, instead of the lookahead silently staying on the plain
+  Gaussian. Two spy-based regression tests added (`test_simulate.py`,
+  `test_backtest.py`) asserting the actual `weight_fn` object reaches
+  `sample_pick`, not just that the call doesn't crash. The live webapp's
+  `recommend_positions` call (`webapp/app.py`) still doesn't expose an
+  opponent-model choice and keeps the plain-Gaussian default — untouched,
+  since it's a separate call site with no `--opponent-model` flag to
+  thread from. The controlled A/B this unblocks (tail-floor vs. plain
+  Gaussian, now apples-to-apples end to end) hasn't been run yet.
 - Untouched final holdout season — 2025 doesn't work yet (`nfl_data_py`
   still 404s on it as of 2026-08-16, not published upstream; recheck
   periodically). Once available: freeze model design before ever looking
