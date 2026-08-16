@@ -245,6 +245,18 @@ Then open `http://127.0.0.1:5000`. It's a Sleeper-style grid — teams as
 columns, rounds as rows, your column highlighted, the current pick
 outlined. Enter your draft slot once; the grid fills in automatically.
 
+**Recommendations are specific players, not just positions** — each ranked
+row resolves to the actual best-available player at that position (name,
+team, ADP), and they load automatically as soon as it's your turn rather
+than needing a manual click every pick.
+
+**Live player pool defaults to FantasyPros' overall consensus rankings**
+(2026-08-16 — `--rankings-source fantasypros`, real expert rank order,
+500+ players), not FFC ADP. `stdev`/`high`/`low` here are approximated
+from FantasyPros' tier groupings (not real draft-position variance the way
+FFC's are) — pass `--rankings-source ffc` for FFC's live ADP instead if
+you want real variance data over deeper player coverage.
+
 **Every cell works the same way, whether it's a live pick or a keeper**:
 click an empty cell, search the player, select — no "mine" checkbox,
 since which column you clicked already answers that. Click the

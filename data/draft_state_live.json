@@ -1,38 +1,5 @@
 {
   "teams": 10,
-  "my_draft_slot": 9,
-  "picks": [
-    {
-      "pick": 1,
-      "player": "Jaxon Smith-Njigba"
-    },
-    {
-      "pick": 2,
-      "player": "Puka Nacua"
-    },
-    {
-      "pick": 3,
-      "player": "Jonathan Taylor"
-    },
-    {
-      "pick": 4,
-      "player": "Amon-Ra St. Brown"
-    },
-    {
-      "pick": 5,
-      "player": "Jahmyr Gibbs"
-    },
-    {
-      "pick": 6,
-      "player": "Justin Jefferson"
-    },
-    {
-      "pick": 7,
-      "player": "CeeDee Lamb"
-    },
-    {
-      "pick": 8,
-      "player": "Ja'Marr Chase"
-    }
-  ]
+  "my_draft_slot": 3,
+  "picks": []
 }

@@ -20,6 +20,14 @@ that's an actual model-behavior fix rather than an evaluation-only change
 clustering fix all live in the backtest harness and don't affect what this
 tool recommends -- VOR in particular is a baseline the model is compared
 against, not a component of the model itself).
+
+Live player pool defaults to FantasyPros' overall consensus rankings CSV
+(`--rankings-source fantasypros`, the default), not FFC ADP -- real expert
+rank order and much deeper coverage (500+ players vs. FFC's ~260), but
+stdev/high/low are approximated from tier width rather than real
+draft-position variance (see `historical/sources/fantasypros_rankings.py`
+for the exact tradeoff). Pass `--rankings-source ffc` to use FFC's live ADP
+instead, which has real variance data but shallower coverage.
 """
 from __future__ import annotations
 
@@ -32,6 +40,7 @@ from flask import Flask, jsonify, render_template, request
 
 from fantasyprep.draft_sim.auto_pick import espn_pool_for_auto_pick
 from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor, sample_pick
+from fantasyprep.historical.sources.fantasypros_rankings import load_fantasypros_rankings
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.simulate import (
     current_pick_number,
@@ -333,6 +342,9 @@ def create_app(
     return app
 
 
+DEFAULT_RANKINGS_PATH = Path("data/raw/fantasypros_2026_rankings.csv")
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--year", type=int, required=True)
@@ -342,12 +354,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--rankings-source", choices=["fantasypros", "ffc"], default="fantasypros",
+                         help="'fantasypros' (default) uses the FantasyPros overall consensus rankings CSV "
+                         "as the live draft pool -- real expert rank order, but stdev/high/low are "
+                         "approximated from tier width, not real draft-position variance. 'ffc' uses "
+                         "FantasyFootballCalculator's live ADP instead (real draft-position variance, but "
+                         "shallower player coverage -- ~260 players vs FantasyPros' 500+).")
+    parser.add_argument("--rankings-path", type=Path, default=DEFAULT_RANKINGS_PATH,
+                         help="CSV path when --rankings-source=fantasypros.")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    app = create_app(args.year, args.draft_state, args.data_dir, args.num_sims)
+    live_pool = None
+    if args.rankings_source == "fantasypros":
+        print(f"Loading FantasyPros rankings from {args.rankings_path}...")
+        live_pool = load_fantasypros_rankings(args.rankings_path)
+        print(f"  {len(live_pool)} players loaded")
+    app = create_app(args.year, args.draft_state, args.data_dir, args.num_sims, live_pool=live_pool)
     app.run(host=args.host, port=args.port, debug=args.debug)
 
 
