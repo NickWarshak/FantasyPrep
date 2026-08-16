@@ -4,6 +4,11 @@ let pendingWasCurrentPick = false;
 let suggestions = [];
 let highlightedIndex = -1;
 let simRunning = false;
+// True while the slot-picker is shown on demand (via "Change Team") even
+// though a slot is already set -- otherwise render() always hides it once
+// my_draft_slot is non-null, and there was no way back in short of editing
+// the draft-state file by hand.
+let forceShowSlotPicker = false;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -98,19 +103,29 @@ async function chooseSlot(slot) {
     alert(data.error);
     return;
   }
+  forceShowSlotPicker = false;
   render(data);
+}
+
+function showSlotPicker() {
+  forceShowSlotPicker = true;
+  render(currentState);
 }
 
 function render(state) {
   currentState = state;
   const hasSlot = state.my_draft_slot !== null && state.my_draft_slot !== undefined;
+  const showPicker = !hasSlot || forceShowSlotPicker;
 
-  document.getElementById("setup-screen").hidden = hasSlot;
-  document.getElementById("app-main").hidden = !hasSlot;
+  document.getElementById("setup-screen").hidden = !showPicker;
+  document.getElementById("app-main").hidden = showPicker;
   document.getElementById("status-bar").hidden = !hasSlot;
   document.getElementById("header-actions").hidden = !hasSlot;
+  // "Cancel" only makes sense once a slot already exists to fall back to --
+  // first-time setup has nothing to cancel back to.
+  document.getElementById("setup-cancel").hidden = !hasSlot;
 
-  if (!hasSlot && state.teams) renderSlotGrid(state);
+  if (showPicker && state.teams) renderSlotGrid(state);
 
   if (hasSlot) {
     document.getElementById("status-pick").textContent =
@@ -227,6 +242,13 @@ document.getElementById("reset-btn").addEventListener("click", async () => {
   if (!confirm("Reset the whole draft?")) return;
   const res = await fetch("/api/reset", { method: "POST" });
   render(await res.json());
+});
+
+document.getElementById("change-team-btn").addEventListener("click", showSlotPicker);
+
+document.getElementById("setup-cancel").addEventListener("click", () => {
+  forceShowSlotPicker = false;
+  render(currentState);
 });
 
 document.getElementById("picker-cancel").addEventListener("click", closePicker);

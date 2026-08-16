@@ -17,6 +17,7 @@
       <span id="status-turn-badge" class="turn-badge" hidden>Your Pick</span>
     </div>
     <div id="header-actions" hidden>
+      <button id="change-team-btn" class="btn btn-ghost">Change Team</button>
       <button id="reset-btn" class="btn btn-ghost">Reset Draft</button>
     </div>
   </header>
@@ -24,9 +25,10 @@
   <section id="setup-screen">
     <div class="setup-card">
       <h1>Which team are you?</h1>
-      <p class="setup-hint">Click your draft slot -- the board fills in automatically as picks happen. Already
-        set up before? Picking the same slot again picks up right where you left off.</p>
+      <p class="setup-hint">Click your draft slot -- the board fills in automatically as picks happen. Picking a
+        slot you've already used before picks up right where you left off.</p>
       <div id="slot-grid"></div>
+      <button id="setup-cancel" class="btn btn-ghost" hidden>Cancel</button>
     </div>
   </section>
 
