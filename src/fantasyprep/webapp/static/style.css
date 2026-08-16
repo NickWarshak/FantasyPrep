@@ -42,6 +42,13 @@
 
 * { box-sizing: border-box; }
 
+/* The `hidden` attribute must always win over any component's own
+   `display:` rule -- an ID selector like #setup-screen otherwise beats
+   the browser's built-in [hidden]{display:none} on specificity, which is
+   exactly what silently broke show/hide toggling here (setup screen and
+   the picker modal both stayed visually present despite .hidden = true). */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
