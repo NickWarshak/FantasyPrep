@@ -39,6 +39,7 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request
 
 from fantasyprep.draft_sim.auto_pick import espn_pool_for_auto_pick
+from fantasyprep.draft_sim.draft_now_vs_wait import compare_now_vs_wait
 from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor, sample_pick
 from fantasyprep.historical.sources.fantasypros_rankings import load_fantasypros_rankings
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
@@ -334,6 +335,43 @@ def create_app(
                 "player": player.name, "team": player.team, "adp": player.adp,
             })
         return jsonify(results)
+
+    @app.get("/api/now-vs-wait")
+    def now_vs_wait():
+        """Draft-Now-vs-Wait for a specific position pair -- the caller
+        (frontend) passes the top-2 positions from a /api/recommend response
+        it already has, rather than this endpoint recomputing
+        recommend_positions from scratch (that's the expensive part, no
+        reason to pay for it twice for the same decision point)."""
+        if session.my_draft_slot is None:
+            return jsonify({"error": "Call /api/setup first"}), 400
+        target = request.args.get("target", "")
+        alternative = request.args.get("alternative", "")
+        if not target or not alternative:
+            return jsonify({"error": "target and alternative query params are required"}), 400
+
+        state = session.state()
+        seed = request.args.get("seed", type=int)
+        sims = request.args.get("num_sims", default=num_sims, type=int)
+        points_source = request.args.get("points_source", default="historical")
+        if points_source not in ("historical", "espn"):
+            return jsonify({"error": "points_source must be 'historical' or 'espn'"}), 400
+
+        points_model = get_points_model(points_source)
+        result = compare_now_vs_wait(
+            target, alternative, live_pool, state, settings, points_model, sims, random.Random(seed),
+            opponent_weight_fn=pick_weight_with_tail_floor,
+        )
+        if result is None:
+            return jsonify(None)
+        return jsonify({
+            "position": result.position,
+            "now_mean": result.now_mean, "now_p25": result.now_p25, "now_p75": result.now_p75,
+            "wait_alternative_position": result.wait_alternative_position,
+            "wait_mean": result.wait_mean, "wait_p25": result.wait_p25, "wait_p75": result.wait_p75,
+            "survival_probability": result.survival_probability,
+            "cost_of_waiting": result.cost_of_waiting,
+        })
 
     @app.post("/api/simulate/step")
     def simulate_step():

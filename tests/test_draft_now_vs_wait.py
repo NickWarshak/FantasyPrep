@@ -1,4 +1,5 @@
 import random
+from unittest.mock import patch
 
 from fantasyprep.draft_sim.draft_now_vs_wait import (
     compare_now_vs_wait,
@@ -6,6 +7,8 @@ from fantasyprep.draft_sim.draft_now_vs_wait import (
     survival_probability,
     validate_against_real_outcome,
 )
+from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
+from fantasyprep.draft_sim.opponent import sample_pick as real_sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel
 from fantasyprep.draft_sim.simulate import state_from_picks
 from fantasyprep.historical.outcomes import OutcomeDistribution
@@ -162,6 +165,56 @@ def test_compare_now_vs_wait_none_when_target_position_unavailable():
         "QB", "WR", pool, state, SETTINGS, points_model, num_sims=5, rng=random.Random(1)
     )
     assert result is None
+
+
+def test_compare_now_vs_wait_defaults_to_plain_gaussian_opponent_model():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+
+    seen: list = []
+
+    def spy(p, pick_number, rng=None, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
+
+    # compare_now_vs_wait's opponent sampling happens through two different
+    # modules (its own simulate_wait_and_target/survival_probability, and
+    # simulate.py's simulate_position_choice for the "now" branch) -- both
+    # need to be spied on to confirm the argument actually reaches every
+    # opponent pick, not just the ones this module calls directly.
+    with patch("fantasyprep.draft_sim.draft_now_vs_wait.sample_pick", side_effect=spy), \
+         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+        result = compare_now_vs_wait(
+            "RB", "WR", pool, state, SETTINGS, points_model, num_sims=10, rng=random.Random(1)
+        )
+
+    assert result is not None
+    assert seen  # opponent sampling actually happened somewhere in the chain
+    assert all(fn is pick_weight for fn in seen)
+
+
+def test_compare_now_vs_wait_threads_custom_opponent_weight_fn_everywhere():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+
+    seen: list = []
+
+    def spy(p, pick_number, rng=None, weight_fn=pick_weight):
+        seen.append(weight_fn)
+        return real_sample_pick(p, pick_number, rng, weight_fn=weight_fn)
+
+    with patch("fantasyprep.draft_sim.draft_now_vs_wait.sample_pick", side_effect=spy), \
+         patch("fantasyprep.draft_sim.simulate.sample_pick", side_effect=spy):
+        result = compare_now_vs_wait(
+            "RB", "WR", pool, state, SETTINGS, points_model, num_sims=10, rng=random.Random(1),
+            opponent_weight_fn=pick_weight_with_tail_floor,
+        )
+
+    assert result is not None
+    assert seen
+    assert all(fn is pick_weight_with_tail_floor for fn in seen)
 
 
 # --- validate_against_real_outcome ---------------------------------------------------

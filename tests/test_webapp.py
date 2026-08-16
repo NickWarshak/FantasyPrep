@@ -303,6 +303,33 @@ def test_recommend_rejects_invalid_points_source(client):
     assert resp.status_code == 400
 
 
+# --- Draft Now vs. Wait -----------------------------------------------------
+
+
+def test_now_vs_wait_before_setup_rejected(client):
+    resp = client.get("/api/now-vs-wait?target=RB&alternative=WR")
+    assert resp.status_code == 400
+
+
+def test_now_vs_wait_requires_target_and_alternative(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    resp = client.get("/api/now-vs-wait?target=RB")
+    assert resp.status_code == 400
+
+
+def test_now_vs_wait_returns_full_comparison(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    resp = client.get("/api/now-vs-wait?target=RB&alternative=WR&seed=1")
+    data = resp.get_json()
+
+    assert data["position"] == "RB"
+    assert data["wait_alternative_position"] == "WR"
+    assert data["now_p25"] <= data["now_p75"]
+    assert data["wait_p25"] <= data["wait_p75"]
+    assert 0.0 <= data["survival_probability"] <= 1.0
+    assert data["cost_of_waiting"] == pytest.approx(data["now_mean"] - data["wait_mean"])
+
+
 def test_recommend_espn_points_source_uses_injected_projection(tmp_path: Path):
     app = _make_app(tmp_path, espn_points=FIXTURE_ESPN_POINTS)
     client = app.test_client()

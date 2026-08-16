@@ -30,6 +30,12 @@
   --te: #E0A526;
   --dst: #A98CE8;
 
+  /* Status color for the "safe to wait" state -- deliberately a different
+     green from --wr (more saturated, more "go") so a status signal never
+     gets read as a position badge, and vice versa. */
+  --safe: #4ADE80;
+  --safe-dim: rgba(74, 222, 128, 0.14);
+
   --radius: 12px;
   --radius-sm: 8px;
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -400,6 +406,36 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 .rec-stats { text-align: right; }
 .rec-expected { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
 .rec-range { font-size: 0.66rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* --- Draft Now vs. Wait card ------------------------------------------- */
+
+#now-vs-wait-card {
+  margin-top: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+#now-vs-wait-card.urgent { border-color: var(--accent-dim); background: color-mix(in srgb, var(--surface-2) 85%, var(--accent) 6%); }
+#now-vs-wait-card.safe { border-color: var(--safe-dim); background: color-mix(in srgb, var(--surface-2) 85%, var(--safe) 6%); }
+
+.nvw-verdict {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+.nvw-verdict.urgent { color: var(--accent); }
+.nvw-verdict.safe { color: var(--safe); }
+.nvw-verdict-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+
+.nvw-detail { color: var(--text-dim); font-size: 0.8rem; line-height: 1.5; }
+.nvw-detail strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.nvw-loading { color: var(--text-faint); font-size: 0.78rem; }
 
 /* --- Picker modal -------------------------------------------------------- */
 

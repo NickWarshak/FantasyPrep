@@ -39,7 +39,7 @@ import random
 import statistics
 from dataclasses import dataclass
 
-from fantasyprep.draft_sim.opponent import sample_pick
+from fantasyprep.draft_sim.opponent import pick_weight, sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
 from fantasyprep.draft_sim.simulate import (
@@ -62,6 +62,7 @@ def simulate_wait_and_target(
     points_model: PointsModel,
     num_sims: int,
     rng: random.Random,
+    opponent_weight_fn=pick_weight,
 ) -> list[float] | None:
     """Completed-roster value if I take `take_now_position` right now and
     deliberately target `target_position` at my very next pick (best
@@ -104,10 +105,10 @@ def simulate_wait_and_target(
                 chosen = (
                     min(target_candidates, key=lambda p: p.adp)
                     if target_candidates
-                    else sample_pick(remaining, pick_num, rng)
+                    else sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
                 )
             else:
-                chosen = sample_pick(remaining, pick_num, rng)
+                chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
             remaining.remove(chosen)
             if pick_num in my_pick_set:
                 my_team.append(chosen)
@@ -129,6 +130,7 @@ def survival_probability(
     num_sims: int,
     rng: random.Random,
     tier_size: int = 3,
+    opponent_weight_fn=pick_weight,
 ) -> float:
     """Empirical probability that at least one of the current top
     `tier_size` undrafted players at `target_position` is still
@@ -154,7 +156,7 @@ def survival_probability(
         for pick_num in range(state.current_pick + 1, next_pick):
             if pick_num in state.assigned or not remaining:
                 continue
-            chosen = sample_pick(remaining, pick_num, rng)
+            chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
             remaining.remove(chosen)
         if tier_names & {normalize_name(p.name) for p in remaining}:
             survived += 1
@@ -192,6 +194,7 @@ def compare_now_vs_wait(
     points_model: PointsModel,
     num_sims: int,
     rng: random.Random,
+    opponent_weight_fn=pick_weight,
 ) -> NowVsWaitResult | None:
     """The full comparison: draft `target_position` now, vs. take
     `wait_alternative_position` now and deliberately target
@@ -200,18 +203,22 @@ def compare_now_vs_wait(
     `recommend_positions` ranks 2nd, matching what a real drafter would
     actually consider skipping to."""
     now_results = simulate_position_choice(
-        target_position, live_pool, state, settings, points_model, num_sims, rng
+        target_position, live_pool, state, settings, points_model, num_sims, rng,
+        opponent_weight_fn=opponent_weight_fn,
     )
     if now_results is None:
         return None
 
     wait_results = simulate_wait_and_target(
-        wait_alternative_position, target_position, live_pool, state, settings, points_model, num_sims, rng
+        wait_alternative_position, target_position, live_pool, state, settings, points_model, num_sims, rng,
+        opponent_weight_fn=opponent_weight_fn,
     )
     if wait_results is None:
         return None
 
-    survival = survival_probability(target_position, live_pool, state, settings, num_sims, rng)
+    survival = survival_probability(
+        target_position, live_pool, state, settings, num_sims, rng, opponent_weight_fn=opponent_weight_fn
+    )
 
     def _p25(vals):
         return statistics.quantiles(vals, n=4)[0] if len(vals) >= 4 else min(vals)

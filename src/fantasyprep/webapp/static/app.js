@@ -142,6 +142,7 @@ function render(state) {
     loadRecommendations();
   } else {
     document.getElementById("recommend-list").hidden = true;
+    document.getElementById("now-vs-wait-card").hidden = true;
     document.getElementById("recommend-status").textContent = hasSlot
       ? "Recommendations appear automatically once it's your turn."
       : "";
@@ -400,9 +401,44 @@ async function loadRecommendations() {
       list.appendChild(card);
     });
     list.hidden = false;
+
+    // Draft Now vs. Wait for the top pick specifically: not "what's best"
+    // (the list above already answers that) but "does it matter if I wait
+    // a round" -- a genuinely different question neither the cross-position
+    // ranking nor a within-position comparison (not built yet) answers.
+    if (rows.length >= 2) loadNowVsWait(rows[0].position, rows[1].position);
   } finally {
     recommendInFlight = false;
   }
+}
+
+async function loadNowVsWait(target, alternative) {
+  const card = document.getElementById("now-vs-wait-card");
+  card.className = "";
+  card.innerHTML = '<div class="nvw-loading">Checking whether it\'s safe to wait...</div>';
+  card.hidden = false;
+
+  const res = await fetch(`/api/now-vs-wait?target=${target}&alternative=${alternative}`);
+  const data = await res.json();
+  if (!res.ok || !data) {
+    card.hidden = true;  // no next pick to compare against, or comparison unavailable -- just skip it
+    return;
+  }
+
+  const urgent = data.cost_of_waiting > 0;
+  const survivalPct = Math.round(data.survival_probability * 100);
+  card.className = urgent ? "urgent" : "safe";
+  card.innerHTML =
+    `<div class="nvw-verdict ${urgent ? "urgent" : "safe"}">` +
+    `<span class="nvw-verdict-dot"></span>` +
+    (urgent ? `Draft ${data.position} now` : `Safe to wait on ${data.position}`) +
+    `</div>` +
+    `<div class="nvw-detail">` +
+    `${survivalPct}% chance a top ${data.position} is still there next round. ` +
+    `Taking ${data.wait_alternative_position} now, ${data.position} next pick projects to ` +
+    `<strong>${data.wait_mean.toFixed(0)}</strong> vs. <strong>${data.now_mean.toFixed(0)}</strong> for taking ` +
+    `${data.position} now.` +
+    `</div>`;
 }
 
 document.getElementById("recommend-btn").addEventListener("click", loadRecommendations);
