@@ -2,64 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FantasyPrep Draft Assistant</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Draft Assistant</h1>
-
-  <section id="setup-section">
-    <h2>Setup</h2>
-    <label>My draft slot: <input type="number" id="draft-slot-input" min="1"></label>
-    <button id="setup-submit">Start / Update</button>
-    <button id="reset-btn">Reset draft</button>
-  </section>
-
-  <section id="board-section" hidden>
-    <p id="pick-summary"></p>
-
-    <div id="simulate-controls">
-      <label>Speed:
-        <select id="sim-speed">
-          <option value="0">Instant</option>
-          <option value="150">Fast</option>
-          <option value="500" selected>Normal</option>
-          <option value="1200">Slow</option>
-        </select>
-      </label>
-      <label>Randomness:
-        <input type="number" id="sim-randomness" value="1.0" min="0" max="3" step="0.1" style="width: 4em">
-      </label>
-      <span class="hint">(0 = strict ESPN ADP order, 1 = typical variance, 2-3 = wild)</span>
-      <button id="simulate-btn">Simulate opponent picks</button>
-      <button id="simulate-stop-btn" hidden>Stop</button>
-      <span id="simulate-status"></span>
+  <header id="app-header">
+    <div class="brand">
+      <span class="brand-mark">FP</span>
+      <span class="brand-name">FantasyPrep</span>
     </div>
+    <div id="status-bar" hidden>
+      <span id="status-pick"></span>
+      <span id="status-turn-badge" class="turn-badge" hidden>Your Pick</span>
+    </div>
+    <div id="header-actions" hidden>
+      <button id="reset-btn" class="btn btn-ghost">Reset Draft</button>
+    </div>
+  </header>
 
-    <div id="grid-wrapper">
-      <table id="draft-grid"></table>
+  <section id="setup-screen">
+    <div class="setup-card">
+      <h1>Start your draft</h1>
+      <p class="setup-hint">Enter the slot you're drafting from -- the board fills in automatically as picks happen.</p>
+      <label class="field">
+        <span>Your draft slot</span>
+        <input type="number" id="draft-slot-input" min="1" placeholder="e.g. 3">
+      </label>
+      <button id="setup-submit" class="btn btn-accent">Start Draft</button>
     </div>
   </section>
 
-  <section id="picker-section" hidden>
-    <h2 id="picker-title"></h2>
-    <input type="text" id="player-search" placeholder="Search player name...">
-    <ul id="player-suggestions"></ul>
-    <button id="picker-cancel">Cancel</button>
-  </section>
+  <main id="app-main" hidden>
+    <div id="board-panel">
+      <div id="simulate-bar">
+        <div class="simulate-controls">
+          <label class="field-inline">
+            <span>Speed</span>
+            <select id="sim-speed">
+              <option value="0">Instant</option>
+              <option value="150">Fast</option>
+              <option value="500" selected>Normal</option>
+              <option value="1200">Slow</option>
+            </select>
+          </label>
+          <label class="field-inline">
+            <span>Randomness</span>
+            <input type="number" id="sim-randomness" value="1.0" min="0" max="3" step="0.1">
+          </label>
+          <span class="hint">0 = strict ADP order, 1 = typical variance, 2-3 = wild</span>
+        </div>
+        <div class="simulate-actions">
+          <span id="simulate-status"></span>
+          <button id="simulate-btn" class="btn btn-primary">Simulate Opponent Picks</button>
+          <button id="simulate-stop-btn" class="btn btn-ghost" hidden>Stop</button>
+        </div>
+      </div>
 
-  <section id="recommend-section" hidden>
-    <h2>Recommendation</h2>
-    <p class="hint">Updates automatically on your turn. Ranked by position value; each row is the
-      specific best-ADP undrafted player at that position -- who you'd actually get, not just which
-      position to target.</p>
-    <button id="recommend-btn">Refresh Recommendation</button>
-    <p id="recommend-status"></p>
-    <table id="recommend-table" hidden>
-      <thead><tr><th>Player</th><th>Team</th><th>Position</th><th>ADP</th><th>Expected</th><th>P25</th><th>P75</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </section>
+      <div id="grid-wrapper">
+        <table id="draft-grid"></table>
+      </div>
+    </div>
+
+    <aside id="sidebar-panel">
+      <section id="recommend-section">
+        <div class="panel-head">
+          <h2>Recommendation</h2>
+          <button id="recommend-btn" class="btn btn-ghost btn-sm">Refresh</button>
+        </div>
+        <p class="hint">Updates automatically on your turn. Each row is the specific best-available player at that
+          position -- who you'd actually get, ranked by real value, not just which position to target.</p>
+        <p id="recommend-status"></p>
+        <div id="recommend-list" hidden></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="picker-overlay" hidden>
+    <div id="picker-modal">
+      <div class="picker-head">
+        <h2 id="picker-title"></h2>
+        <button id="picker-cancel" class="btn btn-ghost btn-sm">Cancel</button>
+      </div>
+      <input type="text" id="player-search" placeholder="Search player name...">
+      <ul id="player-suggestions"></ul>
+    </div>
+  </div>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

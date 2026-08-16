@@ -23,6 +23,10 @@ function cellLabel(round, team) {
   return `${round}.${team}`;
 }
 
+function posChip(position) {
+  return position ? `<span class="pos-chip pos-${position}">${position}</span>` : "";
+}
+
 function renderGrid(state) {
   const table = document.getElementById("draft-grid");
   table.innerHTML = "";
@@ -56,7 +60,7 @@ function renderGrid(state) {
         td.innerHTML =
           `<div class="pick-num">${cellLabel(round, team)}</div>` +
           `<div class="player-name">${info.player}</div>` +
-          `<div class="player-meta">${info.position || ""} ${info.team || ""}</div>`;
+          `<div class="player-meta">${posChip(info.position)}<span class="team-label">${info.team || ""}</span></div>`;
         td.addEventListener("click", () => clearPick(pickNum));
       } else {
         td.innerHTML = `<div class="pick-num">${cellLabel(round, team)}</div><div class="claim">+</div>`;
@@ -73,15 +77,16 @@ function render(state) {
   currentState = state;
   const hasSlot = state.my_draft_slot !== null && state.my_draft_slot !== undefined;
 
-  document.getElementById("board-section").hidden = !hasSlot;
-  document.getElementById("recommend-section").hidden = !hasSlot;
+  document.getElementById("setup-screen").hidden = hasSlot;
+  document.getElementById("app-main").hidden = !hasSlot;
+  document.getElementById("status-bar").hidden = !hasSlot;
+  document.getElementById("header-actions").hidden = !hasSlot;
 
   if (hasSlot) {
     document.getElementById("draft-slot-input").value = state.my_draft_slot;
-    document.getElementById("pick-summary").textContent =
-      `Current pick: ${state.current_pick} of ${state.total_picks}` +
-      (state.next_pick_is_mine ? " (yours)" : "") +
-      " -- press Enter anywhere to log the next pick";
+    document.getElementById("status-pick").textContent =
+      `Pick ${state.current_pick} of ${state.total_picks}`;
+    document.getElementById("status-turn-badge").hidden = !state.next_pick_is_mine;
     renderGrid(state);
   }
 
@@ -92,7 +97,7 @@ function render(state) {
     // num_sims, or just to recompute).
     loadRecommendations();
   } else {
-    document.getElementById("recommend-table").hidden = true;
+    document.getElementById("recommend-list").hidden = true;
     document.getElementById("recommend-status").textContent = hasSlot
       ? "Recommendations appear automatically once it's your turn."
       : "";
@@ -115,7 +120,7 @@ function openPicker(pickNum, round, team) {
   pendingWasCurrentPick = currentState && pickNum === currentState.current_pick;
   document.getElementById("picker-title").textContent =
     `Assign pick ${cellLabel(round, team)}` + (pendingWasCurrentPick ? "" : " (keeper -- ahead of the current pick)");
-  document.getElementById("picker-section").hidden = false;
+  document.getElementById("picker-overlay").hidden = false;
   document.getElementById("player-search").value = "";
   suggestions = [];
   highlightedIndex = -1;
@@ -134,7 +139,7 @@ function closePicker() {
   pendingWasCurrentPick = false;
   suggestions = [];
   highlightedIndex = -1;
-  document.getElementById("picker-section").hidden = true;
+  document.getElementById("picker-overlay").hidden = true;
 }
 
 function renderSuggestions() {
@@ -142,7 +147,9 @@ function renderSuggestions() {
   list.innerHTML = "";
   suggestions.forEach((p, i) => {
     const li = document.createElement("li");
-    li.textContent = `${p.name} (${p.position} ${p.team}, ADP ${p.adp.toFixed(1)})`;
+    li.innerHTML =
+      `<span class="sugg-name">${p.name}</span>` +
+      `<span class="sugg-meta">${posChip(p.position)} ${p.team} &middot; ADP ${p.adp.toFixed(1)}</span>`;
     if (i === highlightedIndex) li.classList.add("highlighted");
     li.addEventListener("click", () => assignPick(pendingPickNumber, p.name));
     list.appendChild(li);
@@ -199,6 +206,10 @@ document.getElementById("reset-btn").addEventListener("click", async () => {
 
 document.getElementById("picker-cancel").addEventListener("click", closePicker);
 
+document.getElementById("picker-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "picker-overlay") closePicker();  // click on the backdrop, not the modal card
+});
+
 let searchDebounce = null;
 document.getElementById("player-search").addEventListener("input", (e) => {
   clearTimeout(searchDebounce);
@@ -246,7 +257,7 @@ document.getElementById("player-search").addEventListener("keydown", (e) => {
 // Global: Enter opens the picker for the current pick when nothing else is
 // focused, so a whole draft can be logged without ever touching the mouse.
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && document.getElementById("picker-section").hidden && !simRunning) {
+  if (e.key === "Enter" && document.getElementById("picker-overlay").hidden && !simRunning) {
     const active = document.activeElement;
     const typingElsewhere = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
     if (!typingElsewhere) {
@@ -319,9 +330,9 @@ async function loadRecommendations() {
   recommendInFlight = true;
 
   const status = document.getElementById("recommend-status");
-  const table = document.getElementById("recommend-table");
+  const list = document.getElementById("recommend-list");
   status.textContent = "Simulating... this takes several seconds.";
-  table.hidden = true;
+  list.hidden = true;
 
   try {
     const res = await fetch("/api/recommend");
@@ -332,17 +343,25 @@ async function loadRecommendations() {
     }
 
     status.textContent = "";
-    const tbody = table.querySelector("tbody");
-    tbody.innerHTML = "";
-    for (const row of rows) {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        `<td>${row.player}</td><td>${row.team || ""}</td><td>${row.position}</td>` +
-        `<td>${row.adp.toFixed(1)}</td><td>${row.expected.toFixed(1)}</td>` +
-        `<td>${row.p25.toFixed(1)}</td><td>${row.p75.toFixed(1)}</td>`;
-      tbody.appendChild(tr);
-    }
-    table.hidden = false;
+    list.innerHTML = "";
+    rows.forEach((row, i) => {
+      const card = document.createElement("div");
+      card.className = "rec-card";
+      card.style.setProperty("--rank-color", `var(--${row.position.toLowerCase()}, var(--text-faint))`);
+      card.innerHTML =
+        `<span class="rec-rank">${i + 1}</span>` +
+        `<div class="rec-main">` +
+        `<div class="rec-player">${row.player}</div>` +
+        `<div class="rec-meta">${posChip(row.position)}<span class="team-label">${row.team || ""}</span>` +
+        `<span class="adp">ADP ${row.adp.toFixed(1)}</span></div>` +
+        `</div>` +
+        `<div class="rec-stats">` +
+        `<div class="rec-expected">${row.expected.toFixed(0)}</div>` +
+        `<div class="rec-range">${row.p25.toFixed(0)}&ndash;${row.p75.toFixed(0)}</div>` +
+        `</div>`;
+      list.appendChild(card);
+    });
+    list.hidden = false;
   } finally {
     recommendInFlight = false;
   }
