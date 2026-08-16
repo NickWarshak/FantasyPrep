@@ -1,0 +1,4832 @@
+[
+  {
+    "year": 2022,
+    "my_slot": 1,
+    "seed_index": 0,
+    "baseline_points": 2160.7999999999997,
+    "model_points": 2506.16,
+    "pure_adp_points": 2160.7999999999997,
+    "vor_points": 2080.1,
+    "delta": 345.3600000000001,
+    "delta_vs_pure_adp": 345.3600000000001,
+    "delta_vs_vor": 426.05999999999995,
+    "baseline_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        302.76
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        201.4
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        168.4
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Dalton Schultz",
+        "TE",
+        142.7
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        249.1
+      ],
+      [
+        "Aaron Rodgers",
+        "QB",
+        239.2
+      ]
+    ],
+    "model_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        368.66
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        281.26
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        302.76
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        242.4
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Elijah Moore",
+        "WR",
+        88.1
+      ],
+      [
+        "Dalton Schultz",
+        "TE",
+        142.7
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        243.9
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        302.76
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        201.4
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        168.4
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "LA Rams Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Dalton Schultz",
+        "TE",
+        142.7
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        249.1
+      ],
+      [
+        "Aaron Rodgers",
+        "QB",
+        239.2
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        201.4
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        302.76
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        168.4
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Dak Prescott",
+        "QB",
+        198.6
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        200.52
+      ],
+      [
+        "Aaron Rodgers",
+        "QB",
+        239.2
+      ],
+      [
+        "Nyheim Hines",
+        "RB",
+        81.4
+      ]
+    ],
+    "confidence_weighted_points": 3657.1652721076935,
+    "confidence_weighted_actual_points": 3332.12
+  },
+  {
+    "year": 2022,
+    "my_slot": 3,
+    "seed_index": 0,
+    "baseline_points": 2120.8,
+    "model_points": 2123.96,
+    "pure_adp_points": 2120.8,
+    "vor_points": 2056.34,
+    "delta": 3.1599999999998545,
+    "delta_vs_pure_adp": 3.1599999999998545,
+    "delta_vs_vor": 67.61999999999989,
+    "baseline_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        223.46
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Javonte Williams",
+        "RB",
+        42.0
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        164.0
+      ],
+      [
+        "Courtland Sutton",
+        "WR",
+        159.4
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        222.8
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        204.2
+      ],
+      [
+        "Chase Edmonds",
+        "RB",
+        74.2
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ]
+    ],
+    "model_roster": [
+      [
+        "Josh Allen",
+        "QB",
+        395.52
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Patrick Mahomes",
+        "QB",
+        417.4
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        164.0
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        223.46
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "DK Metcalf",
+        "WR",
+        226.8
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "LA Rams Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Pat Freiermuth",
+        "TE",
+        148.2
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "Joe Burrow",
+        "QB",
+        350.7
+      ],
+      [
+        "DeAndre Hopkins",
+        "WR",
+        151.7
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        223.46
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Javonte Williams",
+        "RB",
+        42.0
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        164.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Courtland Sutton",
+        "WR",
+        159.4
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "LA Rams Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        222.8
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        204.2
+      ],
+      [
+        "Chase Edmonds",
+        "RB",
+        74.2
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        223.46
+      ],
+      [
+        "Michael Pittman Jr.",
+        "WR",
+        216.5
+      ],
+      [
+        "Javonte Williams",
+        "RB",
+        42.0
+      ],
+      [
+        "Lamar Jackson",
+        "QB",
+        236.08
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        164.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Brandin Cooks",
+        "WR",
+        145.6
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        259.2
+      ],
+      [
+        "Dak Prescott",
+        "QB",
+        198.6
+      ],
+      [
+        "Matthew Stafford",
+        "QB",
+        108.38
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        200.52
+      ]
+    ],
+    "confidence_weighted_points": 2896.1148622882615,
+    "confidence_weighted_actual_points": 3474.84
+  },
+  {
+    "year": 2022,
+    "my_slot": 5,
+    "seed_index": 0,
+    "baseline_points": 1957.1599999999999,
+    "model_points": 2151.7,
+    "pure_adp_points": 1841.56,
+    "vor_points": 1911.4599999999998,
+    "delta": 194.53999999999996,
+    "delta_vs_pure_adp": 310.1399999999999,
+    "delta_vs_vor": 240.24,
+    "baseline_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Leonard Fournette",
+        "RB",
+        226.1
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        281.26
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Zach Ertz",
+        "TE",
+        115.6
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Gabe Davis",
+        "WR",
+        171.6
+      ],
+      [
+        "Rashaad Penny",
+        "RB",
+        52.2
+      ],
+      [
+        "Darnell Mooney",
+        "WR",
+        101.5
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        248.8
+      ]
+    ],
+    "model_roster": [
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "CeeDee Lamb",
+        "WR",
+        301.6
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Joe Burrow",
+        "QB",
+        350.7
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        168.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Tyreek Hill",
+        "WR",
+        341.2
+      ],
+      [
+        "DJ Moore",
+        "WR",
+        199.1
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Adam Thielen",
+        "WR",
+        180.0
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "Hunter Henry",
+        "TE",
+        103.9
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Tua Tagovailoa",
+        "QB",
+        230.92
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Leonard Fournette",
+        "RB",
+        226.1
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        281.26
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Gabe Davis",
+        "WR",
+        171.6
+      ],
+      [
+        "Rashaad Penny",
+        "RB",
+        52.2
+      ],
+      [
+        "Darnell Mooney",
+        "WR",
+        101.5
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        248.8
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "JuJu Smith-Schuster",
+        "WR",
+        185.3
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Jonathan Taylor",
+        "RB",
+        146.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        281.26
+      ],
+      [
+        "Leonard Fournette",
+        "RB",
+        226.1
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Zach Ertz",
+        "TE",
+        115.6
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        203.1
+      ],
+      [
+        "Matthew Stafford",
+        "QB",
+        108.38
+      ],
+      [
+        "Darnell Mooney",
+        "WR",
+        101.5
+      ],
+      [
+        "Hunter Renfrow",
+        "WR",
+        79.0
+      ],
+      [
+        "Rashaad Penny",
+        "RB",
+        52.2
+      ]
+    ],
+    "confidence_weighted_points": 2851.8584738544655,
+    "confidence_weighted_actual_points": 3060.32
+  },
+  {
+    "year": 2022,
+    "my_slot": 7,
+    "seed_index": 0,
+    "baseline_points": 2216.46,
+    "model_points": 2254.7599999999998,
+    "pure_adp_points": 2216.46,
+    "vor_points": 2299.64,
+    "delta": 38.29999999999973,
+    "delta_vs_pure_adp": 38.29999999999973,
+    "delta_vs_vor": -44.88000000000011,
+    "baseline_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        190.5
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        220.9
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "David Montgomery",
+        "RB",
+        177.7
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        328.3
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        51.1
+      ],
+      [
+        "Clyde Edwards-Helaire",
+        "RB",
+        98.3
+      ],
+      [
+        "Miles Sanders",
+        "RB",
+        216.7
+      ],
+      [
+        "Rashaad Penny",
+        "RB",
+        52.2
+      ]
+    ],
+    "model_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        281.26
+      ],
+      [
+        "CeeDee Lamb",
+        "WR",
+        301.6
+      ],
+      [
+        "Courtland Sutton",
+        "WR",
+        159.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Dallas Goedert",
+        "TE",
+        141.2
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Dak Prescott",
+        "QB",
+        198.6
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "J.K. Dobbins",
+        "RB",
+        81.2
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        259.2
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Brandin Cooks",
+        "WR",
+        145.6
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        190.5
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        220.9
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "David Montgomery",
+        "RB",
+        177.7
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        328.3
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        51.1
+      ],
+      [
+        "Clyde Edwards-Helaire",
+        "RB",
+        98.3
+      ],
+      [
+        "Miles Sanders",
+        "RB",
+        216.7
+      ],
+      [
+        "Rashaad Penny",
+        "RB",
+        52.2
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ],
+      [
+        "Zach Ertz",
+        "TE",
+        115.6
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Austin Ekeler",
+        "RB",
+        372.7
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        239.5
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Joe Burrow",
+        "QB",
+        350.7
+      ],
+      [
+        "Allen Robinson II",
+        "WR",
+        84.9
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        220.9
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        229.0
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        378.04
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        259.2
+      ],
+      [
+        "David Montgomery",
+        "RB",
+        177.7
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        190.5
+      ],
+      [
+        "Russell Wilson",
+        "QB",
+        225.76
+      ],
+      [
+        "Darnell Mooney",
+        "WR",
+        101.5
+      ]
+    ],
+    "confidence_weighted_points": 3191.551529153312,
+    "confidence_weighted_actual_points": 3065.66
+  },
+  {
+    "year": 2022,
+    "my_slot": 9,
+    "seed_index": 0,
+    "baseline_points": 2070.38,
+    "model_points": 2075.54,
+    "pure_adp_points": 1929.3799999999999,
+    "vor_points": 2105.94,
+    "delta": 5.1599999999998545,
+    "delta_vs_pure_adp": 146.16000000000008,
+    "delta_vs_vor": -30.40000000000009,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        356.36
+      ],
+      [
+        "Alvin Kamara",
+        "RB",
+        211.7
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        248.6
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Diontae Johnson",
+        "WR",
+        180.7
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        200.52
+      ],
+      [
+        "Dallas Goedert",
+        "TE",
+        141.2
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        51.1
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        222.8
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ]
+    ],
+    "model_roster": [
+      [
+        "Travis Kelce",
+        "TE",
+        316.3
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        356.36
+      ],
+      [
+        "Alvin Kamara",
+        "RB",
+        211.7
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        220.9
+      ],
+      [
+        "Lamar Jackson",
+        "QB",
+        236.08
+      ],
+      [
+        "D'Andre Swift",
+        "RB",
+        191.1
+      ],
+      [
+        "Brandin Cooks",
+        "WR",
+        145.6
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        248.6
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        204.2
+      ],
+      [
+        "Tua Tagovailoa",
+        "QB",
+        230.92
+      ],
+      [
+        "Adam Thielen",
+        "WR",
+        180.0
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Matt Ryan",
+        "QB",
+        155.28
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        356.36
+      ],
+      [
+        "Alvin Kamara",
+        "RB",
+        211.7
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        248.6
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Diontae Johnson",
+        "WR",
+        180.7
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        51.1
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        222.8
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        200.52
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        248.8
+      ],
+      [
+        "JuJu Smith-Schuster",
+        "WR",
+        185.3
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        356.36
+      ],
+      [
+        "Alvin Kamara",
+        "RB",
+        211.7
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        335.5
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        248.6
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        284.0
+      ],
+      [
+        "Lamar Jackson",
+        "QB",
+        236.08
+      ],
+      [
+        "Diontae Johnson",
+        "WR",
+        180.7
+      ],
+      [
+        "Dallas Goedert",
+        "TE",
+        141.2
+      ],
+      [
+        "Buffalo Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Nick Chubb",
+        "RB",
+        281.4
+      ],
+      [
+        "Ezekiel Elliott",
+        "RB",
+        185.8
+      ],
+      [
+        "James Conner",
+        "RB",
+        200.2
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        222.8
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        200.52
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ]
+    ],
+    "confidence_weighted_points": 3144.9096592434976,
+    "confidence_weighted_actual_points": 3164.24
+  },
+  {
+    "year": 2023,
+    "my_slot": 1,
+    "seed_index": 0,
+    "baseline_points": 1773.3000000000002,
+    "model_points": 2188.52,
+    "pure_adp_points": 1735.3000000000002,
+    "vor_points": 2189.5,
+    "delta": 415.2199999999998,
+    "delta_vs_pure_adp": 453.2199999999998,
+    "delta_vs_vor": -0.9800000000000182,
+    "baseline_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        273.8
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        145.7
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Pat Freiermuth",
+        "TE",
+        76.8
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        243.7
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Mike Williams",
+        "WR",
+        50.2
+      ]
+    ],
+    "model_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        394.64
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        273.8
+      ],
+      [
+        "Dallas Goedert",
+        "TE",
+        136.3
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Jared Goff",
+        "QB",
+        289.1
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        243.7
+      ],
+      [
+        "David Montgomery",
+        "RB",
+        207.2
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        273.8
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        145.7
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        243.7
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Mike Williams",
+        "WR",
+        50.2
+      ],
+      [
+        "Michael Pittman Jr.",
+        "WR",
+        252.2
+      ],
+      [
+        "Mike Evans",
+        "WR",
+        282.5
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        145.7
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        273.8
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "David Njoku",
+        "TE",
+        201.2
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Deebo Samuel Sr.",
+        "WR",
+        243.7
+      ],
+      [
+        "Deshaun Watson",
+        "QB",
+        86.8
+      ]
+    ],
+    "confidence_weighted_points": 3094.7339555405233,
+    "confidence_weighted_actual_points": 3342.42
+  },
+  {
+    "year": 2023,
+    "my_slot": 3,
+    "seed_index": 0,
+    "baseline_points": 1846.6000000000001,
+    "model_points": 1954.88,
+    "pure_adp_points": 1769.3,
+    "vor_points": 1849.9,
+    "delta": 108.27999999999997,
+    "delta_vs_pure_adp": 185.58000000000015,
+    "delta_vs_vor": 104.98000000000002,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        185.4
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        164.4
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Drake London",
+        "WR",
+        174.38
+      ],
+      [
+        "Deshaun Watson",
+        "QB",
+        86.8
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        267.0
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        290.5
+      ],
+      [
+        "Kenneth Walker",
+        "RB",
+        199.4
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        203.2
+      ],
+      [
+        "J.K. Dobbins",
+        "RB",
+        11.7
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        249.2
+      ]
+    ],
+    "model_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        164.4
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        185.4
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Justin Fields",
+        "QB",
+        230.18
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        290.5
+      ],
+      [
+        "Drake London",
+        "WR",
+        174.38
+      ],
+      [
+        "David Njoku",
+        "TE",
+        201.2
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        203.2
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        150.26
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        72.68
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        185.4
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        164.4
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        267.0
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        290.5
+      ],
+      [
+        "Drake London",
+        "WR",
+        174.38
+      ],
+      [
+        "Kenneth Walker",
+        "RB",
+        199.4
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        203.2
+      ],
+      [
+        "J.K. Dobbins",
+        "RB",
+        11.7
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        249.2
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "James Cook III",
+        "RB",
+        232.7
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Austin Ekeler",
+        "RB",
+        185.4
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        164.4
+      ],
+      [
+        "DeVonta Smith",
+        "WR",
+        227.6
+      ],
+      [
+        "Deshaun Watson",
+        "QB",
+        86.8
+      ],
+      [
+        "David Njoku",
+        "TE",
+        201.2
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        290.5
+      ],
+      [
+        "Kenneth Walker",
+        "RB",
+        199.4
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "J.K. Dobbins",
+        "RB",
+        11.7
+      ],
+      [
+        "Drake London",
+        "WR",
+        174.38
+      ],
+      [
+        "K.J. Osborn",
+        "WR",
+        120.0
+      ]
+    ],
+    "confidence_weighted_points": 2611.2351600218044,
+    "confidence_weighted_actual_points": 2833.1
+  },
+  {
+    "year": 2023,
+    "my_slot": 5,
+    "seed_index": 0,
+    "baseline_points": 1764.94,
+    "model_points": 1890.7000000000003,
+    "pure_adp_points": 1764.94,
+    "vor_points": 1928.52,
+    "delta": 125.76000000000022,
+    "delta_vs_pure_adp": 125.76000000000022,
+    "delta_vs_vor": -37.81999999999971,
+    "baseline_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        246.3
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        145.7
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        234.16
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        195.5
+      ],
+      [
+        "T.J. Hockenson",
+        "TE",
+        219.0
+      ],
+      [
+        "Dameon Pierce",
+        "RB",
+        82.7
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        150.26
+      ],
+      [
+        "Jaxon Smith-Njigba",
+        "WR",
+        149.8
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        89.8
+      ]
+    ],
+    "model_roster": [
+      [
+        "Bijan Robinson",
+        "RB",
+        246.3
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "DK Metcalf",
+        "WR",
+        225.4
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        150.26
+      ],
+      [
+        "Jaxon Smith-Njigba",
+        "WR",
+        149.8
+      ],
+      [
+        "Dameon Pierce",
+        "RB",
+        82.7
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        89.8
+      ],
+      [
+        "AJ Dillon",
+        "RB",
+        117.6
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        246.3
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        145.7
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        195.5
+      ],
+      [
+        "T.J. Hockenson",
+        "TE",
+        219.0
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        234.16
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Dameon Pierce",
+        "RB",
+        82.7
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        150.26
+      ],
+      [
+        "Jaxon Smith-Njigba",
+        "WR",
+        149.8
+      ],
+      [
+        "Michael Thomas",
+        "WR",
+        89.8
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Bijan Robinson",
+        "RB",
+        246.3
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        394.64
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "DK Metcalf",
+        "WR",
+        225.4
+      ],
+      [
+        "Dameon Pierce",
+        "RB",
+        82.7
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        234.16
+      ],
+      [
+        "Elijah Mitchell",
+        "RB",
+        47.5
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        190.7
+      ],
+      [
+        "K.J. Osborn",
+        "WR",
+        120.0
+      ]
+    ],
+    "confidence_weighted_points": 2527.1632200861563,
+    "confidence_weighted_actual_points": 2637.26
+  },
+  {
+    "year": 2023,
+    "my_slot": 7,
+    "seed_index": 0,
+    "baseline_points": 2125.52,
+    "model_points": 1814.6399999999999,
+    "pure_adp_points": 2125.52,
+    "vor_points": 2003.5600000000004,
+    "delta": -310.8800000000001,
+    "delta_vs_pure_adp": -310.8800000000001,
+    "delta_vs_vor": -188.92000000000053,
+    "baseline_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        394.64
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        267.9
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "T.J. Hockenson",
+        "TE",
+        219.0
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        209.2
+      ],
+      [
+        "Michael Pittman Jr.",
+        "WR",
+        252.2
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ]
+    ],
+    "model_roster": [
+      [
+        "Patrick Mahomes",
+        "QB",
+        280.22
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Najee Harris",
+        "RB",
+        195.5
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        267.9
+      ],
+      [
+        "Joe Burrow",
+        "QB",
+        147.16
+      ],
+      [
+        "Brian Robinson",
+        "RB",
+        198.1
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        209.2
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        394.64
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        137.6
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        135.4
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "T.J. Hockenson",
+        "TE",
+        219.0
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        209.2
+      ],
+      [
+        "Michael Pittman Jr.",
+        "WR",
+        252.2
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        267.9
+      ],
+      [
+        "New England Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        262.72
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        223.2
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Keenan Allen",
+        "WR",
+        278.86
+      ],
+      [
+        "David Njoku",
+        "TE",
+        201.2
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Joe Burrow",
+        "QB",
+        147.16
+      ],
+      [
+        "Calvin Ridley",
+        "WR",
+        229.9
+      ],
+      [
+        "Jerry Jeudy",
+        "WR",
+        141.8
+      ],
+      [
+        "Deshaun Watson",
+        "QB",
+        86.8
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        190.7
+      ],
+      [
+        "K.J. Osborn",
+        "WR",
+        120.0
+      ]
+    ],
+    "confidence_weighted_points": 2626.751082098646,
+    "confidence_weighted_actual_points": 2770.2
+  },
+  {
+    "year": 2023,
+    "my_slot": 9,
+    "seed_index": 0,
+    "baseline_points": 1867.3400000000001,
+    "model_points": 2032.12,
+    "pure_adp_points": 1867.3400000000001,
+    "vor_points": 2026.6799999999998,
+    "delta": 164.77999999999975,
+    "delta_vs_pure_adp": 164.77999999999975,
+    "delta_vs_vor": 5.440000000000055,
+    "baseline_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        222.6
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        198.6
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Trevor Lawrence",
+        "QB",
+        262.54
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        209.2
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        203.2
+      ],
+      [
+        "Alexander Mattison",
+        "RB",
+        133.2
+      ],
+      [
+        "Jahan Dotson",
+        "WR",
+        124.8
+      ]
+    ],
+    "model_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "T.J. Hockenson",
+        "TE",
+        219.0
+      ],
+      [
+        "Lamar Jackson",
+        "QB",
+        331.22
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        222.6
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        198.6
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Miles Sanders",
+        "RB",
+        87.6
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "DeAndre Hopkins",
+        "WR",
+        223.6
+      ],
+      [
+        "Dameon Pierce",
+        "RB",
+        82.7
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ],
+      [
+        "Greg Dulcich",
+        "TE",
+        5.5
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        222.6
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "Jaylen Waddle",
+        "WR",
+        198.6
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        156.4
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        227.0
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        209.2
+      ],
+      [
+        "Terry McLaurin",
+        "WR",
+        203.2
+      ],
+      [
+        "Alexander Mattison",
+        "RB",
+        133.2
+      ],
+      [
+        "Trevor Lawrence",
+        "QB",
+        262.54
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        137.3
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        391.3
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        246.66
+      ],
+      [
+        "Josh Jacobs",
+        "RB",
+        181.1
+      ],
+      [
+        "Justin Jefferson",
+        "WR",
+        204.2
+      ],
+      [
+        "Tony Pollard",
+        "RB",
+        222.6
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        356.82
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        213.2
+      ],
+      [
+        "David Njoku",
+        "TE",
+        201.2
+      ],
+      [
+        "San Francisco Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        134.9
+      ],
+      [
+        "Trevor Lawrence",
+        "QB",
+        262.54
+      ],
+      [
+        "Jerick McKinnon",
+        "RB",
+        84.36
+      ],
+      [
+        "Elijah Mitchell",
+        "RB",
+        47.5
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        190.7
+      ],
+      [
+        "K.J. Osborn",
+        "WR",
+        120.0
+      ]
+    ],
+    "confidence_weighted_points": 2691.721504408065,
+    "confidence_weighted_actual_points": 2700.22
+  },
+  {
+    "year": 2024,
+    "my_slot": 1,
+    "seed_index": 0,
+    "baseline_points": 2080.26,
+    "model_points": 2149.04,
+    "pure_adp_points": 1846.3999999999999,
+    "vor_points": 1979.5800000000002,
+    "delta": 68.77999999999975,
+    "delta_vs_pure_adp": 302.6400000000001,
+    "delta_vs_vor": 169.4599999999998,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        246.7
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        355.3
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        195.4
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        199.6
+      ],
+      [
+        "Mike Evans",
+        "WR",
+        240.4
+      ],
+      [
+        "Jordan Love",
+        "QB",
+        233.86
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "James Cook III",
+        "RB",
+        266.7
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ],
+      [
+        "Trey McBride",
+        "TE",
+        243.8
+      ],
+      [
+        "Tank Dell",
+        "WR",
+        140.0
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        175.9
+      ]
+    ],
+    "model_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        372.34
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        195.4
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        246.7
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        355.3
+      ],
+      [
+        "Mike Evans",
+        "WR",
+        240.4
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ],
+      [
+        "Tank Dell",
+        "WR",
+        140.0
+      ],
+      [
+        "Jayden Reed",
+        "WR",
+        197.0
+      ],
+      [
+        "Kirk Cousins",
+        "QB",
+        176.32
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Trey McBride",
+        "TE",
+        243.8
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        246.7
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        355.3
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        195.4
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        199.6
+      ],
+      [
+        "James Cook III",
+        "RB",
+        266.7
+      ],
+      [
+        "Mike Evans",
+        "WR",
+        240.4
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ],
+      [
+        "Trey McBride",
+        "TE",
+        243.8
+      ],
+      [
+        "Tank Dell",
+        "WR",
+        140.0
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        175.9
+      ],
+      [
+        "Jayden Reed",
+        "WR",
+        197.0
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        131.2
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Tyreek Hill",
+        "WR",
+        218.2
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Jonathan Taylor",
+        "RB",
+        246.7
+      ],
+      [
+        "Saquon Barkley",
+        "RB",
+        355.3
+      ],
+      [
+        "Mike Evans",
+        "WR",
+        240.4
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        199.6
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        195.4
+      ],
+      [
+        "Tua Tagovailoa",
+        "QB",
+        181.58
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "James Cook III",
+        "RB",
+        266.7
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ],
+      [
+        "Tank Dell",
+        "WR",
+        140.0
+      ],
+      [
+        "Hollywood Brown",
+        "WR",
+        0.0
+      ],
+      [
+        "Jayden Reed",
+        "WR",
+        197.0
+      ],
+      [
+        "Chuba Hubbard",
+        "RB",
+        241.6
+      ]
+    ],
+    "confidence_weighted_points": 2890.7760108217417,
+    "confidence_weighted_actual_points": 2883.16
+  },
+  {
+    "year": 2024,
+    "my_slot": 3,
+    "seed_index": 0,
+    "baseline_points": 2189.54,
+    "model_points": 2150.02,
+    "pure_adp_points": 2189.54,
+    "vor_points": 2007.04,
+    "delta": -39.51999999999998,
+    "delta_vs_pure_adp": -39.51999999999998,
+    "delta_vs_vor": 142.98000000000002,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        240.9
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        341.7
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        372.34
+      ],
+      [
+        "Chris Olave",
+        "WR",
+        76.7
+      ],
+      [
+        "Trey McBride",
+        "TE",
+        243.8
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "DeVonta Smith",
+        "WR",
+        199.4
+      ],
+      [
+        "Malik Nabers",
+        "WR",
+        273.6
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        222.1
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ]
+    ],
+    "model_roster": [
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        372.34
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Mark Andrews",
+        "TE",
+        188.8
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        240.9
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        341.7
+      ],
+      [
+        "Rachaad White",
+        "RB",
+        199.6
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Chris Olave",
+        "WR",
+        76.7
+      ],
+      [
+        "David Njoku",
+        "TE",
+        148.5
+      ],
+      [
+        "Malik Nabers",
+        "WR",
+        273.6
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        122.7
+      ],
+      [
+        "Justin Herbert",
+        "QB",
+        285.4
+      ],
+      [
+        "Deshaun Watson",
+        "QB",
+        76.72
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        240.9
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        341.7
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Josh Allen",
+        "QB",
+        372.34
+      ],
+      [
+        "Chris Olave",
+        "WR",
+        76.7
+      ],
+      [
+        "DeVonta Smith",
+        "WR",
+        199.4
+      ],
+      [
+        "Malik Nabers",
+        "WR",
+        273.6
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ],
+      [
+        "Trey McBride",
+        "TE",
+        243.8
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        222.1
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Breece Hall",
+        "RB",
+        240.9
+      ],
+      [
+        "Bijan Robinson",
+        "RB",
+        341.7
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "DeVonta Smith",
+        "WR",
+        199.4
+      ],
+      [
+        "Travis Kelce",
+        "TE",
+        195.4
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Chris Olave",
+        "WR",
+        76.7
+      ],
+      [
+        "Malik Nabers",
+        "WR",
+        273.6
+      ],
+      [
+        "George Pickens",
+        "WR",
+        164.4
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        222.1
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ]
+    ],
+    "confidence_weighted_points": 2828.382546163216,
+    "confidence_weighted_actual_points": 2907.84
+  },
+  {
+    "year": 2024,
+    "my_slot": 5,
+    "seed_index": 0,
+    "baseline_points": 2155.3,
+    "model_points": 2025.2999999999997,
+    "pure_adp_points": 1918.7,
+    "vor_points": 2347.7000000000003,
+    "delta": -130.00000000000045,
+    "delta_vs_pure_adp": 106.59999999999968,
+    "delta_vs_vor": -322.40000000000055,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Puka Nacua",
+        "WR",
+        206.6
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        336.4
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        315.12
+      ],
+      [
+        "George Kittle",
+        "TE",
+        236.6
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Nico Collins",
+        "WR",
+        210.6
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        122.7
+      ],
+      [
+        "D'Andre Swift",
+        "RB",
+        214.5
+      ],
+      [
+        "George Pickens",
+        "WR",
+        164.4
+      ]
+    ],
+    "model_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "Patrick Mahomes",
+        "QB",
+        283.02
+      ],
+      [
+        "Puka Nacua",
+        "WR",
+        206.6
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "DeVonta Smith",
+        "WR",
+        199.4
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        336.4
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "George Kittle",
+        "TE",
+        236.6
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        62.4
+      ],
+      [
+        "Jake Ferguson",
+        "TE",
+        104.4
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Puka Nacua",
+        "WR",
+        206.6
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        336.4
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Nico Collins",
+        "WR",
+        210.6
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        315.12
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        122.7
+      ],
+      [
+        "D'Andre Swift",
+        "RB",
+        214.5
+      ],
+      [
+        "George Pickens",
+        "WR",
+        164.4
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        175.9
+      ],
+      [
+        "Raheem Mostert",
+        "RB",
+        70.9
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Derrick Henry",
+        "RB",
+        336.4
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        315.12
+      ],
+      [
+        "George Kittle",
+        "TE",
+        236.6
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Nico Collins",
+        "WR",
+        210.6
+      ],
+      [
+        "George Pickens",
+        "WR",
+        164.4
+      ],
+      [
+        "Amari Cooper",
+        "WR",
+        122.7
+      ],
+      [
+        "James Conner",
+        "RB",
+        253.8
+      ],
+      [
+        "D'Andre Swift",
+        "RB",
+        214.5
+      ]
+    ],
+    "confidence_weighted_points": 3047.1162410800584,
+    "confidence_weighted_actual_points": 2645.5
+  },
+  {
+    "year": 2024,
+    "my_slot": 7,
+    "seed_index": 0,
+    "baseline_points": 2194.0200000000004,
+    "model_points": 2286.5600000000004,
+    "pure_adp_points": 1765.5800000000002,
+    "vor_points": 2194.0200000000004,
+    "delta": 92.53999999999996,
+    "delta_vs_pure_adp": 520.9800000000002,
+    "delta_vs_vor": 92.53999999999996,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        131.2
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        297.24
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Marvin Harrison Jr.",
+        "WR",
+        196.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Drake London",
+        "WR",
+        280.8
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        240.5
+      ],
+      [
+        "DJ Moore",
+        "WR",
+        238.1
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ]
+    ],
+    "model_roster": [
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Jalen Hurts",
+        "QB",
+        315.12
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        131.2
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Marvin Harrison Jr.",
+        "WR",
+        196.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Dalton Schultz",
+        "TE",
+        118.2
+      ],
+      [
+        "Lamar Jackson",
+        "QB",
+        430.38
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        240.5
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        175.9
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Marvin Harrison Jr.",
+        "WR",
+        196.5
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Drake London",
+        "WR",
+        280.8
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        240.5
+      ],
+      [
+        "DJ Moore",
+        "WR",
+        238.1
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ],
+      [
+        "Tee Higgins",
+        "WR",
+        222.1
+      ],
+      [
+        "Rhamondre Stevenson",
+        "RB",
+        175.9
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        137.8
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Amon-Ra St. Brown",
+        "WR",
+        316.18
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "A.J. Brown",
+        "WR",
+        216.9
+      ],
+      [
+        "Kyren Williams",
+        "RB",
+        272.1
+      ],
+      [
+        "Garrett Wilson",
+        "WR",
+        251.9
+      ],
+      [
+        "Kyler Murray",
+        "QB",
+        297.24
+      ],
+      [
+        "Kyle Pitts Sr.",
+        "TE",
+        131.2
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Marvin Harrison Jr.",
+        "WR",
+        196.5
+      ],
+      [
+        "Davante Adams",
+        "WR",
+        241.3
+      ],
+      [
+        "Drake London",
+        "WR",
+        280.8
+      ],
+      [
+        "DJ Moore",
+        "WR",
+        238.1
+      ],
+      [
+        "Joe Mixon",
+        "RB",
+        240.5
+      ],
+      [
+        "Aaron Jones Sr.",
+        "RB",
+        241.6
+      ]
+    ],
+    "confidence_weighted_points": 3206.170366219705,
+    "confidence_weighted_actual_points": 3356.98
+  },
+  {
+    "year": 2024,
+    "my_slot": 9,
+    "seed_index": 0,
+    "baseline_points": 1686.18,
+    "model_points": 1791.8600000000001,
+    "pure_adp_points": 1686.18,
+    "vor_points": 1702.06,
+    "delta": 105.68000000000006,
+    "delta_vs_pure_adp": 105.68000000000006,
+    "delta_vs_vor": 89.80000000000018,
+    "baseline_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Tyreek Hill",
+        "WR",
+        218.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Isiah Pacheco",
+        "RB",
+        56.9
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        299.9
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        121.92
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        62.4
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "Raheem Mostert",
+        "RB",
+        70.9
+      ]
+    ],
+    "model_roster": [
+      [
+        "Tyreek Hill",
+        "WR",
+        218.2
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "C.J. Stroud",
+        "QB",
+        220.38
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Isiah Pacheco",
+        "RB",
+        56.9
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        299.9
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Zack Moss",
+        "RB",
+        81.9
+      ],
+      [
+        "Jaylen Warren",
+        "RB",
+        124.1
+      ],
+      [
+        "Brock Purdy",
+        "QB",
+        266.86
+      ],
+      [
+        "Jonathon Brooks",
+        "RB",
+        7.5
+      ]
+    ],
+    "pure_adp_roster": [
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Tyreek Hill",
+        "WR",
+        218.2
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Isiah Pacheco",
+        "RB",
+        56.9
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        299.9
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        121.92
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        62.4
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ],
+      [
+        "Dalton Kincaid",
+        "TE",
+        100.8
+      ],
+      [
+        "Raheem Mostert",
+        "RB",
+        70.9
+      ]
+    ],
+    "vor_roster": [
+      [
+        "Tyreek Hill",
+        "WR",
+        218.2
+      ],
+      [
+        "Christian McCaffrey",
+        "RB",
+        47.8
+      ],
+      [
+        "Ja'Marr Chase",
+        "WR",
+        403.0
+      ],
+      [
+        "Travis Etienne Jr.",
+        "RB",
+        130.2
+      ],
+      [
+        "Isiah Pacheco",
+        "RB",
+        56.9
+      ],
+      [
+        "De'Von Achane",
+        "RB",
+        299.9
+      ],
+      [
+        "Sam LaPorta",
+        "TE",
+        174.6
+      ],
+      [
+        "Anthony Richardson Sr.",
+        "QB",
+        163.36
+      ],
+      [
+        "Baltimore Defense",
+        "DST",
+        0.0
+      ],
+      [
+        "Cooper Kupp",
+        "WR",
+        175.0
+      ],
+      [
+        "Brandon Aiyuk",
+        "WR",
+        62.4
+      ],
+      [
+        "Stefon Diggs",
+        "WR",
+        121.92
+      ],
+      [
+        "Zack Moss",
+        "RB",
+        81.9
+      ],
+      [
+        "Christian Kirk",
+        "WR",
+        70.9
+      ],
+      [
+        "Chris Godwin Jr.",
+        "WR",
+        137.8
+      ]
+    ],
+    "confidence_weighted_points": 2220.7616373351552,
+    "confidence_weighted_actual_points": 2307.14
+  }
+]

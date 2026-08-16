@@ -1,0 +1,8 @@
+{
+  "teams": 10,
+  "my_draft_slot": 3,
+  "picks": [
+    {"pick": 1, "player": "Bijan Robinson"},
+    {"pick": 2, "player": "Jahmyr Gibbs"}
+  ]
+}

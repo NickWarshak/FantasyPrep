@@ -1,0 +1,38 @@
+{
+  "teams": 10,
+  "my_draft_slot": 9,
+  "picks": [
+    {
+      "pick": 1,
+      "player": "Ja'Marr Chase"
+    },
+    {
+      "pick": 2,
+      "player": "Christian McCaffrey"
+    },
+    {
+      "pick": 3,
+      "player": "Bijan Robinson"
+    },
+    {
+      "pick": 4,
+      "player": "Jahmyr Gibbs"
+    },
+    {
+      "pick": 5,
+      "player": "Puka Nacua"
+    },
+    {
+      "pick": 6,
+      "player": "Jaxon Smith-Njigba"
+    },
+    {
+      "pick": 7,
+      "player": "Jonathan Taylor"
+    },
+    {
+      "pick": 8,
+      "player": "De'Von Achane"
+    }
+  ]
+}
