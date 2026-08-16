@@ -161,6 +161,17 @@ h1, h2 { font-weight: 800; letter-spacing: -0.01em; margin: 0; }
 .field { display: flex; flex-direction: column; gap: 0.4rem; text-align: left; margin-bottom: 1.25rem; }
 .field span { font-size: 0.78rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
 
+#slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 0.6rem; }
+.slot-btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  padding: 0.85rem 0.5rem;
+  font-weight: 700;
+}
+.slot-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+.slot-btn-active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
 input[type="number"], input[type="text"] {
   font: inherit;
   background: var(--surface-2);
@@ -273,7 +284,22 @@ td.cell .pick-num {
   color: var(--text-faint);
   padding: 0.3rem 0.5rem 0;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
+.keeper-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+td.cell.keeper { border-top: 2px solid var(--accent); }
 td.cell .claim {
   display: grid;
   place-items: center;

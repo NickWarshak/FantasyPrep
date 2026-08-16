@@ -57,8 +57,9 @@ function renderGrid(state) {
       if (info) {
         td.classList.add("filled");
         if (info.position) td.classList.add(`pos-${info.position}`);
+        if (info.is_keeper) td.classList.add("keeper");
         td.innerHTML =
-          `<div class="pick-num">${cellLabel(round, team)}</div>` +
+          `<div class="pick-num">${cellLabel(round, team)}${info.is_keeper ? '<span class="keeper-badge" title="Keeper -- survives Reset Draft">K</span>' : ""}</div>` +
           `<div class="player-name">${info.player}</div>` +
           `<div class="player-meta">${posChip(info.position)}<span class="team-label">${info.team || ""}</span></div>`;
         td.addEventListener("click", () => clearPick(pickNum));
@@ -73,6 +74,33 @@ function renderGrid(state) {
   table.appendChild(tbody);
 }
 
+function renderSlotGrid(state) {
+  const grid = document.getElementById("slot-grid");
+  grid.innerHTML = "";
+  for (let slot = 1; slot <= state.teams; slot++) {
+    const btn = document.createElement("button");
+    btn.className = "slot-btn btn";
+    btn.textContent = `Slot ${slot}`;
+    if (slot === state.my_draft_slot) btn.classList.add("slot-btn-active");
+    btn.addEventListener("click", () => chooseSlot(slot));
+    grid.appendChild(btn);
+  }
+}
+
+async function chooseSlot(slot) {
+  const res = await fetch("/api/setup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ my_draft_slot: slot }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error);
+    return;
+  }
+  render(data);
+}
+
 function render(state) {
   currentState = state;
   const hasSlot = state.my_draft_slot !== null && state.my_draft_slot !== undefined;
@@ -82,8 +110,9 @@ function render(state) {
   document.getElementById("status-bar").hidden = !hasSlot;
   document.getElementById("header-actions").hidden = !hasSlot;
 
+  if (!hasSlot && state.teams) renderSlotGrid(state);
+
   if (hasSlot) {
-    document.getElementById("draft-slot-input").value = state.my_draft_slot;
     document.getElementById("status-pick").textContent =
       `Pick ${state.current_pick} of ${state.total_picks}`;
     document.getElementById("status-turn-badge").hidden = !state.next_pick_is_mine;
@@ -115,6 +144,13 @@ function roundTeamForPick(pickNum, teams) {
   return { round, team };
 }
 
+async function fetchSuggestions(query) {
+  const res = await fetch(`/api/players?q=${encodeURIComponent(query)}`);
+  suggestions = await res.json();
+  highlightedIndex = suggestions.length ? 0 : -1; // first result pre-highlighted -- Enter picks it instantly
+  renderSuggestions();
+}
+
 function openPicker(pickNum, round, team) {
   pendingPickNumber = pickNum;
   pendingWasCurrentPick = currentState && pickNum === currentState.current_pick;
@@ -122,9 +158,10 @@ function openPicker(pickNum, round, team) {
     `Assign pick ${cellLabel(round, team)}` + (pendingWasCurrentPick ? "" : " (keeper -- ahead of the current pick)");
   document.getElementById("picker-overlay").hidden = false;
   document.getElementById("player-search").value = "";
-  suggestions = [];
-  highlightedIndex = -1;
-  renderSuggestions();
+  // Show best-available-by-ADP immediately, before any typing -- an empty
+  // query now returns that by design (see /api/players), so this is the
+  // same fetch the search box itself does, just triggered on open.
+  fetchSuggestions("");
   document.getElementById("player-search").focus();
 }
 
@@ -177,26 +214,14 @@ async function assignPick(pickNum, playerName) {
 }
 
 async function clearPick(pickNum) {
-  if (!confirm(`Clear this pick?`)) return;
+  const info = currentState && currentState.picks[pickNum];
+  const message = info && info.is_keeper
+    ? "Remove this keeper? It won't come back after a reset once removed."
+    : "Clear this pick?";
+  if (!confirm(message)) return;
   const res = await fetch(`/api/picks/${pickNum}`, { method: "DELETE" });
   render(await res.json());
 }
-
-document.getElementById("setup-submit").addEventListener("click", async () => {
-  const slot = parseInt(document.getElementById("draft-slot-input").value, 10);
-  if (!slot) return;
-  const res = await fetch("/api/setup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ my_draft_slot: slot }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error);
-    return;
-  }
-  render(data);
-});
 
 document.getElementById("reset-btn").addEventListener("click", async () => {
   if (!confirm("Reset the whole draft?")) return;
@@ -214,18 +239,9 @@ let searchDebounce = null;
 document.getElementById("player-search").addEventListener("input", (e) => {
   clearTimeout(searchDebounce);
   const query = e.target.value;
-  searchDebounce = setTimeout(async () => {
-    if (!query.trim()) {
-      suggestions = [];
-      highlightedIndex = -1;
-      renderSuggestions();
-      return;
-    }
-    const res = await fetch(`/api/players?q=${encodeURIComponent(query)}`);
-    suggestions = await res.json();
-    highlightedIndex = suggestions.length ? 0 : -1; // first result pre-highlighted -- Enter picks it instantly
-    renderSuggestions();
-  }, 200);
+  // An empty query is valid on purpose (falls back to best-available-by-ADP,
+  // same as on open) -- no early-return special case needed here anymore.
+  searchDebounce = setTimeout(() => fetchSuggestions(query), 200);
 });
 
 // Keyboard-driven entry: Up/Down cycle suggestions, Enter picks the

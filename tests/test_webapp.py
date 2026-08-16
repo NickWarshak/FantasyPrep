@@ -165,6 +165,60 @@ def test_reset_clears_picks_keeps_slot(client):
     assert data["my_draft_slot"] == 4
 
 
+# --- Keepers: persist across reset instead of needing re-entry every time ---
+
+
+def test_assigning_the_actual_current_pick_is_not_a_keeper(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/1", json={"player_name": "RB One"})  # pick 1 IS the current pick
+    resp = client.post("/api/reset")
+    assert resp.get_json()["picks"] == {}  # not remembered -- correctly a normal live pick
+
+
+def test_assigning_ahead_of_the_current_pick_is_a_keeper_and_survives_reset(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/20", json={"player_name": "RB One"})  # current pick is still 1 -- this is a keeper
+
+    resp = client.post("/api/reset")
+    data = resp.get_json()
+    assert data["picks"]["20"]["player"] == "RB One"
+    assert data["picks"]["20"]["is_keeper"] is True
+
+
+def test_reset_response_marks_keepers_but_not_regular_picks(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/20", json={"player_name": "RB One"})  # keeper
+    resp = client.put("/api/picks/1", json={"player_name": "WR One"})  # current pick, not a keeper
+    data = resp.get_json()
+    assert data["picks"]["20"]["is_keeper"] is True
+    assert data["picks"]["1"]["is_keeper"] is False
+
+
+def test_clearing_a_keeper_removes_it_permanently_not_just_until_next_reset(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/20", json={"player_name": "RB One"})
+    client.delete("/api/picks/20")
+
+    resp = client.post("/api/reset")
+    assert resp.get_json()["picks"] == {}  # gone for good, doesn't reappear
+
+
+def test_keepers_persist_across_a_fresh_session_reload(tmp_path: Path):
+    # Simulates restarting the whole app (a new DraftSession reading the
+    # same file), not just calling /api/reset within one running session.
+    app1 = _make_app(tmp_path)
+    client1 = app1.test_client()
+    client1.post("/api/setup", json={"my_draft_slot": 1})
+    client1.put("/api/picks/20", json={"player_name": "RB One"})
+    client1.post("/api/reset")
+
+    app2 = _make_app(tmp_path)  # fresh DraftSession, same draft-state file on disk
+    client2 = app2.test_client()
+    data = client2.get("/api/state").get_json()
+    assert data["picks"]["20"]["player"] == "RB One"
+    assert data["picks"]["20"]["is_keeper"] is True
+
+
 def test_player_search_excludes_drafted(client):
     client.post("/api/setup", json={"my_draft_slot": 1})
     client.put("/api/picks/1", json={"player_name": "RB One"})
@@ -175,10 +229,25 @@ def test_player_search_excludes_drafted(client):
     assert "RB Two" in names
 
 
-def test_player_search_empty_query_returns_empty(client):
+def test_player_search_empty_query_returns_best_available_by_adp(client):
+    # Opening the picker with nothing typed should show useful default
+    # options (best available by ADP), not nothing.
     client.post("/api/setup", json={"my_draft_slot": 1})
     resp = client.get("/api/players?q=")
-    assert resp.get_json() == []
+    rows = resp.get_json()
+    assert rows  # not empty
+    assert rows[0]["name"] == "RB One"  # lowest ADP (1.0) in the fixture pool
+    adps = [p["adp"] for p in rows]
+    assert adps == sorted(adps)
+
+
+def test_player_search_empty_query_still_excludes_drafted(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+    resp = client.get("/api/players?q=")
+    names = [p["name"] for p in resp.get_json()]
+    assert "RB One" not in names
+    assert names[0] == "WR One"  # next-lowest ADP (2.0) once RB One is off the board
 
 
 def test_recommend_before_setup_rejected(client):

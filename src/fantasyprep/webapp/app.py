@@ -67,6 +67,13 @@ class DraftSession:
         self.by_name = {normalize_name(p.name): p for p in live_pool}
         self.my_draft_slot: int | None = None
         self.picks: list[dict] = []  # [{"pick": N, "player": name}, ...], any order, gaps allowed
+        # Keepers persist across reset_draft() -- picks are wiped back down to
+        # just these instead of to nothing, so a keeper only needs entering
+        # once, not after every reset. A pick becomes a keeper automatically
+        # when it's assigned somewhere other than the actual current pick
+        # (see set_pick) -- same "ahead of the current pick" concept the UI
+        # already used for keepers, just now remembered instead of forgotten.
+        self.keepers: list[dict] = []
         self._load()
 
     def _load(self) -> None:
@@ -76,12 +83,16 @@ class DraftSession:
         self.my_draft_slot = raw.get("my_draft_slot")
         # tolerate legacy files that had a "mine" field -- ignored, it's derived now
         self.picks = [{"pick": p["pick"], "player": p["player"]} for p in raw.get("picks", [])]
+        self.keepers = [{"pick": p["pick"], "player": p["player"]} for p in raw.get("keepers", [])]
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(
             json.dumps(
-                {"teams": self.settings.teams, "my_draft_slot": self.my_draft_slot, "picks": self.picks},
+                {
+                    "teams": self.settings.teams, "my_draft_slot": self.my_draft_slot,
+                    "picks": self.picks, "keepers": self.keepers,
+                },
                 indent=2,
             ),
             encoding="utf-8",
@@ -99,7 +110,12 @@ class DraftSession:
         return {normalize_name(p["player"]) for p in self.picks}
 
     def set_pick(self, pick_number: int, player_name: str) -> str | None:
-        """Assign a player to a specific pick slot. Returns an error message, or None on success."""
+        """Assign a player to a specific pick slot. Returns an error message, or None on success.
+
+        Assigning anywhere other than the actual current pick means this is a
+        keeper (pre-assigned ahead of where the live/simulated draft has
+        reached) -- automatically remembered in `self.keepers` too, so it
+        survives `reset_draft()` instead of needing to be re-entered."""
         total_picks = self.settings.teams * self.total_rounds()
         if not 1 <= pick_number <= total_picks:
             return f"pick_number must be 1-{total_picks}"
@@ -108,18 +124,30 @@ class DraftSession:
         if normalize_name(player_name) in self.drafted_names():
             return f"{player_name} is already drafted"
 
-        self.picks.append({"pick": pick_number, "player": player_name})
+        current = current_pick_number(self.picks)
+        entry = {"pick": pick_number, "player": player_name}
+        self.picks.append(entry)
+        if pick_number != current:
+            self.keepers = [k for k in self.keepers if k["pick"] != pick_number]
+            self.keepers.append(entry)
         self.save()
         return None
 
     def clear_pick(self, pick_number: int) -> None:
         self.picks = [p for p in self.picks if p["pick"] != pick_number]
+        self.keepers = [p for p in self.keepers if p["pick"] != pick_number]
+        self.save()
+
+    def reset_draft(self) -> None:
+        """Wipe picks back down to just the saved keepers, not to nothing."""
+        self.picks = list(self.keepers)
         self.save()
 
     def to_dict(self) -> dict:
         total_rounds = self.total_rounds()
         total_picks = self.settings.teams * total_rounds
         current = current_pick_number(self.picks)
+        keeper_picks = {k["pick"] for k in self.keepers}
 
         by_pick = {}
         for p in self.picks:
@@ -131,6 +159,7 @@ class DraftSession:
                 "team": player.team if player else None,
                 "owner": owner,
                 "mine": owner == self.my_draft_slot,
+                "is_keeper": p["pick"] in keeper_picks,
             }
 
         return {
@@ -240,9 +269,10 @@ def create_app(
     @app.get("/api/players")
     def search_players():
         query = request.args.get("q", "").strip().lower()
-        if not query:
-            return jsonify([])
-        matches = [p for p in undrafted_pool() if query in p.name.lower()]
+        pool = undrafted_pool()
+        # No query -- default to best-available-by-ADP instead of nothing, so
+        # opening the picker shows useful options immediately, before typing.
+        matches = [p for p in pool if query in p.name.lower()] if query else list(pool)
         matches.sort(key=lambda p: p.adp)
         return jsonify(
             [{"name": p.name, "position": p.position, "team": p.team, "adp": p.adp} for p in matches[:15]]
@@ -265,8 +295,7 @@ def create_app(
 
     @app.post("/api/reset")
     def reset():
-        session.picks = []
-        session.save()
+        session.reset_draft()  # back to just the saved keepers, not to nothing
         return jsonify(session.to_dict())
 
     @app.get("/api/recommend")

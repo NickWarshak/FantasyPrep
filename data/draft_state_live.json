@@ -1,5 +1,16 @@
 {
   "teams": 10,
-  "my_draft_slot": 4,
-  "picks": []
+  "my_draft_slot": 5,
+  "picks": [
+    {
+      "pick": 25,
+      "player": "Bijan Robinson"
+    }
+  ],
+  "keepers": [
+    {
+      "pick": 25,
+      "player": "Bijan Robinson"
+    }
+  ]
 }
