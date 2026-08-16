@@ -407,6 +407,29 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 .rec-expected { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
 .rec-range { font-size: 0.66rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
+/* --- Recommendation confidence badge ------------------------------------
+   How lopsided the top position's edge is over the runner-up. "tossup"
+   borrows the accent color (same "pay attention" language as now-vs-wait's
+   "urgent" state) since a close call is the case worth flagging; "clear"
+   uses --safe since a wide edge is the reassuring case; "lean" stays
+   neutral text -- real but not remarkable either way. */
+
+#recommend-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  background: var(--surface-2);
+}
+#recommend-confidence.clear { color: var(--safe); background: var(--safe-dim); border-color: transparent; }
+#recommend-confidence.tossup { color: var(--accent); background: var(--accent-dim); border-color: transparent; }
+
 /* --- Draft Now vs. Wait card ------------------------------------------- */
 
 #now-vs-wait-card {

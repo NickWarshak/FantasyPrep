@@ -44,7 +44,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import random
 import statistics
@@ -60,7 +59,13 @@ from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_fl
 OPPONENT_WEIGHT_FN = {"gaussian": pick_weight, "gaussian-tail-floor": pick_weight_with_tail_floor}
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
-from fantasyprep.draft_sim.simulate import CANDIDATE_POSITIONS, pick_owner, recommend_positions, state_from_picks
+from fantasyprep.draft_sim.simulate import (
+    CANDIDATE_POSITIONS,
+    pick_owner,
+    position_confidence,
+    recommend_positions,
+    state_from_picks,
+)
 from fantasyprep.historical import weekly_stats
 from fantasyprep.historical.outcomes import (
     DEFAULT_HISTORICAL_YEARS,
@@ -308,7 +313,7 @@ def confidence_weighted_pick_value(
     can be compared directly, as a calibration check, not a replacement
     for the primary win/loss comparison.
     """
-    top_position, top_mean, top_p25, top_p75 = rows[0]
+    top_position = rows[0][0]
     top_candidates = [p for p in undrafted if p.position == top_position]
     top_player = min(top_candidates, key=lambda p: p.adp) if top_candidates else None
     top_value = actual_points.get(normalize_name(top_player.name), 0.0) if top_player else 0.0
@@ -316,17 +321,14 @@ def confidence_weighted_pick_value(
     if len(rows) < 2 or top_player is None:
         return top_value, top_value, 1.0
 
-    second_position, second_mean, second_p25, second_p75 = rows[1]
+    second_position = rows[1][0]
     second_candidates = [p for p in undrafted if p.position == second_position]
     second_player = min(second_candidates, key=lambda p: p.adp) if second_candidates else None
     if second_player is None:
         return top_value, top_value, 1.0
     second_value = actual_points.get(normalize_name(second_player.name), 0.0)
 
-    margin = top_mean - second_mean
-    spread = ((top_p75 - top_p25) + (second_p75 - second_p25)) / 2 or 1.0  # avoid div-by-zero
-    weight_top = 1.0 / (1.0 + math.exp(-margin / spread))
-
+    weight_top = position_confidence(rows)
     blended = weight_top * top_value + (1 - weight_top) * second_value
     return blended, top_value, weight_top
 

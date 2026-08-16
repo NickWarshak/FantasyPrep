@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 import statistics
 from dataclasses import dataclass
@@ -196,6 +197,29 @@ def recommend_positions(
 
     rows.sort(key=lambda r: r[1], reverse=True)
     return rows
+
+
+def position_confidence(rows: list[tuple[str, float, float, float]]) -> float | None:
+    """How lopsided the top-ranked position's edge is over the runner-up,
+    as a 0.5-1.0 confidence that the argmax is the right call -- 0.5 means
+    a true toss-up, 1.0 means the runner-up isn't a real contender.
+
+    A logistic function of the margin between the top two candidates'
+    means, scaled by their pooled P25-P75 spread (a wide spread needs a
+    bigger raw-point margin before a pick counts as genuinely confident,
+    rather than an arbitrary fixed point-margin cutoff). Only the top two
+    matter for this framing -- how far the 3rd-best position trails isn't
+    part of "was this pick close."
+
+    Returns None if there's no second candidate to compare against (fewer
+    than two viable positions this pick)."""
+    if len(rows) < 2:
+        return None
+    _, top_mean, top_p25, top_p75 = rows[0]
+    _, second_mean, second_p25, second_p75 = rows[1]
+    margin = top_mean - second_mean
+    spread = ((top_p75 - top_p25) + (second_p75 - second_p25)) / 2 or 1.0  # avoid div-by-zero
+    return 1.0 / (1.0 + math.exp(-margin / spread))
 
 
 def build_points_model(

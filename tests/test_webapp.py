@@ -258,12 +258,17 @@ def test_recommend_before_setup_rejected(client):
 def test_recommend_returns_all_positions_sorted(client):
     client.post("/api/setup", json={"my_draft_slot": 1})
     resp = client.get("/api/recommend?seed=1")
-    rows = resp.get_json()
+    data = resp.get_json()
+    rows = data["rows"]
 
     positions = {row["position"] for row in rows}
     assert positions == {"QB", "RB", "WR", "TE"}
     expecteds = [row["expected"] for row in rows]
     assert expecteds == sorted(expecteds, reverse=True)
+    # 4 candidate positions this pick -- there's a runner-up to compare
+    # against, so confidence must be a real 0.5-1.0 value, not None.
+    assert data["confidence"] is not None
+    assert 0.5 <= data["confidence"] <= 1.0
 
 
 def test_recommend_resolves_each_position_to_its_best_adp_undrafted_player(client):
@@ -273,7 +278,7 @@ def test_recommend_resolves_each_position_to_its_best_adp_undrafted_player(clien
     # actually draft if it picked that position.
     client.post("/api/setup", json={"my_draft_slot": 1})
     resp = client.get("/api/recommend?seed=1")
-    rows = resp.get_json()
+    rows = resp.get_json()["rows"]
 
     by_position = {row["position"]: row for row in rows}
     assert by_position["RB"]["player"] == "RB One"
@@ -292,7 +297,7 @@ def test_recommend_skips_a_player_already_drafted(client):
     client.put("/api/picks/1", json={"player_name": "RB One"})
 
     resp = client.get("/api/recommend?seed=1")
-    rows = resp.get_json()
+    rows = resp.get_json()["rows"]
     by_position = {row["position"]: row for row in rows}
     assert by_position["RB"]["player"] == "RB Two"
 
@@ -341,8 +346,8 @@ def test_recommend_espn_points_source_uses_injected_projection(tmp_path: Path):
     resp_historical = client.get("/api/recommend?seed=1&points_source=historical")
     resp_espn = client.get("/api/recommend?seed=1&points_source=espn")
 
-    hist_best = max(row["expected"] for row in resp_historical.get_json())
-    espn_best = max(row["expected"] for row in resp_espn.get_json())
+    hist_best = max(row["expected"] for row in resp_historical.get_json()["rows"])
+    espn_best = max(row["expected"] for row in resp_espn.get_json()["rows"])
     # ESPN source must reflect RB One's 999-point fixture projection somewhere
     # in the roster value -- historical (max real fixture outcome ~350) can't.
     assert espn_best > hist_best

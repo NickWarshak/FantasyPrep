@@ -142,6 +142,7 @@ function render(state) {
     loadRecommendations();
   } else {
     document.getElementById("recommend-list").hidden = true;
+    document.getElementById("recommend-confidence").hidden = true;
     document.getElementById("now-vs-wait-card").hidden = true;
     document.getElementById("recommend-status").textContent = hasSlot
       ? "Recommendations appear automatically once it's your turn."
@@ -362,6 +363,32 @@ document.getElementById("simulate-stop-btn").addEventListener("click", () => {
   document.getElementById("simulate-status").textContent = "Stopped.";
 });
 
+// How lopsided the top position's edge is over the runner-up -- surfaces
+// backtest.py's confidence-weighted-blend math live for the first time
+// instead of only ever existing as an offline calibration diagnostic.
+function renderConfidence(confidence, rows) {
+  const badge = document.getElementById("recommend-confidence");
+  if (confidence === null || confidence === undefined || rows.length < 2) {
+    badge.hidden = true;
+    return;
+  }
+  const pct = Math.round(confidence * 100);
+  let tier, label;
+  if (confidence >= 0.85) {
+    tier = "clear";
+    label = "Clear favorite";
+  } else if (confidence >= 0.65) {
+    tier = "lean";
+    label = "Likely best pick";
+  } else {
+    tier = "tossup";
+    label = "Toss-up";
+  }
+  badge.className = tier;
+  badge.textContent = `${label} · ${pct}% confidence (${rows[0].position} vs. ${rows[1].position})`;
+  badge.hidden = false;
+}
+
 let recommendInFlight = false;
 
 async function loadRecommendations() {
@@ -372,16 +399,19 @@ async function loadRecommendations() {
   const list = document.getElementById("recommend-list");
   status.textContent = "Simulating... this takes several seconds.";
   list.hidden = true;
+  document.getElementById("recommend-confidence").hidden = true;
 
   try {
     const res = await fetch("/api/recommend");
-    const rows = await res.json();
+    const data = await res.json();
     if (!res.ok) {
-      status.textContent = rows.error || "Error running simulation.";
+      status.textContent = data.error || "Error running simulation.";
       return;
     }
+    const rows = data.rows;
 
     status.textContent = "";
+    renderConfidence(data.confidence, rows);
     list.innerHTML = "";
     rows.forEach((row, i) => {
       const card = document.createElement("div");

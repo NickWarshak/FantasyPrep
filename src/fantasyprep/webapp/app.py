@@ -46,6 +46,7 @@ from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBo
 from fantasyprep.draft_sim.simulate import (
     current_pick_number,
     pick_owner,
+    position_confidence,
     recommend_positions,
     state_from_picks,
 )
@@ -316,6 +317,12 @@ def create_app(
             live_pool, state, settings, points_model, sims, rng,
             opponent_weight_fn=pick_weight_with_tail_floor,
         )
+        # How lopsided the top position's edge is over the runner-up -- the
+        # same logistic blend backtest.py has used since the season-total
+        # calibration check, surfaced live for the first time here instead
+        # of only ever existing as an offline diagnostic. None when there's
+        # no second position to compare against.
+        confidence = position_confidence(rows)
 
         # Resolve each recommended position down to the specific player the
         # tool would actually draft there -- same rule the model itself uses
@@ -334,7 +341,7 @@ def create_app(
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
             })
-        return jsonify(results)
+        return jsonify({"rows": results, "confidence": confidence})
 
     @app.get("/api/now-vs-wait")
     def now_vs_wait():

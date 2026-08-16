@@ -14,6 +14,7 @@ from fantasyprep.draft_sim.simulate import (
     my_pick_numbers,
     parse_args,
     pick_owner,
+    position_confidence,
     recommend_positions,
     simulate_position_choice,
     state_from_picks,
@@ -223,6 +224,35 @@ def test_recommend_positions_default_opponent_weight_fn_is_plain_gaussian():
     assert rows
     assert seen_weight_fns
     assert all(fn is pick_weight for fn in seen_weight_fns)
+
+
+# --- position_confidence ----------------------------------------------------
+
+
+def test_position_confidence_none_with_fewer_than_two_rows():
+    assert position_confidence([]) is None
+    assert position_confidence([("RB", 100.0, 90.0, 110.0)]) is None
+
+
+def test_position_confidence_is_half_on_an_exact_tie():
+    # Zero margin between the top two means -> logistic(0) == 0.5 exactly,
+    # regardless of spread.
+    rows = [("RB", 100.0, 90.0, 110.0), ("WR", 100.0, 80.0, 120.0)]
+    assert position_confidence(rows) == 0.5
+
+
+def test_position_confidence_increases_with_margin_same_spread():
+    tight = [("RB", 101.0, 90.0, 110.0), ("WR", 100.0, 90.0, 110.0)]
+    wide = [("RB", 130.0, 90.0, 110.0), ("WR", 100.0, 90.0, 110.0)]
+    assert 0.5 < position_confidence(tight) < position_confidence(wide) < 1.0
+
+
+def test_position_confidence_same_margin_wider_spread_is_less_confident():
+    # Same 10-point margin, but the wide-spread pair has more uncertainty
+    # baked into each estimate, so the same raw margin should count for less.
+    narrow_spread = [("RB", 110.0, 95.0, 105.0), ("WR", 100.0, 95.0, 105.0)]
+    wide_spread = [("RB", 110.0, 50.0, 150.0), ("WR", 100.0, 50.0, 150.0)]
+    assert position_confidence(wide_spread) < position_confidence(narrow_spread)
 
 
 # --- HistoricalBootstrapModel: real crash risk this session -- a position with
