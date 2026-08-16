@@ -2,10 +2,12 @@
 
 Draft decision engine tools. See [ROADMAP.md](ROADMAP.md) for the full plan.
 
-**Working across multiple machines (or starting a new session)?** Read
-[STATUS.md](STATUS.md) first — it's the living current-state snapshot (headline
-results, what's running, what's next), kept up to date specifically so a session on
-a different machine doesn't have to re-derive context from scratch.
+**Working across multiple machines (or starting a new session)?** Read the live
+status page first: **https://claude.ai/code/artifact/bb491872-5b2a-407a-8add-71d0c35f9253**
+— current results, what's running, what's next, updated in place by whichever
+machine/session touches it (no `git pull`/`push` needed to read or write it, unlike
+everything else in this repo). [STATUS.md](STATUS.md) is just a durable pointer to
+that link, kept here in case anyone lands on the repo without it.
 
 ## Setup
 
