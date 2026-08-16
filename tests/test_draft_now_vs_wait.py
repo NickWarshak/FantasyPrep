@@ -1,12 +1,15 @@
 import random
 from unittest.mock import patch
 
+import pytest
+
 from fantasyprep.draft_sim.draft_now_vs_wait import (
     compare_now_vs_wait,
     generate_validation_samples,
     simulate_wait_and_target,
     survival_probability,
     validate_against_real_outcome,
+    validate_against_real_outcome_averaged,
 )
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
 from fantasyprep.draft_sim.opponent import sample_pick as real_sample_pick
@@ -320,3 +323,70 @@ def test_generate_validation_samples_seeds_are_unique():
     seeds = [seed for _year, _pick, seed in samples]
     assert len(seeds) == len(set(seeds))  # no two samples share an opponent-room draw
     assert len(samples) == 50  # 10 years x 5 picks -- the real default width
+
+
+# --- validate_against_real_outcome_averaged ---------------------------------------------------
+
+
+def test_validate_against_real_outcome_averaged_matches_single_seed_when_num_replay_seeds_is_one():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {normalize_name(p.name): 5.0 + i for i, p in enumerate(pool)}
+
+    single = validate_against_real_outcome(
+        "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+        points_model=points_model, actual_points=actual_points, num_sims=5, seed=1,
+    )
+    averaged = validate_against_real_outcome_averaged(
+        "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+        points_model=points_model, actual_points=actual_points, num_sims=5, base_seed=1,
+        num_replay_seeds=1,
+    )
+    assert averaged == single
+
+
+def test_validate_against_real_outcome_averaged_uses_distinct_spaced_seeds():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {normalize_name(p.name): 5.0 + i for i, p in enumerate(pool)}
+
+    seen_seeds: list[int] = []
+
+    def spy(*args, **kwargs):
+        seen_seeds.append(args[9])  # seed is the 10th positional arg
+        return 100.0, 50.0
+
+    with patch("fantasyprep.draft_sim.draft_now_vs_wait.validate_against_real_outcome", side_effect=spy):
+        now_avg, wait_avg = validate_against_real_outcome_averaged(
+            "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+            points_model=points_model, actual_points=actual_points, num_sims=5, base_seed=1,
+            num_replay_seeds=3,
+        )
+
+    assert seen_seeds == [1, 1001, 2001]  # spaced 1000 apart, not repeated
+    assert now_avg == 100.0  # average of constant mocked returns is itself
+    assert wait_avg == 50.0
+
+
+def test_validate_against_real_outcome_averaged_actually_averages():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+    actual_points = {normalize_name(p.name): 5.0 + i for i, p in enumerate(pool)}
+
+    returns = iter([(0.0, 0.0), (30.0, 60.0), (60.0, 0.0)])
+
+    with patch(
+        "fantasyprep.draft_sim.draft_now_vs_wait.validate_against_real_outcome",
+        side_effect=lambda *a, **k: next(returns),
+    ):
+        now_avg, wait_avg = validate_against_real_outcome_averaged(
+            "RB", "WR", decision_pick=1, live_pool=pool, state=state, settings=SETTINGS,
+            points_model=points_model, actual_points=actual_points, num_sims=5, base_seed=1,
+            num_replay_seeds=3,
+        )
+
+    assert now_avg == pytest.approx(30.0)  # mean of 0, 30, 60
+    assert wait_avg == pytest.approx(20.0)  # mean of 0, 60, 0

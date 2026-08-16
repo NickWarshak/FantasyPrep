@@ -334,6 +334,58 @@ def validate_against_real_outcome(
     return now_points, wait_points
 
 
+def validate_against_real_outcome_averaged(
+    target_position: str,
+    wait_alternative_position: str,
+    decision_pick: int,
+    live_pool,
+    state: DraftState,
+    settings: LeagueSettings,
+    points_model: PointsModel,
+    actual_points: dict[str, float],
+    num_sims: int,
+    base_seed: int,
+    num_replay_seeds: int = 3,
+    opponent_weight_fn=pick_weight,
+) -> tuple[float, float]:
+    """Averages `validate_against_real_outcome` over several independent
+    replay seeds instead of trusting a single one.
+
+    A single real replay is a genuinely noisy ground truth: everything
+    downstream of the decision pick (every other pick, mine and every
+    opponent's) is filled in stochastically, and that noise moves the real
+    point total independently of whether the decision itself was good.
+    Measured directly (2026-08-16, one real 2023 decision): the same
+    decision's real_delta swung from -216.6 to +210.1 -- sign and all --
+    across just 4 replay seeds. "Was now or wait better, from this
+    decision point" is inherently a question about an expectation over how
+    the rest of the draft could unfold, not about one arbitrary draw of
+    it -- so averaging several replay seeds isn't a variance-reduction
+    trick bolted on after the fact, it's what the question already meant.
+    CRN (same seed for both branches, see `validate_against_real_outcome`)
+    still isolates the decision from opponent-room noise *within* each
+    individual replay; averaging across *several* seeds on top of that
+    removes the remaining downstream-pick noise CRN alone can't cancel,
+    since CRN pairs "now" against "wait" but doesn't fix what those
+    downstream picks actually were.
+
+    Seeds are spaced 1000 apart (`base_seed`, `base_seed + 1000`, ...) so
+    they don't collide with the `random.Random(seed + pick_num)` draws
+    `_model_driven_strategy` already makes internally off the same base
+    seed for a single replay."""
+    now_total = 0.0
+    wait_total = 0.0
+    for i in range(num_replay_seeds):
+        now_points, wait_points = validate_against_real_outcome(
+            target_position, wait_alternative_position, decision_pick, live_pool, state, settings,
+            points_model, actual_points, num_sims, base_seed + i * 1000,
+            opponent_weight_fn=opponent_weight_fn,
+        )
+        now_total += now_points
+        wait_total += wait_points
+    return now_total / num_replay_seeds, wait_total / num_replay_seeds
+
+
 def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir, opponent_weight_fn=pick_weight) -> None:
     """Standalone CLI: evaluate a real draft state at a given pick,
     compare the top-ranked position (take now) against the 2nd-ranked
@@ -429,11 +481,12 @@ DEFAULT_VALIDATION_SAMPLES = generate_validation_samples()
 
 def _cli_validate(
     samples: list[tuple[int, int, int]], num_sims: int, data_dir, opponent_weight_fn=pick_weight,
+    num_replay_seeds: int = 3,
 ) -> None:
-    """Runs `validate_against_real_outcome` across several real decision
-    points and reports how often the pre-decision predicted direction
-    ('now' vs 'wait') matches which one actually scored better in real
-    points -- the check this diagnostic needs to pass before it should
+    """Runs `validate_against_real_outcome_averaged` across several real
+    decision points and reports how often the pre-decision predicted
+    direction ('now' vs 'wait') matches which one actually scored better in
+    real points -- the check this diagnostic needs to pass before it should
     ever influence a live recommendation (see module docstring).
 
     `opponent_weight_fn` defaults to the plain Gaussian for reproducibility
@@ -441,7 +494,13 @@ def _cli_validate(
     validate against the same opponent model the live tool actually uses
     (the live tool has used the tail-floor fix since 2026-08-16; this
     default hasn't been swapped, matching the opt-in convention everywhere
-    else in this project)."""
+    else in this project).
+
+    `num_replay_seeds` controls how many independent real replays get
+    averaged per sample for the ground truth (see
+    `validate_against_real_outcome_averaged`'s docstring for why a single
+    replay isn't trustworthy on its own -- measured directly, the same
+    decision's real_delta swung sign across just 4 replay seeds)."""
     import random as _random
 
     from fantasyprep.draft_sim.backtest import leakage_safe_distributions
@@ -491,9 +550,9 @@ def _cli_validate(
             print(f"{year} pick {pick}: skipped, no prediction available")
             continue
 
-        now_real, wait_real = validate_against_real_outcome(
+        now_real, wait_real = validate_against_real_outcome_averaged(
             top_position, alt_position, pick, live_pool, state, settings, points_model, actual_points, num_sims, seed,
-            opponent_weight_fn=opponent_weight_fn,
+            num_replay_seeds=num_replay_seeds, opponent_weight_fn=opponent_weight_fn,
         )
         real_delta = now_real - wait_real
         predicted_sign = "now" if prediction.cost_of_waiting > 0 else "wait"
@@ -541,12 +600,21 @@ def main(argv: list[str] | None = None) -> None:
         help="gaussian matches every earlier run of this CLI (default, for reproducibility); "
         "gaussian-tail-floor matches what the live tool actually uses since 2026-08-16",
     )
+    parser.add_argument(
+        "--replay-seeds", type=int, default=3,
+        help="with --validate, how many independent real replays to average per sample for the ground truth "
+        "(default 3) -- a single replay is measurably too noisy to trust alone, see "
+        "validate_against_real_outcome_averaged's docstring",
+    )
     args = parser.parse_args(argv)
     opponent_weight_fn = pick_weight_with_tail_floor if args.opponent_model == "gaussian-tail-floor" else pick_weight
 
     if args.validate:
         samples = QUICK_VALIDATION_SAMPLES if args.quick else DEFAULT_VALIDATION_SAMPLES
-        _cli_validate(samples, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn)
+        _cli_validate(
+            samples, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn,
+            num_replay_seeds=args.replay_seeds,
+        )
     elif args.year is not None and args.pick is not None:
         _cli_run(args.year, args.pick, args.num_sims, args.seed, args.data_dir, opponent_weight_fn=opponent_weight_fn)
     else:
