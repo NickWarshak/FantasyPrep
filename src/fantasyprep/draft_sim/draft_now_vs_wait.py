@@ -385,13 +385,46 @@ def _cli_run(year: int, pick: int, num_sims: int, seed: int, data_dir, opponent_
           f"({'draft now' if result.cost_of_waiting > 0 else 'safe to wait'})")
 
 
-# A handful of (year, pick, seed) samples spread across years/rounds --
-# not exhaustive, just enough to get a real read on agreement rate
-# without a long run. Override with --samples for a bigger/different set.
-DEFAULT_VALIDATION_SAMPLES = [
+def generate_validation_samples(
+    years=range(2015, 2025),
+    picks=(10, 25, 45, 65, 90),
+    seed_start: int = 1,
+) -> list[tuple[int, int, int]]:
+    """A systematic (year, pick, seed) sweep -- same discipline
+    `backtest.py` already uses for its own replay scope (every
+    backtest-eligible year, 2015-2024, matching `DEFAULT_BACKTEST_YEARS`
+    there -- not re-imported here to keep this module's dependency on
+    backtest.py lazy/scoped, same as everywhere else in this file), not a
+    hand-picked handful. `picks` spans roughly round 1, 3, 5, 7, 9 so
+    early/mid/late draft decisions are all represented, not just
+    early-to-mid like the original 8-sample set. Each (year, pick) gets
+    its own seed so results are independent, not correlated by reusing
+    one opponent-room draw across the whole sweep."""
+    samples = []
+    seed = seed_start
+    for year in years:
+        for pick in picks:
+            samples.append((year, pick, seed))
+            seed += 1
+    return samples
+
+
+# The original hand-picked spot check -- fast (8 samples), useful for a
+# quick sanity check (`--validate --quick`), but never had real statistical
+# power: at n=8, a single flipped sample swings the headline agreement rate
+# by 12.5 points, which is exactly what happened between the 6/8 (75%)
+# originally recorded and the 4/8 (50%) found once the validation harness
+# was fixed to match the live opponent model (see ROADMAP.md Phase 5,
+# 2026-08-16). Kept only for fast iteration, not for trusting the result.
+QUICK_VALIDATION_SAMPLES = [
     (2023, 12, 1), (2023, 25, 2), (2023, 45, 3), (2023, 60, 4),
     (2024, 15, 5), (2024, 30, 6), (2024, 55, 7), (2024, 70, 8),
 ]
+
+# The real default: 10 years x 5 draft depths = 50 samples, systematically
+# generated rather than cherry-picked. --validate uses this unless --quick
+# is passed.
+DEFAULT_VALIDATION_SAMPLES = generate_validation_samples()
 
 
 def _cli_validate(
@@ -422,6 +455,10 @@ def _cli_validate(
 
     cache: dict[int, tuple] = {}
     agreements = []
+    # Tracked separately so a position-specific pattern (e.g. the QB misses
+    # found in the original 8-sample run) can be confirmed or ruled out at
+    # real sample size instead of eyeballing a handful of printed lines.
+    agreements_by_position: dict[str, list[bool]] = {}
 
     for year, pick, seed in samples:
         if year not in cache:
@@ -463,6 +500,7 @@ def _cli_validate(
         real_sign = "now" if real_delta > 0 else "wait"
         agree = predicted_sign == real_sign
         agreements.append(agree)
+        agreements_by_position.setdefault(top_position, []).append(agree)
 
         print(f"{year} pick {pick:3d} ({top_position} vs {alt_position}): "
               f"predicted={predicted_sign} (cost {prediction.cost_of_waiting:+.1f}, "
@@ -473,6 +511,10 @@ def _cli_validate(
     if n:
         print(f"\n{sum(agreements)}/{n} agreement ({sum(agreements) / n:.0%}) -- "
               f"50% is coin-flip baseline, this should be well above it before trusting the signal.")
+        print("\nBy target position (the position the diagnostic was deciding whether to draft now):")
+        for position in sorted(agreements_by_position):
+            results = agreements_by_position[position]
+            print(f"  {position}: {sum(results)}/{len(results)} ({sum(results) / len(results):.0%})")
     else:
         print("\nNo valid samples.")
 
@@ -486,7 +528,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--pick", type=int, help="single-decision mode: overall pick number to evaluate")
     parser.add_argument("--validate", action="store_true",
                          help="run against real historical outcomes instead of a single live decision "
-                         "(see DEFAULT_VALIDATION_SAMPLES)")
+                         "-- 50 systematically-generated samples by default (see DEFAULT_VALIDATION_SAMPLES), "
+                         "pass --quick for the original fast-but-underpowered 8-sample spot check")
+    parser.add_argument("--quick", action="store_true",
+                         help="with --validate, use QUICK_VALIDATION_SAMPLES (8 samples, fast) instead of the "
+                         "full 50-sample sweep -- for iteration, not for trusting the resulting number")
     parser.add_argument("--num-sims", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
@@ -499,7 +545,8 @@ def main(argv: list[str] | None = None) -> None:
     opponent_weight_fn = pick_weight_with_tail_floor if args.opponent_model == "gaussian-tail-floor" else pick_weight
 
     if args.validate:
-        _cli_validate(DEFAULT_VALIDATION_SAMPLES, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn)
+        samples = QUICK_VALIDATION_SAMPLES if args.quick else DEFAULT_VALIDATION_SAMPLES
+        _cli_validate(samples, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn)
     elif args.year is not None and args.pick is not None:
         _cli_run(args.year, args.pick, args.num_sims, args.seed, args.data_dir, opponent_weight_fn=opponent_weight_fn)
     else:

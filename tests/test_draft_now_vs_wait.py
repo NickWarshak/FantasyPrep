@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from fantasyprep.draft_sim.draft_now_vs_wait import (
     compare_now_vs_wait,
+    generate_validation_samples,
     simulate_wait_and_target,
     survival_probability,
     validate_against_real_outcome,
@@ -304,3 +305,18 @@ def test_validate_against_real_outcome_now_strategy_actually_drafts_target_posit
     # If "now" drafted RB0 at the decision pick as expected, its huge
     # score should dominate the roster's real total.
     assert now_points >= 9999.0
+
+
+# --- generate_validation_samples ---------------------------------------------------
+
+
+def test_generate_validation_samples_covers_every_year_and_pick():
+    samples = generate_validation_samples(years=[2020, 2021], picks=(10, 50), seed_start=1)
+    assert samples == [(2020, 10, 1), (2020, 50, 2), (2021, 10, 3), (2021, 50, 4)]
+
+
+def test_generate_validation_samples_seeds_are_unique():
+    samples = generate_validation_samples(years=range(2015, 2025), picks=(10, 25, 45, 65, 90))
+    seeds = [seed for _year, _pick, seed in samples]
+    assert len(seeds) == len(set(seeds))  # no two samples share an opponent-room draw
+    assert len(samples) == 50  # 10 years x 5 picks -- the real default width
