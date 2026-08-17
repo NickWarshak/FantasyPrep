@@ -322,3 +322,94 @@ def test_sample_pick_index_zero_weight_fallback_picks_only_among_available():
     for _ in range(50):
         idx = sample_pick_index(adp, stdev, available, pick_number=1, rng=rng, weight_fn=pick_weight)
         assert available[idx]
+
+
+# --- OpponentSampler: precomputed weight matrix, since a player's weight
+# at a given pick number never depends on simulation history -- avoids
+# recomputing the same weight vector once per simulation for every pick
+# number (which recurs identically across every one of num_sims sims). ---
+
+from fantasyprep.draft_sim.opponent import OpponentSampler
+
+
+def test_opponent_sampler_matches_sample_pick_index_distribution():
+    # Two independent implementations of the same sampling operation
+    # (recompute-every-call vs. precompute-once) -- confirm they actually
+    # agree, not just that each looks reasonable on its own.
+    rng_fresh = random.Random(42)
+    rng_precomputed = random.Random(42)
+    pool = [_p(f"P{i}", adp=float(1 + i * 2), stdev=1.5) for i in range(15)]
+    pick_number = 10
+    adp, stdev = _arrays(pool)
+
+    fresh_counts = Counter()
+    for _ in range(50_000):
+        available = np.ones(len(pool), dtype=bool)
+        idx = sample_pick_index(adp, stdev, available, pick_number, rng_fresh)
+        fresh_counts[pool[idx].name] += 1
+
+    sampler = OpponentSampler(pool, pick_numbers=[pick_number])
+    precomputed_counts = Counter()
+    for _ in range(50_000):
+        available = np.ones(len(pool), dtype=bool)
+        idx = sampler.sample(pick_number, available, rng_precomputed)
+        precomputed_counts[pool[idx].name] += 1
+
+    for player in pool:
+        fresh_prob = fresh_counts.get(player.name, 0) / 50_000
+        precomputed_prob = precomputed_counts.get(player.name, 0) / 50_000
+        assert fresh_prob == pytest.approx(precomputed_prob, abs=0.015)
+
+
+def test_opponent_sampler_handles_multiple_pick_numbers_correctly():
+    # A sampler built once over a whole pick range must give each pick
+    # number its OWN correct weights, not reuse one row for every pick --
+    # a player near their ADP at pick 5 should be favored there but not
+    # necessarily at pick 50, and the sampler needs to tell those apart.
+    pool = [_p("Early", adp=5.0, stdev=1.0), _p("Late", adp=50.0, stdev=1.0)]
+    sampler = OpponentSampler(pool, pick_numbers=range(1, 60))
+    rng = random.Random(1)
+
+    early_counts = Counter()
+    for _ in range(2000):
+        available = np.ones(2, dtype=bool)
+        idx = sampler.sample(5, available, rng)
+        early_counts[pool[idx].name] += 1
+    assert early_counts["Early"] > early_counts["Late"]
+
+    late_counts = Counter()
+    for _ in range(2000):
+        available = np.ones(2, dtype=bool)
+        idx = sampler.sample(50, available, rng)
+        late_counts[pool[idx].name] += 1
+    assert late_counts["Late"] > late_counts["Early"]
+
+
+def test_opponent_sampler_respects_availability_mask():
+    pool = [_p(f"P{i}", adp=float(1 + i), stdev=1.0) for i in range(10)]
+    sampler = OpponentSampler(pool, pick_numbers=[5])
+    rng = random.Random(7)
+    available = np.array([i % 2 == 0 for i in range(10)])  # only even indices available
+
+    for _ in range(200):
+        idx = sampler.sample(5, available, rng)
+        assert available[idx]
+
+
+def test_opponent_sampler_with_tail_floor_weight_fn():
+    cmc = _p("Christian McCaffrey", adp=2.4, stdev=1.0, position="RB")
+    other = _p("Other", adp=50.0, stdev=5.0)
+    pool = [cmc, other]
+    sampler = OpponentSampler(pool, pick_numbers=[10], weight_fn=pick_weight_with_tail_floor)
+    rng = random.Random(3)
+    available = np.ones(2, dtype=bool)
+
+    counts = Counter()
+    for _ in range(500):
+        idx = sampler.sample(10, available, rng)
+        counts[pool[idx].name] += 1
+    # Same "stuck player" scenario from the tail-floor tests above -- the
+    # precomputed sampler must apply the tail-floor formula, not silently
+    # fall back to plain Gaussian.
+    assert counts["Christian McCaffrey"] > counts["Other"]
+

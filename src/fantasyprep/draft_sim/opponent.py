@@ -160,6 +160,49 @@ def sample_pick(
     return pool[idx]
 
 
+def _draw_index(weights: np.ndarray, available: np.ndarray, rng: random.Random) -> int:
+    """Shared weighted-draw core: given a full-size weights array and a
+    same-length availability mask, zero the unavailable entries and draw
+    one index with a single `rng.random()` call against a cumulative-weight
+    array (`searchsorted(..., side="right")`) -- the same mechanism
+    CPython's own `random.choices(k=1)` uses internally, so every existing
+    seeded call site stays reproducible. Shared by `sample_pick_index`
+    (computes weights fresh every call) and `OpponentSampler.sample`
+    (looks up a precomputed weight row) -- the draw mechanics are
+    identical either way, only where the weights come from differs.
+
+    A size-based scalar/numpy dispatch was tried and reverted here
+    (2026-08-16): `weights` is always the FULL pool size (deliberately
+    never shrunk -- masking with zeros avoids the cost of boolean-slicing
+    a new array every draw), so its length never reflects the shrinking
+    `available` count within a sim. Real player pools in this project are
+    always well above any sane scalar-beats-numpy threshold, so a
+    length-based dispatch was structurally unreachable dead code that
+    only added per-call overhead -- confirmed by profiling
+    (`_draw_index_scalar` never appeared in a real profile) and by a
+    direct before/after benchmark on the validation path (measurably
+    slower with the dispatch than without: 74.86s vs. 60.64s for the same
+    3-replay comparison). Making the underlying idea work for real would
+    need dispatching on `available.sum()` instead, which conflicts with
+    keeping the array un-shrunk -- a bigger redesign, not attempted
+    without a concrete workload that would actually benefit from it."""
+    weights = np.where(available, weights, 0.0)
+    total = weights.sum()
+    if total == 0:
+        candidates = np.flatnonzero(available)
+        return int(rng.choice(candidates.tolist()))
+    cumulative = np.cumsum(weights)
+    u = rng.random() * total
+    idx = int(np.searchsorted(cumulative, u, side="right"))
+    # Guard the float-boundary case, and skip any (should-be-impossible,
+    # since unavailable weights are zeroed) unavailable index a boundary
+    # rounding error could land on.
+    idx = min(idx, len(weights) - 1)
+    if not available[idx]:
+        idx = int(np.flatnonzero(available)[0])
+    return idx
+
+
 def sample_pick_index(
     adp: np.ndarray,
     stdev: np.ndarray,
@@ -182,13 +225,18 @@ def sample_pick_index(
     which `sample_pick` itself can't do since it only ever sees one pick's
     worth of a shrinking `pool` list at a time.
 
+    Still recomputes the weight vector fresh on every call, though --
+    prefer `OpponentSampler` when the same (pool, pick_number) weights
+    would otherwise be recomputed across many simulations, since the
+    weight for a given player at a given pick number never depends on
+    simulation history (see `OpponentSampler`'s docstring). Kept as its
+    own function because it's still the right tool for a single one-off
+    draw (e.g. `survival_probability`'s use, which doesn't repeat pick
+    numbers across sims the way a full roster rollout does).
+
     Returns the chosen index into `adp`/`stdev` (not a player) -- the
     caller is responsible for mapping it back to a player object and
-    setting `available[idx] = False`. Unlike `sample_pick`, this does NOT
-    consume the RNG identically to `random.choices` when the zero-weight
-    fallback path is hit (falls back to `rng.choice` over available
-    indices, same as `sample_pick`'s own zero-weight fallback, but as an
-    index rather than a pool slice)."""
+    setting `available[idx] = False`."""
     vectorized = _VECTORIZED_WEIGHT_FNS.get(weight_fn)
     if vectorized is not None:
         weights = vectorized(pick_number, adp, stdev)
@@ -199,19 +247,56 @@ def sample_pick_index(
         weights = np.array(
             [weight_fn(_IndexedPlayerView(a, s), pick_number) for a, s in zip(adp, stdev)], dtype=np.float64,
         )
-    weights = np.where(available, weights, 0.0)
+    return _draw_index(weights, available, rng)
 
-    total = weights.sum()
-    if total == 0:
-        candidates = np.flatnonzero(available)
-        return int(rng.choice(candidates.tolist()))
-    cumulative = np.cumsum(weights)
-    u = rng.random() * total
-    idx = int(np.searchsorted(cumulative, u, side="right"))
-    # Guard the float-boundary case, and skip any (should-be-impossible,
-    # since unavailable weights are zeroed) unavailable index a boundary
-    # rounding error could land on.
-    idx = min(idx, len(adp) - 1)
-    if not available[idx]:
-        idx = int(np.flatnonzero(available)[0])
-    return idx
+
+class OpponentSampler:
+    """Precomputes opponent pick-selection weights for every (pick_number,
+    player) pair once, instead of recomputing the same weight vector on
+    every one of `num_sims` simulations.
+
+    A player's selection weight at a given pick number depends only on
+    their fixed `adp`/`stdev` and that pick number -- never on simulation
+    history or which other players happen to be drafted in a given sim
+    (availability only decides whether a player's already-known weight
+    counts). Profiling (2026-08-16) found the weight computation was
+    still the single largest remaining cost even after per-pick
+    vectorization (`_vectorized_pick_weight_with_tail_floor` alone was
+    ~50% of a live recommendation's runtime) -- almost entirely wasted
+    work, since across `num_sims` simulations the exact same weight
+    vector gets recomputed once per simulation for every pick number that
+    recurs (which is every pick number, since the candidate pool and
+    pick range are fixed for the whole call).
+
+    Builds the full `(pick_numbers x players)` weight matrix in one
+    broadcasted numpy call up front -- for a full draft this is at most a
+    few hundred pick numbers x a few hundred players, a few hundred
+    thousand floats, negligible memory -- then each `sample()` call is
+    just an array lookup plus the same draw mechanics `sample_pick_index`
+    uses (see `_draw_index`)."""
+
+    def __init__(self, players: list[FfcPlayer], pick_numbers, weight_fn=pick_weight):
+        self.players = list(players)
+        adp = np.fromiter((p.adp for p in self.players), dtype=np.float64, count=len(self.players))
+        stdev = np.fromiter((p.stdev for p in self.players), dtype=np.float64, count=len(self.players))
+        unique_picks = np.array(sorted(set(int(p) for p in pick_numbers)), dtype=np.int64)
+
+        vectorized = _VECTORIZED_WEIGHT_FNS.get(weight_fn)
+        if vectorized is not None:
+            # Broadcast pick_numbers as a column against adp/stdev as rows
+            # -- one call computes weights for every (pick, player) pair
+            # at once, instead of one call per pick number.
+            self._weights = vectorized(unique_picks[:, None], adp[None, :], stdev[None, :])
+        else:
+            self._weights = np.array(
+                [
+                    [weight_fn(_IndexedPlayerView(a, s), int(pn)) for a, s in zip(adp, stdev)]
+                    for pn in unique_picks
+                ],
+                dtype=np.float64,
+            )
+        self._row_for_pick = {int(pn): i for i, pn in enumerate(unique_picks)}
+
+    def sample(self, pick_number: int, available: np.ndarray, rng: random.Random) -> int:
+        row = self._row_for_pick[pick_number]
+        return _draw_index(self._weights[row], available, rng)
