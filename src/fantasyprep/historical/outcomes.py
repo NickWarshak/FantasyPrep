@@ -106,8 +106,15 @@ def build_outcome_distributions(
     for year in years:
         adp_cache = adp_cache_dir / f".ffc_{settings.teams}_{year}.json" if adp_cache_dir else None
         adp_players = ffc.fetch_adp(year, teams=settings.teams, cache_path=adp_cache)
-        ranks = ffc.position_ranks(adp_players)
-        rank_by_key = {(normalize_name(p.name), p.position): ranks[p.name] for p in adp_players}
+        # Per-player ranks, so two players sharing a name don't collide -- see
+        # ffc.position_ranks. (The join below still keys on name, so an
+        # ambiguous pair resolves to whichever sorts last; that affects at most
+        # a handful of bucket samples and is not worth dropping real outcomes
+        # over, unlike the market join where ADP is the feature under test.)
+        rank_by_key = {
+            (normalize_name(p.name), p.position): rank
+            for p, rank in ffc.ranked_players(adp_players)
+        }
 
         season_outcomes = nfl_stats.actual_fantasy_points(year, settings.scoring)
 

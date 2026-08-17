@@ -144,9 +144,10 @@ def adp_rank_pairs(
             continue
 
         adp_players = ffc.fetch_adp(int(season), teams=settings.teams, cache_path=cache_path)
-        ranks = ffc.position_ranks(adp_players)
+        # Per-player ranks -- see ffc.position_ranks on the name-collision bug.
         rank_by_key = {
-            (normalize_name(p.name), p.position): ranks[p.name] for p in adp_players
+            (normalize_name(p.name), p.position): rank
+            for p, rank in ffc.ranked_players(adp_players)
         }
 
         season_rows = canonical[canonical["season"] == season]

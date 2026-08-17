@@ -65,8 +65,11 @@ def load_adp_seasons(
         if not cache_path.exists():
             continue
         players = ffc.fetch_adp(season, teams=settings.teams, cache_path=cache_path)
-        ranks = ffc.position_ranks(players)
-        for player in players:
+        # `ranked_players` rather than `position_ranks`: ranks attach to player
+        # objects, so two players sharing a name each keep their own real rank
+        # instead of one silently overwriting the other. The ambiguity is then
+        # handled once, deliberately, in `_drop_ambiguous_names`.
+        for player, rank in ffc.ranked_players(players):
             if player.position not in SKILL_POSITIONS:
                 continue
             rows.append(
@@ -75,7 +78,7 @@ def load_adp_seasons(
                     "join_name": normalize_name(player.name),
                     "fantasy_position": player.position,
                     "adp": player.adp,
-                    "adp_position_rank": ranks[player.name],
+                    "adp_position_rank": rank,
                     "adp_stdev": player.stdev,
                 }
             )

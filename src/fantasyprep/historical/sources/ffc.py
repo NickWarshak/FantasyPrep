@@ -91,18 +91,55 @@ def _normalize(raw: dict) -> list[FfcPlayer]:
     return players
 
 
-def position_ranks(players: list[FfcPlayer]) -> dict[str, int]:
-    """Map player name -> rank within their position by ADP (1 = earliest at that position)."""
+def ranked_players(players: list[FfcPlayer]) -> list[tuple[FfcPlayer, int]]:
+    """Each player paired with his rank within his position by ADP (1 = first).
+
+    The correct primitive. Prefer this over `position_ranks` wherever you hold
+    the player objects themselves, because it cannot suffer the name collision
+    described below -- ranks attach to players, not to strings.
+    """
     by_position: dict[str, list[FfcPlayer]] = {}
     for p in players:
         by_position.setdefault(p.position, []).append(p)
 
-    ranks: dict[str, int] = {}
-    for position, plist in by_position.items():
+    ranked: list[tuple[FfcPlayer, int]] = []
+    for plist in by_position.values():
         plist.sort(key=lambda pl: pl.adp)
-        for i, p in enumerate(plist, start=1):
-            ranks[p.name] = i
-    return ranks
+        ranked.extend((p, i) for i, p in enumerate(plist, start=1))
+    return ranked
+
+
+def ambiguous_names(players: list[FfcPlayer]) -> set[str]:
+    """Names shared by two different players at the same position.
+
+    Real, not hypothetical: two different Mike Williamses (Tampa Bay and
+    Seattle) and two different Steve Smiths (Carolina and the Giants) were all
+    active receivers in 2010 and 2011.
+    """
+    seen: Counter = Counter((p.name, p.position) for p in players)
+    return {name for (name, _), count in seen.items() if count > 1}
+
+
+def position_ranks(players: list[FfcPlayer]) -> dict[str, int]:
+    """Map player name -> positional ADP rank, EXCLUDING ambiguous names.
+
+    This function existed before `ranked_players` and is kept because the
+    points model looks players up by name (it receives a name, not an object).
+    But a name-keyed dict cannot represent two players who share a name, and
+    the original implementation just let the later one overwrite the earlier:
+    both 2011 Mike Williamses came back as rank 62 despite ADPs 114 picks
+    apart, and which one won was an accident of sort order.
+
+    Colliding names are now omitted rather than resolved arbitrarily. A caller
+    that misses gets no rank, and every caller here already treats that as
+    "unknown, assume deep" -- which is honest, where a confidently wrong rank
+    was not. It costs 8 of 2,461 entries across 2010-2024 (0.3%).
+
+    Team is deliberately not used to break the tie: callers hold only a name,
+    so they could not supply a team to disambiguate with even if this did.
+    """
+    excluded = ambiguous_names(players)
+    return {p.name: rank for p, rank in ranked_players(players) if p.name not in excluded}
 
 
 def derive_rank_cutoff(players: list[FfcPlayer], settings: LeagueSettings) -> dict[str, int]:

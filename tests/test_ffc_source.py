@@ -1,7 +1,14 @@
 import json
 from pathlib import Path
 
-from fantasyprep.historical.sources.ffc import FfcPlayer, derive_rank_cutoff, fetch_adp, position_ranks
+from fantasyprep.historical.sources.ffc import (
+    FfcPlayer,
+    ambiguous_names,
+    derive_rank_cutoff,
+    fetch_adp,
+    position_ranks,
+    ranked_players,
+)
 from fantasyprep.league.settings import LeagueSettings, ScoringSettings
 
 RAW_FIXTURE = {
@@ -127,3 +134,64 @@ def test_derive_rank_cutoff_ignores_undrafted_tail():
     # Only 1 QB is actually drafted (adp 3); the undrafted 2nd QB (adp 13)
     # must not inflate the count.
     assert cutoff["QB"] == 2
+
+
+def _wr(name: str, team: str, adp: float) -> FfcPlayer:
+    return FfcPlayer(name=name, position="WR", team=team, adp=adp, stdev=5.0, high=1, low=99)
+
+
+def test_two_players_sharing_a_name_each_keep_their_own_rank():
+    # Real case: two different Mike Williamses (Tampa Bay and Seattle) were
+    # both active receivers in 2010 and 2011, with ADPs 114 picks apart.
+    # A name-keyed dict cannot represent this, so the original implementation
+    # let one silently overwrite the other -- both came back rank 62.
+    players = [
+        _wr("Mike Williams", "TB", 42.1),
+        _wr("Other Guy", "KC", 80.0),
+        _wr("Mike Williams", "SEA", 156.0),
+    ]
+
+    ranked = ranked_players(players)
+
+    by_team = {(p.name, p.team): rank for p, rank in ranked}
+    assert by_team[("Mike Williams", "TB")] == 1
+    assert by_team[("Other Guy", "KC")] == 2
+    assert by_team[("Mike Williams", "SEA")] == 3
+
+
+def test_ambiguous_names_are_detected():
+    players = [
+        _wr("Mike Williams", "TB", 42.1),
+        _wr("Mike Williams", "SEA", 156.0),
+        _wr("Unique Guy", "KC", 80.0),
+    ]
+
+    assert ambiguous_names(players) == {"Mike Williams"}
+
+
+def test_position_ranks_abstains_on_ambiguous_names():
+    players = [
+        _wr("Mike Williams", "TB", 42.1),
+        _wr("Mike Williams", "SEA", 156.0),
+        _wr("Unique Guy", "KC", 80.0),
+    ]
+
+    ranks = position_ranks(players)
+
+    # Omitted rather than resolved arbitrarily: callers treat a miss as
+    # "unknown, assume deep", which is honest. A confidently wrong rank is not.
+    assert "Mike Williams" not in ranks
+    assert ranks["Unique Guy"] == 2
+
+
+def test_same_name_at_different_positions_is_not_ambiguous():
+    # Only a name+position clash is genuinely unresolvable; a WR and a TE
+    # sharing a name are separable by the position the caller already knows.
+    players = [
+        _wr("Mike Williams", "TB", 42.1),
+        FfcPlayer(name="Mike Williams", position="TE", team="SEA", adp=90.0,
+                  stdev=5.0, high=1, low=99),
+    ]
+
+    assert ambiguous_names(players) == set()
+    assert position_ranks(players)["Mike Williams"] == 1
