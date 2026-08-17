@@ -546,6 +546,34 @@ before adding features," agreed with)
   (post-vectorization, `be8d0fa`/`cfaf38e`) is the first one to actually
   finish. Unblocks the report redesign (STATUS.md's former #2 priority,
   deferred pending exactly this verdict) — not done yet.
+- 🔴 **Opponent-model choice (Gaussian vs. tail-floor) reverses 2 of the
+  3 backtest baselines** (2026-08-17, Windows overnight) — the headline
+  table and the TE-hindsight run above were both measured under the
+  plain-Gaussian opponent model, which the live tool stopped using on
+  2026-08-16 (see the tail-floor fix above). Re-ran the same 200-replay
+  scope (10yr×10slot×2 seeds, same seed) with only `--opponent-model`
+  differing: vs. ADP+need drops from 59% win/+30.2 (Gaussian) to **42%
+  win/-34.5, a losing record** (tail-floor); vs. pure ADP-chalk drops
+  from 73%/+155.0 to a coin-flip 51%/+52.9; vs. VOR moves the *other*
+  direction, from a CI-includes-zero 60%/+32.6 to a solid 63%/+77.2.
+  CIs for ADP+need don't overlap between the two conditions — a real,
+  reproducible effect (this run's Gaussian arm reproduces the old
+  published mean delta to one decimal, +30.2 both times, ruling out a
+  cross-machine methodology drift). A supplementary position-level
+  breakdown computed from the raw roster data (not the tool's built-in
+  output, so a plausible hypothesis rather than a confirmed mechanism):
+  QB's contribution to the model's edge shrinks roughly 40% under
+  tail-floor, RB's negative contribution widens, TE and WR move less.
+  Results: `data/overnight_backtest_gaussian.json` /
+  `data/overnight_backtest_tailfloor.json` (both committed), logged
+  experiments `overnight_ab_gaussian_2026-08-16` /
+  `overnight_ab_tailfloor_2026-08-16`. **Not yet done**: rerunning the
+  TE-hindsight comparison above under tail-floor (it was deliberately
+  Gaussian-only, for comparability with the old headline) and rerunning
+  the headline table itself under tail-floor — until both land, treat
+  the "model beats a realistic ADP+need drafter" claim as unresolved
+  under the opponent model the live tool actually uses, now the highest
+  STATUS.md priority.
 
 **Phase 3 — Player-Level Decision Engine**
 - ✅ **Built as a standalone diagnostic** (2026-08-16/17, Mac mini,
