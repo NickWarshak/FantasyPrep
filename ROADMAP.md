@@ -616,12 +616,43 @@ before adding features," agreed with)
 
   A 2-replay smoke test (`num_sims=30`) showed the player-choice branch
   losing badly (0/2, mean -200) — not concerning at n=2 given the
-  bucket-pooling caveat above (near-zero real signal expected under the
-  historical points model specifically), but flagged rather than assumed
-  away. **Overnight 20-seed/`num_sims=100` full-grid backtest launched
-  2026-08-16 ~23:15 EDT to get a real answer** (`data/backtest_player_choice_20seed.json`,
-  experiment `player-choice-vs-current-model-20seed`) — result not yet in
-  as of this entry; check STATUS.md's dedicated section for the outcome.
+  bucket-pooling caveat above, but flagged rather than assumed away. The
+  full overnight 20-seed/`num_sims=100` grid (`data/backtest_player_choice_20seed.json`,
+  experiment `player-choice-vs-current-model-20seed`, n=2000) **confirmed
+  the smoke test was not noise: this makes real performance measurably
+  worse.** Player-choice beat the current model in only 39% of replays
+  (95% CI 37%-43%, doesn't cross 50%), mean delta **-57.5** (95% CI -70.8
+  to -42.4, entirely negative). And **0/2000 replays matched the naive
+  best-ADP roster** — every single one diverged somewhere, far more often
+  than the bucket-pooling caveat alone predicts.
+
+  Root cause confirmed by hand, not just inferred (`player_choice.py
+  --year 2022 --pick 10`): at a real decision, Derrick Henry (ADP 4.3)
+  edged Jonathan Taylor (ADP 1.3, the real best-ADP pick) by simulated EV
+  1765.5 vs. 1763.0 — a 2.5-point margin on a ~1765-point roster value,
+  well inside Monte Carlo noise at `num_sims=100`. That's the mechanism
+  end to end: `HistoricalBootstrapModel` gives same-bucket candidates
+  statistically identical outcome distributions, so `recommend_players`'
+  "winner" among close candidates is essentially a coin flip driven by
+  simulation noise, not a real per-player signal — and real ADP already
+  encodes genuine market information (injury risk, situation, aging
+  curves) this points model has no other access to. Departing from it on
+  a noise-level coin flip throws that real signal away, which is exactly
+  what a systematic real-world loss looks like.
+
+  **Verdict**: full Monte Carlo re-simulation per candidate player is the
+  wrong tool for player-vs-player under the historical bootstrap points
+  model specifically — it needs genuine per-player signal to differentiate
+  candidates on anything but noise, which this points model doesn't have.
+  This directly validates Windows's simpler, already-live `resolve_pick`/
+  `best_value_within_position` approach (commits `670ce61`/`a39d573`): using
+  ESPN's real per-player projections directly, instead of re-simulating an
+  points model blind to per-player identity, was the right call. Not
+  wired into live recommendations (per this phase's stated posture); kept
+  as a validated-negative diagnostic and a real methodological lesson
+  (worth revisiting *if* paired with real per-player signal, e.g. ESPN
+  projections as `player_choice.py`'s `points_model`, rather than
+  abandoned outright) rather than deleted.
 - DST/K: deliberately *not* a target for modeling investment here (one
   low-value late slot, high year-to-year noise, streaming-friendly) —
   now that `historical/sources/ffc.py`'s DEF/PK position-code bug is
