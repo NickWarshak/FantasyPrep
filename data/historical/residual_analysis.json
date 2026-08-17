@@ -1,0 +1,159 @@
+{
+  "dispersion": {
+    "median_split": {
+      "predicted_risky_half": {
+        "actual_mean_abs_residual": 67.6,
+        "actual_residual_stdev": 86.0,
+        "n": 828
+      },
+      "predicted_safe_half": {
+        "actual_mean_abs_residual": 57.1,
+        "actual_residual_stdev": 71.2,
+        "n": 828
+      }
+    },
+    "n": 1656,
+    "pooled_early_round_bootstrap": {
+      "ci_high": 22.4,
+      "ci_low": 3.6,
+      "excludes_zero": true,
+      "n_high_risk": 446,
+      "n_low_risk": 445,
+      "observed_stdev_gap": 13.0,
+      "rank_cutoff": 24
+    },
+    "spearman_predicted_vs_actual_magnitude": 0.0897,
+    "within_adp_tier": {
+      "1-6": {
+        "actual_mean_abs_residual_high": 79.7,
+        "actual_mean_abs_residual_low": 68.4,
+        "actual_stdev_high_risk": 100.0,
+        "actual_stdev_low_risk": 86.7,
+        "n_high_risk": 120,
+        "n_low_risk": 119
+      },
+      "13-24": {
+        "actual_mean_abs_residual_high": 67.2,
+        "actual_mean_abs_residual_low": 58.2,
+        "actual_stdev_high_risk": 87.4,
+        "actual_stdev_low_risk": 73.2,
+        "n_high_risk": 207,
+        "n_low_risk": 207
+      },
+      "25-48": {
+        "actual_mean_abs_residual_high": 55.7,
+        "actual_mean_abs_residual_low": 59.1,
+        "actual_stdev_high_risk": 68.1,
+        "actual_stdev_low_risk": 72.0,
+        "n_high_risk": 234,
+        "n_low_risk": 234
+      },
+      "49+": {
+        "actual_mean_abs_residual_high": 62.3,
+        "actual_mean_abs_residual_low": 59.2,
+        "actual_stdev_high_risk": 69.4,
+        "actual_stdev_low_risk": 70.9,
+        "n_high_risk": 149,
+        "n_low_risk": 148
+      },
+      "7-12": {
+        "actual_mean_abs_residual_high": 67.6,
+        "actual_mean_abs_residual_low": 55.9,
+        "actual_stdev_high_risk": 86.5,
+        "actual_stdev_low_risk": 77.2,
+        "n_high_risk": 119,
+        "n_low_risk": 119
+      }
+    }
+  },
+  "feature_associations": {
+    "adp": {
+      "n": 1656,
+      "vs_residual_level": -0.1599,
+      "vs_residual_magnitude": -0.0211
+    },
+    "adp_position_rank": {
+      "n": 1656,
+      "vs_residual_level": -0.1154,
+      "vs_residual_magnitude": -0.0238
+    },
+    "adp_stdev": {
+      "n": 1656,
+      "vs_residual_level": -0.1517,
+      "vs_residual_magnitude": -0.0254
+    },
+    "age": {
+      "n": 1656,
+      "vs_residual_level": -0.0468,
+      "vs_residual_magnitude": -0.0257
+    },
+    "draft_pick": {
+      "n": 1522,
+      "vs_residual_level": -0.0172,
+      "vs_residual_magnitude": -0.0658
+    },
+    "prev_carries": {
+      "n": 1458,
+      "vs_residual_level": 0.0842,
+      "vs_residual_magnitude": 0.0876
+    },
+    "prev_catch_rate": {
+      "n": 1276,
+      "vs_residual_level": 0.0923,
+      "vs_residual_magnitude": 0.0364
+    },
+    "prev_fantasy_points": {
+      "n": 1458,
+      "vs_residual_level": 0.1218,
+      "vs_residual_magnitude": 0.026
+    },
+    "prev_fantasy_points_per_game": {
+      "n": 1458,
+      "vs_residual_level": 0.0852,
+      "vs_residual_magnitude": 0.0829
+    },
+    "prev_games": {
+      "n": 1458,
+      "vs_residual_level": 0.1046,
+      "vs_residual_magnitude": -0.0571
+    },
+    "prev_position_rank": {
+      "n": 1458,
+      "vs_residual_level": -0.1088,
+      "vs_residual_magnitude": 0.0111
+    },
+    "prev_target_share": {
+      "n": 1276,
+      "vs_residual_level": 0.0415,
+      "vs_residual_magnitude": -0.0235
+    },
+    "prev_targets": {
+      "n": 1458,
+      "vs_residual_level": 0.0645,
+      "vs_residual_magnitude": -0.0836
+    },
+    "prev_wopr": {
+      "n": 1271,
+      "vs_residual_level": 0.0114,
+      "vs_residual_magnitude": -0.0356
+    },
+    "prev_yards_per_target": {
+      "n": 1276,
+      "vs_residual_level": -0.0018,
+      "vs_residual_magnitude": -0.0461
+    },
+    "seasons_of_history": {
+      "n": 1656,
+      "vs_residual_level": -0.0228,
+      "vs_residual_magnitude": -0.0293
+    },
+    "seasons_since_rookie_year": {
+      "n": 1656,
+      "vs_residual_level": -0.031,
+      "vs_residual_magnitude": -0.0246
+    }
+  },
+  "n_residuals": 1656,
+  "residual_mean": -0.92,
+  "residual_stdev": 78.99
+}
