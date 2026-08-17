@@ -886,3 +886,143 @@ and gating its output. Individually, later phases don't block each other
    for QB and got dropped, ESPN doesn't have usable historical ADP either
    — the sharp source that actually shipped is FantasyPros ECR. See
    README.md for the full saga.)
+
+## Historical data foundation (2026-08-17)
+
+Groundwork for the eventual player-level outcome model. Deliberately scoped as
+**data engineering only** — the simulator, decision engine, backtest
+methodology, scoring, and opponent model are all unchanged. New package
+`historical/dataset/` lands alongside `historical/outcomes.py` rather than
+replacing it.
+
+The motivating gap: today every WR drafted 4th–6th at his position shares one
+bootstrap distribution. The goal is a distribution conditioned on that player's
+market rank, prior production, opportunity, age, and environment. That needs
+trustworthy data first, so this pass built and audited the data and stopped
+short of modelling.
+
+### Three traps found auditing the source
+
+A 1999–2024 nflverse seasonal CSV was supplied. It turned out to be the *same
+upstream source* the project already pulls via `nfl_data_py.import_seasonal_data`
+— its real value-add is the extra 1999–2009 seasons and being frozen, hence
+reproducible. Auditing it before use found three things that would each have
+silently corrupted anything built on top:
+
+1. **`season_type` holds three views of every player-season** — REG, POST, and
+   REG+POST — and REG+POST reports *different* fantasy points for 3,105 of the
+   15,102 player-seasons. A naive `read_csv` triple-counts every player and
+   inflates totals with playoff production. We keep REG, matching
+   `nfl_stats.py`'s existing `s_type="REG"`.
+
+2. **nflverse's `fantasy_points_ppr` uses 4-point passing TDs; our league uses
+   6.** Established by reproduction rather than assumption: `compute_points` at
+   `pass_td=4.0` matches that column to **0.00 max delta across all 13,415**
+   regular-season skill rows. That is simultaneously a strong independent
+   validation of `compute_points` itself — the same function the live pipeline
+   and backtest score with — and proof the column can't be the outcome variable.
+   Peyton Manning 2013 is 519.98 ours vs 409.98 theirs, exactly 2x his 55
+   passing TDs. Kept as `fantasy_points_nflverse_ppr`, a cross-check only.
+
+3. **The air-yards column family is fabricated *zeros* before 2006, not nulls.**
+   nflfastR's charting starts in 2006; before that these columns pass a null
+   check while carrying no information, so a model spanning the full history
+   would learn that nobody had air yards in 2003. `receiving_yards_after_catch`
+   is the nastiest case — *fragmentary* rather than uniformly zero (85 players
+   in 1999, ~1% in 2000–2005, season max 185 vs 670 in 2006), so it looks alive.
+   All masked to NaN by `loader.mask_uncollected_eras`.
+
+Also found: one 1999 orphan row with no name *and* no position. Dropped, but
+reported in the audit and bounded by a 0.1% threshold that still fails the build
+outright if name resolution ever breaks systemically.
+
+### Leakage prevention is enforced in code
+
+A leak doesn't crash anything — it just makes a future backtest report an edge
+that isn't real — so it isn't left to reviewer discipline. `features.py` splits
+every column into `PRE_SEASON_COLUMNS` and its **complement**, so an
+unclassified new column is treated as an outcome and fails closed.
+`preseason_frame()` is the sanctioned way to build model inputs.
+
+Two classifications that look over-cautious and are deliberate: `recent_team` is
+an *outcome* (it's the player's last team, so a midseason trade encodes
+post-draft information), and `yoy_fantasy_change` is an *outcome* despite
+reading like a feature (season Y's change contains season Y). Prior-season lags
+only carry a strictly adjacent season forward — a player who missed a year gets
+NaN, not a two-year-old season relabelled "last year".
+
+### Bucket-width study: width 3 holds for RB/WR, is thin for QB/TE
+
+`BUCKET_WIDTH = 3` was a reasonable choice but never measured. Measured now,
+two ways — by draft-time ADP rank (2010–2024, the comparable-to-today view) and
+by prior-season finish rank (2000–2024, the only view available for the full
+history, and leakage-safe by construction).
+
+Reading the ADP study as the bias/variance trade it is: at width 3, RB and WR
+carry ~43 samples per bucket with minimums of 30 and 36 — defensible. But the
+**deepest 3-wide buckets hold 2 samples at QB and 1 at TE**, which is not a
+distribution. Separately, WR loses almost nothing going 3 to 5 (spread of bucket
+medians 178.8 to 175.1, a 2% loss) while median samples per bucket rise 43 to 71
+— so if any width changes, WR is the strongest candidate. The prior-finish-rank
+study carries ~60% more samples per bucket than the ADP one, since it spans 25
+seasons instead of 15.
+
+**`BUCKET_WIDTH` deliberately not changed.** It's a live simulator parameter and
+deserves its own A/B backtest like everything else here, not a summary statistic.
+
+### FFC's `teams` parameter does nothing — affects the existing backtest
+
+Probing FFC directly while researching historical ADP: every past season returns
+`meta.teams=12` regardless of what's requested, and for the current season the
+echo is cosmetic — 2026 ADP values are **byte-identical across teams=8/10/12/14**
+(0 of 259 players differ, same `total_drafts`). So every
+`data/raw/.ffc_10_*.json` is 12-team-labelled pooled ADP despite the `_10_` in
+the filename, and has been all along.
+
+**This does not invalidate any existing backtest result** — both baseline and
+model conditions draft from the same ADP, so the A/B comparison stays internally
+consistent. What's wrong is the *claim* that the market input is 10-team
+specific. `ffc.derive_rank_cutoff` computes draft depth from 10-team roster math
+and applies it to an ordering that isn't 10-team specific, making the derived
+replacement ranks approximate in a way its docstring doesn't acknowledge. Fix is
+either a genuinely team-count-specific source or dropping the parameter and
+documenting the input as pooled consensus ADP. Not done here — out of scope for
+a data-only pass.
+
+Related: the earlier note that FFC historical ADP "drifts" **did not reproduce**.
+A fresh 2015 fetch versus the 2026-08-16 cache differs for 0 of 201 players,
+with `total_drafts` identical. Most likely the drift was on a still-accumulating
+recent season, not a closed one — meaning closed-season backtests should be
+reproducible across calendar days after all.
+
+### Coverage answers
+
+- **Historical ADP**: PPR floors at **2010** — exactly where
+  `DEFAULT_HISTORICAL_YEARS` already sat, so that was right. Standard scoring
+  reaches 2008; half-PPR has nothing. **1999–2007 has no market rank at all**,
+  which is the binding constraint on using the dataset's extra history for
+  anything ADP-conditioned. Not recommended to mix standard into PPR buckets:
+  a reception is worth 1 point in our league and 0 in that data, which
+  systematically distorts exactly the pass-catchers we're trying to learn about.
+- **Weekly data**: already working in `weekly_stats.py`, 1999–2024, joins on
+  gsis `player_id`. Snap counts are shallower than advertised (effective floor
+  **2013**, not 2012) and key on `pfr_player_id`, needing an id crosswalk.
+- **Player metadata**: the best result. `import_players` joins at **100%** on
+  gsis_id, with `birth_date`, `rookie_season`, and `years_of_experience` at 100%
+  coverage **in every era including 1999–2005**. Age was the one intended model
+  input with no source at all; it now has one, for free, no new dependency. The
+  27% draft-position gap is undrafted players — signal, not missing data.
+
+### Next
+
+Cheapest high-value step is the **age/experience join** (one exact-key merge,
+~5 new pre-season columns, zero leakage risk). Before spending anything on
+pre-2010 ADP acquisition, first check whether prior-finish-rank conditioning —
+available across all 26 seasons today — is sufficient on its own; that's a cheap
+analysis against data already in hand and it determines whether the ADP gap
+matters at all.
+
+Artifacts: `docs/HISTORICAL_DATA_AUDIT.md` (generated, re-runnable),
+`docs/HISTORICAL_ADP_RESEARCH.md`, `docs/WEEKLY_DATA_RESEARCH.md`,
+`docs/PLAYER_METADATA_RESEARCH.md`, `data/historical/*.parquet`. 46 new tests,
+full suite 349 passing, no regressions.
