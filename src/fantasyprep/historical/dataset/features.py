@@ -33,6 +33,7 @@ from __future__ import annotations
 import pandas as pd
 
 from fantasyprep.historical.dataset.canonical import _safe_divide
+from fantasyprep.historical.dataset.metadata import METADATA_FEATURE_COLUMNS
 
 # Prior-season values worth carrying forward as model inputs. Ranks are included
 # because "last year's WR8" is exactly the kind of coarse prior a market uses.
@@ -84,10 +85,19 @@ YOY_COLUMNS = ("yoy_fantasy_change", "yoy_target_change")
 
 # Knowable before the season starts: who the player is, and everything that
 # already happened in prior seasons.
+#
+# `METADATA_FEATURE_COLUMNS` (age, rookie season, draft capital) join in here
+# without a `prev_` lag, unlike everything else. That's not an oversight: a
+# birth date and a draft slot are fixed facts, so age *entering* season Y is
+# fully knowable before season Y kicks off. Note what is deliberately NOT here
+# -- the source's `years_of_experience` is a career-to-date figure reflecting
+# today rather than the row's season, so it would leak; `metadata.py` computes
+# `seasons_since_rookie_year` against the row's own season instead.
 PRE_SEASON_COLUMNS = frozenset(
     {"player_id", "player_name", "season", "position", "fantasy_position", "position_group"}
     | {f"prev_{c}" for c in LAG_SOURCE_COLUMNS}
     | {"prev_season", "seasons_of_history"}
+    | set(METADATA_FEATURE_COLUMNS)
 )
 
 

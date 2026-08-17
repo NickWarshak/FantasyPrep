@@ -245,7 +245,7 @@ The 2006 cliff in `air_yards_share`/`wopr` is the era boundary, not a data quali
 
 ### `data/historical/player_season_features.parquet`
 
-14,045 rows x 94 columns -- QB/RB/WR/TE only, with ranks, per-game rates, efficiency ratios, and prior-season lags.
+14,045 rows x 102 columns -- QB/RB/WR/TE only, with ranks, per-game rates, efficiency ratios, and prior-season lags.
 
 **Ranking methodology.** Ranks are computed on `fantasy_points` under our
 scoring, never the source column. Ties use `min` (two players tied for 5th are
@@ -257,11 +257,26 @@ players would bias the replacement-level tail. PPG rank comes in two variants:
 games, leaving the rest NaN. Both are kept because which is correct depends on
 the question.
 
+### Player metadata join (age, experience, draft capital)
+
+`nfl_data_py.import_players` joined on `gsis_id` -- which *is* our `player_id`, so no fuzzy matching. **Age coverage: 100.0%** of 14,045 rows; rookie season 100.0%.
+
+| position | n with age | mean | min | max |
+|---|---|---|---|---|
+| QB | 2,003 | 28.6 | 21.2 | 45.1 |
+| RB | 4,187 | 26.1 | 20.6 | 38.7 |
+| TE | 2,794 | 26.7 | 20.8 | 40.3 |
+| WR | 5,061 | 26.3 | 20.8 | 41.9 |
+
+Draft position is present for 73.1% of rows. **The remaining 26.9% is not missing data** -- those players went undrafted, which is real signal, so it is encoded as an explicit `undrafted` flag with the pick left NaN rather than filled with a sentinel a model would read as 'pick 0'.
+
+These columns are **leakage-safe without a lag**: a birth date and a draft slot are fixed facts, so age entering season Y is knowable before season Y. Note what is deliberately excluded -- the source's `years_of_experience` is a career-to-date figure reflecting *today* rather than the row's season, so it would leak; `seasons_since_rookie_year` is computed against the row's own season instead.
+
 ## Leakage safety
 
 The eventual point of this data is leakage-safe held-out backtests, so the pre-season / outcome split is enforced in code rather than by convention (`features.py`):
 
-- **`PRE_SEASON_COLUMNS`** (28 present here): identity, plus `prev_*` values and `seasons_of_history`. Legal model inputs for predicting that season.
+- **`PRE_SEASON_COLUMNS`** (36 present here): identity, plus `prev_*` values and `seasons_of_history`. Legal model inputs for predicting that season.
 - **Outcome columns** (66): everything else -- that season's own stats, rates, ranks and points. Target variables only.
 - The outcome set is defined as the *complement* of the pre-season set, not as a second hand-maintained list, so a newly added column is treated as an outcome until someone deliberately classifies it. It fails closed.
 - `preseason_frame(df, season)` is the sanctioned way to build model inputs.

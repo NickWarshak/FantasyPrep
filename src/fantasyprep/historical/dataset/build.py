@@ -29,6 +29,7 @@ from fantasyprep.historical.dataset.features import (
     outcome_columns,
 )
 from fantasyprep.historical.dataset.loader import DEFAULT_CSV_PATH, CsvPlayerSeasonSource
+from fantasyprep.historical.dataset.metadata import add_metadata, coverage_report
 from fantasyprep.historical.dataset.ranks import MIN_GAMES_FOR_PPG_RANK, add_ranks
 
 DEFAULT_OUT_DIR = Path("data/historical")
@@ -39,6 +40,7 @@ def build_all(
     csv_path: Path = DEFAULT_CSV_PATH,
     out_dir: Path = DEFAULT_OUT_DIR,
     docs_dir: Path = DEFAULT_DOCS_DIR,
+    with_metadata: bool = True,
 ) -> dict:
     source = CsvPlayerSeasonSource(csv_path)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -55,6 +57,14 @@ def build_all(
     # 12th among receivers, and a pool containing punters would be meaningless.
     skill = add_ranks(skill_players(canonical))
     features = add_features(skill)
+
+    if with_metadata:
+        print("Joining player metadata (age, experience, draft capital)...")
+        features = add_metadata(features)
+        metadata_coverage = coverage_report(features)
+        print(f"  age coverage: {metadata_coverage['age_coverage']:.1%}")
+    else:
+        metadata_coverage = None
 
     print("Running outcome bucket study...")
     adp_pairs = dist_mod.adp_rank_pairs(skill)
@@ -90,18 +100,23 @@ def build_all(
     features.to_parquet(features_path, index=False)
     study_path.write_text(json.dumps(study, indent=2, sort_keys=True), encoding="utf-8")
     audit_path.write_text(
-        render_audit(findings, canonical, features, study, csv_path), encoding="utf-8"
+        render_audit(findings, canonical, features, study, csv_path, metadata_coverage),
+        encoding="utf-8",
     )
 
     print(f"\n  {canonical_path}  ({len(canonical):,} rows x {len(canonical.columns)} cols)")
     print(f"  {features_path}  ({len(features):,} rows x {len(features.columns)} cols)")
     print(f"  {study_path}")
     print(f"  {audit_path}")
-    return {"canonical": canonical, "features": features, "study": study, "audit": findings}
+    return {
+        "canonical": canonical, "features": features, "study": study,
+        "audit": findings, "metadata_coverage": metadata_coverage,
+    }
 
 
 def render_audit(
-    findings: dict, canonical: pd.DataFrame, features: pd.DataFrame, study: dict, csv_path: Path
+    findings: dict, canonical: pd.DataFrame, features: pd.DataFrame, study: dict,
+    csv_path: Path, metadata_coverage: dict | None = None,
 ) -> str:
     coverage = findings["coverage"]
     identity = findings["identity"]
@@ -407,6 +422,42 @@ def render_audit(
     add("the question.")
     add("")
 
+    if metadata_coverage:
+        add("### Player metadata join (age, experience, draft capital)")
+        add("")
+        add(
+            f"`nfl_data_py.import_players` joined on `gsis_id` -- which *is* our "
+            f"`player_id`, so no fuzzy matching. **Age coverage: "
+            f"{metadata_coverage['age_coverage']:.1%}** of "
+            f"{metadata_coverage['rows']:,} rows; rookie season "
+            f"{metadata_coverage['rookie_season_coverage']:.1%}."
+        )
+        add("")
+        add("| position | n with age | mean | min | max |")
+        add("|---|---|---|---|---|")
+        for position in sorted(metadata_coverage["age_by_position"]):
+            s = metadata_coverage["age_by_position"][position]
+            add(f"| {position} | {s['n']:,} | {s['mean']} | {s['min']} | {s['max']} |")
+        add("")
+        add(
+            f"Draft position is present for "
+            f"{metadata_coverage['draft_pick_coverage']:.1%} of rows. **The remaining "
+            f"{metadata_coverage['undrafted_share']:.1%} is not missing data** -- those "
+            "players went undrafted, which is real signal, so it is encoded as an "
+            "explicit `undrafted` flag with the pick left NaN rather than filled with a "
+            "sentinel a model would read as 'pick 0'."
+        )
+        add("")
+        add(
+            "These columns are **leakage-safe without a lag**: a birth date and a draft "
+            "slot are fixed facts, so age entering season Y is knowable before season Y. "
+            "Note what is deliberately excluded -- the source's `years_of_experience` is "
+            "a career-to-date figure reflecting *today* rather than the row's season, so "
+            "it would leak; `seasons_since_rookie_year` is computed against the row's own "
+            "season instead."
+        )
+        add("")
+
     add("## Leakage safety")
     add("")
     add(
@@ -567,8 +618,12 @@ def main() -> None:
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV_PATH)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--docs-dir", type=Path, default=DEFAULT_DOCS_DIR)
+    parser.add_argument("--no-metadata", action="store_true",
+                        help="skip the age/experience join, keeping the build fully offline "
+                             "even with no cached metadata on disk")
     args = parser.parse_args()
-    build_all(csv_path=args.csv, out_dir=args.out_dir, docs_dir=args.docs_dir)
+    build_all(csv_path=args.csv, out_dir=args.out_dir, docs_dir=args.docs_dir,
+              with_metadata=not args.no_metadata)
 
 
 if __name__ == "__main__":
