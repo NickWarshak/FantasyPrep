@@ -1026,3 +1026,155 @@ Artifacts: `docs/HISTORICAL_DATA_AUDIT.md` (generated, re-runnable),
 `docs/HISTORICAL_ADP_RESEARCH.md`, `docs/WEEKLY_DATA_RESEARCH.md`,
 `docs/PLAYER_METADATA_RESEARCH.md`, `data/historical/*.parquet`. 46 new tests,
 full suite 349 passing, no regressions.
+
+## Modeling research: four experiments (2026-08-17, Windows)
+
+Full detail in `docs/MODELING_RESEARCH.md`; raw output in
+`data/historical/{adp_vs_history_benchmark,distribution_benchmark,residual_analysis,rookie_model}.json`.
+New `fantasyprep.research` package, with sklearn/scipy declared as an optional
+`research` extra so the simulator, backtest and dataset build never depend on
+them. **The draft engine was not modified by any of this.**
+
+The four experiments were run in sequence, each prompted by the last one's
+result, and together they tell one story that is not the story the project set
+out to confirm.
+
+### 1. The market already prices the median
+
+Three arms predicting held-out season points, walk-forward, ridge. Common
+population (has ADP *and* a prior season, n=1,458):
+
+| arm | Spearman | R² |
+|---|---|---|
+| history | 0.5715 | 0.3661 |
+| market (ADP) | 0.6074 | 0.4049 |
+| both | 0.6149 | 0.4124 |
+
+ADP adds **+0.046 R²** on top of history. History adds **+0.0075** on top of
+ADP — essentially nothing.
+
+**A methodological trap nearly reversed this.** The first run had history at
+R² 0.2812. But only the market arm trained on drafted players (it has no choice
+— a row with no ADP has no market features), while history trained on every
+row. Matching the training populations lifted history to 0.3661: **two thirds
+of the apparent gap was a training-population artifact, not information.** All
+arms now train matched, with the unmatched variant kept as a robustness line.
+
+ADP's real edge is on **rookies** (0.517 vs 0.283 Spearman) — where the player
+has no history at all. Worth remembering why: ADP contains offseason
+information (injuries, depth charts, holdouts) that lagged stats structurally
+cannot. This is "recent vs stale information", not "crowd beats stats".
+
+### 2. The incumbent bucket system is already well calibrated
+
+Given #1, a better median is an exhausted margin, so the scoreboard moved to
+calibration. Scored on 1,656 held-out player-seasons:
+
+| arm | coverage err | CRPS | median MAE |
+|---|---|---|---|
+| adp_bucket (incumbent) | 0.0149 | 35.716 | 62.36 |
+| adp_prior_bucket | 0.0152 | 35.728 | 62.35 |
+| profile_quantile | 0.0154 | **34.551** | **60.47** |
+
+**Mean absolute coverage error of 1.5 percentage points for the system already
+in production** — being empirical, it is calibrated close to by construction.
+That is a real validation of the current design and a hard bar, not a strawman.
+The profile model wins **modestly**: CRPS −3.3%, median MAE −3.0%, at equal
+calibration and slightly tighter intervals.
+
+**Two-axis empirical bucketing is infeasible at this data volume**, which is why
+arm B matches arm A to three decimals. Measured: the ADP × prior-finish cell
+clears 20 samples only **4.0%** of the time; 65.8% falls back to ADP-only and
+30.2% all the way to position-level. Conditioning beyond ADP rank requires a
+*model*, not finer buckets.
+
+**A concrete defect worth fixing**: both bucket arms under-cover the upside.
+P90 coverage is 0.87 against nominal 0.90, P75 is 0.73 against 0.75 — real
+outcomes beat the stated ceiling ~13% of the time instead of 10%.
+
+### 3. Risk is separable from rank, but weakly and only early
+
+Residual = actual − leakage-safe ADP-bucket expectation (n=1,656, mean −0.9,
+stdev 79.0). Average calibration can hide what a draft engine needs: a system
+can be calibrated overall while being overconfident about 30-year-olds and
+underconfident about second-year breakouts, with the errors cancelling.
+
+**Level: no exploitable bias.** Every feature association is weak (largest
+|Spearman| 0.15). The market is efficient about *where* to draft a player.
+
+**Dispersion: real but modest.** Fitting |residual| on the preseason profile and
+splitting each ADP tier at its own median predicted risk gives stdev gaps of
++13.3 / +9.3 / +14.2 in tiers 1-6 / 7-12 / 13-24, and *reversed* (−3.9, −1.5) in
+25-48 and 49+. Bootstrapped, because a 15% gap on ~120 players per cell is
+exactly the kind of number that evaporates under resampling: pooled across the
+top 24, split within tier, **+13.0 stdev, 95% CI [+3.6, +22.4] — excludes
+zero.** No single tier clears zero alone, which is stated rather than papered
+over.
+
+Past rank 24 there is no signal. That is a real boundary, not a reason to keep
+hunting — deep picks are lottery tickets where everyone is equally uncertain.
+It also happens to be the useful place for it, since the early rounds decide a
+season.
+
+### 4. Rookies do NOT deserve their own model
+
+The natural conclusion from #1 and #2, argued explicitly in review:
+`prev_fantasy_points = NaN` is a different information state, not missing data.
+Tested rather than assumed, on 198 held-out rookies:
+
+| arm | coverage err | CRPS | median MAE |
+|---|---|---|---|
+| adp_bucket | 0.0267 | 36.063 | 64.08 |
+| **shared_profile** | **0.0152** | **32.902** | **57.59** |
+| rookie_specialist | 0.0640 | 35.361 | 63.09 |
+
+**The specialist is worse on every metric**, with ~4× the coverage error, and
+barely better than the incumbent it was meant to displace. Same ordering at RB
+and WR separately. Cause is sample size, not feature design: a rookie-only model
+trains on 62–236 rows while the shared model transfers an ADP-to-outcome
+relationship learned from thousands.
+
+### The through-line, and what it implies
+
+Two independent experiments hit the same wall from different directions — 2D
+bucketing failed because its cells were empty 96% of the time, rookie
+specialisation failed because 150 rows cannot support a model. **The binding
+constraint on this project's modeling is data volume, not model
+sophistication.** Anything that fragments the sample loses; pooling wins.
+
+That reorders priorities:
+
+1. **Expand the sample before elaborating the model.** The 1999-2009 seasons can
+   train the history component *today*, with no ADP at all — already sitting in
+   `player_season_features.parquet`.
+2. **Carry a variance term, not a better median.** The median is the market's
+   job. The early-round dispersion signal is what is worth feeding the Monte
+   Carlo.
+3. **Fix the upside under-coverage**, a measured defect in the distributions the
+   simulator samples from today.
+4. **Pre-2010 ADP stays demoted** — its value is concentrated in rookie
+   modeling, and the shared model (needing no extra ADP) is the better rookie
+   model anyway.
+
+**Size the next phase against gains that are real but incremental**: 3% CRPS
+overall, 9% on rookies, a modest early-round variance signal. Not the step
+change the "player-level vNext" framing assumed.
+
+### Engineering fixed along the way
+
+- **FFC name collision.** `position_ranks` built a name-keyed dict, so two
+  players sharing a name overwrote each other and *both* returned the same
+  positional rank — the 2011 Mike Williams pair (Tampa Bay and Seattle) both
+  reported rank 62 despite ADPs 114 picks apart, and which one won was an
+  accident of sort order. Two Steve Smiths had the same problem. `ranked_players()`
+  is now the correct primitive (ranks attach to objects, not strings);
+  `position_ranks` omits ambiguous names rather than resolving them arbitrarily,
+  costing 8 of 2,461 entries (0.3%). Regression tests added.
+- **ADP columns were classified as outcomes**, caught by the fail-closed leakage
+  split — `preseason_frame()` was silently stripping them, so no model could
+  have used ADP at all.
+- **Age/experience/draft-capital join** landed at 100% coverage on `gsis_id`.
+  The source's `years_of_experience` is deliberately dropped because it leaks
+  (career-to-date, reflects today rather than the row's season);
+  `seasons_since_rookie_year` replaces it. Undrafted players carry an explicit
+  flag rather than an imputed pick number.
