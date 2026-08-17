@@ -398,6 +398,37 @@ def test_recommend_value_pick_surfaces_a_later_adp_player_as_better_value(tmp_pa
     assert value_pick["is_different"] is True
 
 
+def test_recommend_points_source_espn_actually_recommends_the_value_player(tmp_path: Path):
+    # The deeper integration: points_source=espn shouldn't just display a
+    # value pick alongside the model's real choice -- it should BE the
+    # model's choice, for the recommended row itself, not just the
+    # separate value_pick card.
+    value_espn_points = {
+        "RB One": 100.0, "RB Two": 300.0,
+        "WR One": 100.0, "WR Two": 300.0,
+        "QB One": 100.0, "QB Two": 300.0,
+        "TE One": 100.0, "TE Two": 300.0,
+    }
+    app = _make_app(tmp_path, espn_points=value_espn_points)
+    client = app.test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    resp_historical = client.get("/api/recommend?seed=1&points_source=historical")
+    resp_espn = client.get("/api/recommend?seed=1&points_source=espn")
+
+    hist_rows = resp_historical.get_json()["rows"]
+    espn_rows = resp_espn.get_json()["rows"]
+
+    hist_top_position = hist_rows[0]["position"]
+    # Under historical scoring, the recommended player is still best-ADP.
+    assert next(r["player"] for r in hist_rows if r["position"] == hist_top_position) == f"{hist_top_position} One"
+    # Under espn scoring, the SAME position's recommended player is now
+    # the value player, not chalk -- the simulation itself picked
+    # differently, this isn't just the separate value_pick card.
+    espn_top_position = espn_rows[0]["position"]
+    assert next(r["player"] for r in espn_rows if r["position"] == espn_top_position) == f"{espn_top_position} Two"
+
+
 def test_next_pick_is_mine_hint(client):
     # 10-team, slot 1 -> picks 1, 20, 21, ...
     client.post("/api/setup", json={"my_draft_slot": 1})

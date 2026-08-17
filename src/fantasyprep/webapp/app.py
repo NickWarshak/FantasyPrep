@@ -49,6 +49,7 @@ from fantasyprep.draft_sim.simulate import (
     pick_owner,
     position_confidence,
     recommend_positions,
+    resolve_pick,
     state_from_picks,
 )
 from fantasyprep.historical.outcomes import build_outcome_distributions
@@ -313,10 +314,23 @@ def create_app(
             return jsonify({"error": "points_source must be 'historical' or 'espn'"}), 400
         rng = random.Random(seed)
 
+        # ESPN's real per-player projections -- the one source of genuine
+        # player-specific signal in this codebase (the historical bucket
+        # model can't differentiate two players at the same rank). Always
+        # fetched (cached to disk after the first call) since the
+        # within-position value-pick comparison below needs it regardless
+        # of which points_source the main recommendation uses; only
+        # actually steers the simulation's own player *selection* when
+        # points_source=espn was explicitly requested (opt-in -- see
+        # simulate.resolve_pick's docstring for why historical stays
+        # untouched by this).
+        espn_points = get_points_model("espn").espn_points
+        player_points = espn_points if points_source == "espn" else None
+
         points_model = get_points_model(points_source)
         rows = recommend_positions(
             live_pool, state, settings, points_model, sims, rng,
-            opponent_weight_fn=pick_weight_with_tail_floor,
+            opponent_weight_fn=pick_weight_with_tail_floor, player_points=player_points,
         )
         # How lopsided the top position's edge is over the runner-up -- the
         # same logistic blend backtest.py has used since the season-total
@@ -326,33 +340,28 @@ def create_app(
         confidence = position_confidence(rows)
 
         # Resolve each recommended position down to the specific player the
-        # tool would actually draft there -- same rule the model itself uses
-        # live (backtest.py's model_strategy): best-ADP undrafted player at
-        # that position. Not a separate player-level model (that's real
-        # future work, not built yet) -- this is the existing position-level
-        # recommendation made concrete, not a new source of judgment.
+        # tool would actually draft there -- resolve_pick with the SAME
+        # player_points the simulation itself used above, so the displayed
+        # player always matches what was actually simulated (best-ADP
+        # unless points_source=espn asked for value-aware selection).
         undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
         results = []
         for pos, mean, p25, p75 in rows:
             candidates = [p for p in undrafted if p.position == pos]
             if not candidates:
                 continue
-            player = min(candidates, key=lambda p: p.adp)
+            player = resolve_pick(candidates, player_points)
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
             })
 
         # Within-position comparison for the #1 recommended position: is the
-        # best-ADP player actually the best real value, using ESPN's
-        # per-player projections (the one source of genuine player-specific
-        # signal in this codebase) -- the historical bucket model can't
-        # differentiate two players at the same rank, so this only makes
-        # sense against real named-player data, regardless of which
-        # points_source the main recommendation used.
+        # best-ADP player actually the best real value -- shown regardless
+        # of points_source (even under historical scoring, it's worth
+        # knowing a later-ADP player projects higher in reality).
         value_pick = None
         if rows:
-            espn_points = get_points_model("espn").espn_points
             value_pick = best_value_within_position(rows[0][0], undrafted, espn_points)
 
         return jsonify({"rows": results, "confidence": confidence, "value_pick": value_pick})

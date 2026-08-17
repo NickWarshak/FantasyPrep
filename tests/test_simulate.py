@@ -4,6 +4,8 @@ import statistics
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor
 from fantasyprep.draft_sim.opponent import OpponentSampler as real_opponent_sampler
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel
@@ -17,6 +19,7 @@ from fantasyprep.draft_sim.simulate import (
     pick_owner,
     position_confidence,
     recommend_positions,
+    resolve_pick,
     simulate_position_choice,
     state_from_picks,
 )
@@ -379,3 +382,80 @@ def test_best_value_within_position_ignores_candidates_outside_adp_window():
 
     assert result is not None
     assert result["value_player"] != "WR14"
+
+
+# --- resolve_pick / player_points threading: real per-player signal can
+# now drive which player a position's simulated pick actually is, not
+# just display an alternative alongside the model's real choice
+# (2026-08-16). Opt-in -- None preserves best-ADP exactly. ---
+
+
+def testresolve_pick_defaults_to_best_adp_with_no_player_points():
+    candidates = [_p("Chalk", "WR", adp=10.0), _p("Later", "WR", adp=14.0)]
+    assert resolve_pick(candidates, player_points=None).name == "Chalk"
+    assert resolve_pick(candidates, player_points={}).name == "Chalk"
+
+
+def testresolve_pick_prefers_real_value_within_window():
+    candidates = [_p("Chalk", "WR", adp=10.0), _p("Better Value", "WR", adp=14.0)]
+    player_points = {"chalk": 150.0, "better value": 220.0}
+    assert resolve_pick(candidates, player_points).name == "Better Value"
+
+
+def testresolve_pick_ignores_signal_outside_adp_window():
+    # ADP_VALUE_WINDOW is 8 -- a huge projection well outside that window
+    # must not override the in-window best-ADP player.
+    candidates = [_p(f"P{i}", "WR", adp=float(i)) for i in range(1, 15)]
+    player_points = {f"p{i}": 100.0 for i in range(1, 15)}
+    player_points["p14"] = 999.0  # adp=14, well outside an 8-wide window
+    assert resolve_pick(candidates, player_points).name != "P14"
+
+
+def testresolve_pick_falls_back_to_best_adp_when_no_signal_in_window():
+    candidates = [_p("Chalk", "WR", adp=10.0), _p("Later", "WR", adp=14.0)]
+    # Neither player has real signal -- must not error or guess.
+    assert resolve_pick(candidates, player_points={"someone else": 999.0}).name == "Chalk"
+
+
+def test_simulate_position_choice_selects_by_value_when_player_points_given():
+    # Deterministic real points make this end-to-end checkable. WR rank is
+    # by ADP (BUCKET_WIDTH=3): WR One (rank 1) and two fillers (ranks 2-3)
+    # all land in bucket 0 (fixed 100.0); Value WR (adp=8.0, rank 4) is the
+    # first WR to fall into bucket 1, given its own distinct fixed outcome
+    # -- so which bucket the simulated roster's WR score comes from
+    # directly reveals which specific player was actually picked.
+    pool = list(LIVE_POOL) + [
+        _p("Filler WR A", "WR", adp=6.5),
+        _p("Filler WR B", "WR", adp=7.0),
+        _p("Value WR", "WR", adp=8.0),
+    ]
+    state = state_from_picks(teams=10, my_draft_slot=1, picks=[])
+    distributions = dict(DISTRIBUTIONS)
+    distributions[("WR", 1)] = OutcomeDistribution("WR", 1, [500.0])  # Value WR's bucket, distinct from 100.0
+    points_model = HistoricalBootstrapModel(distributions)
+
+    results_no_signal = simulate_position_choice(
+        "WR", pool, state, SETTINGS, points_model, num_sims=1, rng=random.Random(1),
+    )
+    results_with_signal = simulate_position_choice(
+        "WR", pool, state, SETTINGS, points_model, num_sims=1, rng=random.Random(1),
+        player_points={"value wr": 100_000.0},  # dwarfs every other WR's real fixture projection
+    )
+
+    assert results_no_signal is not None and results_with_signal is not None
+    # No signal -> chalk WR One (bucket 0, 100.0). With signal -> Value WR
+    # actually gets drafted (bucket 1, 500.0) -- the only way the roster
+    # total can differ by exactly 400 between two runs sharing a seed.
+    assert results_with_signal[0] - results_no_signal[0] == pytest.approx(400.0)
+
+
+def test_recommend_positions_player_points_defaults_to_none_unaffected():
+    # No player_points passed -- ranking must be identical to before this
+    # parameter existed (same seed, same everything else).
+    state = state_from_picks(teams=10, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(DISTRIBUTIONS)
+    with_default = recommend_positions(LIVE_POOL, state, SETTINGS, points_model, num_sims=5, rng=random.Random(1))
+    explicit_none = recommend_positions(
+        LIVE_POOL, state, SETTINGS, points_model, num_sims=5, rng=random.Random(1), player_points=None,
+    )
+    assert with_default == explicit_none

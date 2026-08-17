@@ -43,6 +43,13 @@ from fantasyprep.players.normalize import normalize_name
 
 CANDIDATE_POSITIONS = ("QB", "RB", "WR", "TE")
 
+# How many ADP-ranked candidates at a position count as "reachable" for a
+# real-value comparison -- shared by resolve_pick (drives which player the
+# simulation actually treats as the pick) and best_value_within_position
+# (the live "value pick" display) so the two stay consistent: a real
+# drafter doesn't reach several rounds past ADP chasing a projection.
+ADP_VALUE_WINDOW = 8
+
 
 def pick_owner(teams: int, pick_number: int) -> int:
     """Which team draft-slot (1-indexed) owns a given overall pick number, snake order."""
@@ -104,6 +111,31 @@ def _ffc_scoring_slug(settings: LeagueSettings) -> str:
     return "standard"
 
 
+def resolve_pick(candidates: list[ffc.FfcPlayer], player_points: dict[str, float] | None) -> ffc.FfcPlayer:
+    """Which specific player counts as "the" pick at a position -- real
+    per-player signal (`player_points`, e.g. ESPN projections) within
+    `ADP_VALUE_WINDOW` of ADP when available, not just blindly the
+    best-ADP player.
+
+    Defaults to best-ADP when `player_points` is None/empty or nobody in
+    the window has signal -- this is what makes the change opt-in: the
+    historical bucket points model has no per-player signal to justify
+    deviating from ADP order, so every existing backtest/research call
+    site (which never passes `player_points`) is completely unaffected.
+    Only a caller that has real named-player data and deliberately passes
+    it (the live tool, when `points_source=espn`) gets value-aware
+    selection."""
+    best_adp = min(candidates, key=lambda p: p.adp)
+    if not player_points:
+        return best_adp
+    window = sorted(candidates, key=lambda p: p.adp)[:ADP_VALUE_WINDOW]
+    with_signal = [(p, player_points.get(normalize_name(p.name))) for p in window]
+    with_signal = [(p, pts) for p, pts in with_signal if pts is not None]
+    if not with_signal:
+        return best_adp
+    return max(with_signal, key=lambda t: t[1])[0]
+
+
 def simulate_position_choice(
     candidate_position: str,
     live_pool: list[ffc.FfcPlayer],
@@ -113,6 +145,7 @@ def simulate_position_choice(
     num_sims: int,
     rng: random.Random,
     opponent_weight_fn=pick_weight,
+    player_points: dict[str, float] | None = None,
 ) -> list[float] | None:
     # Position rank reflects each player's fixed standing in the full live
     # ADP universe -- not shifting as the draft progresses -- since that's
@@ -124,7 +157,7 @@ def simulate_position_choice(
     candidates = [p for p in undrafted if p.position == candidate_position]
     if not candidates:
         return None
-    my_pick_now = min(candidates, key=lambda p: p.adp)
+    my_pick_now = resolve_pick(candidates, player_points)
 
     total_rounds = sum(settings.roster_slots.values()) + settings.bench
     my_picks = [n for n in my_pick_numbers(state.teams, state.my_draft_slot, total_rounds) if n >= state.current_pick]
@@ -187,6 +220,7 @@ def recommend_positions(
     num_sims: int,
     rng: random.Random,
     opponent_weight_fn=pick_weight,
+    player_points: dict[str, float] | None = None,
 ) -> list[tuple[str, float, float, float]]:
     """Position, expected starting-lineup points, P25, P75 -- sorted best first.
 
@@ -197,12 +231,19 @@ def recommend_positions(
     `opponent.pick_weight_with_tail_floor` here to keep this internal
     assumption consistent with an outer `--opponent-model
     gaussian-tail-floor` backtest run (see `backtest.py`'s `run_full_draft`
-    docstring for why the two used to diverge)."""
+    docstring for why the two used to diverge).
+
+    `player_points` (normalized name -> real projected points, e.g. ESPN's)
+    lets each position's simulated pick be the best real-value player
+    within `ADP_VALUE_WINDOW`, not just the best-ADP one -- see
+    `resolve_pick`. None (the default) preserves the original best-ADP
+    behavior exactly, so no existing backtest/research call site is
+    affected by this parameter existing."""
     rows = []
     for position in CANDIDATE_POSITIONS:
         results = simulate_position_choice(
             position, live_pool, state, settings, points_model, num_sims, rng,
-            opponent_weight_fn=opponent_weight_fn,
+            opponent_weight_fn=opponent_weight_fn, player_points=player_points,
         )
         if results is None:
             continue
