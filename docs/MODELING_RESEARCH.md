@@ -229,3 +229,153 @@ That reorders the priorities:
 rookies, a modest variance signal in the first two rounds. Anyone planning the
 next phase should size the effort against that, not against the hoped-for step
 change.
+
+---
+
+# Part II: from "what predicts outcomes" to "what the engine can use"
+
+Part I established that the market prices the median and the incumbent buckets
+are already calibrated. Part II asks the follow-up question that actually
+governs the roadmap: **can the draft engine consume anything better, and what is
+wrong with the distributions it samples from today?**
+
+The answers reordered the plan.
+
+---
+
+## 5. The draft objective is structurally variance-seeking
+
+`python -m fantasyprep.research.variance_sensitivity`
+
+`roster.starting_lineup_value` sorts a roster and takes the top N per slot. That
+is a **selection operator, and it is convex** — so by Jensen's inequality,
+raising a player's variance while holding his mean fixed *raises* expected
+starting-lineup value. The lineup captures upside; the bench truncates downside.
+Nobody chose this. It falls out of the roster math.
+
+Today it is invisible, because every player in a rank bucket shares one
+distribution, so the effect is uniform and cancels between positions. Introduce
+genuine player-specific variance and it stops cancelling.
+
+Measured with a mean-preserving spread on WR only (bucket mean held at
+**264.49 → 264.49 exactly**; stdev 83.3 → 166.5), 2024 pool, slot 5, common seed:
+
+| spread | top rec | WR | RB |
+|---|---|---|---|
+| 1.00 | **RB** | 1708.2 | 1708.3 |
+| 1.25 | **WR** | 1737.9 | 1729.9 |
+| 1.50 | **WR** | 1769.2 | 1752.8 |
+| 2.00 | **WR** | 1834.3 | 1801.2 |
+
+**A 1.25× spread — mean unchanged to the cent — flips the top recommendation and
+buys +29.7 points.** At 2× it is +126.1.
+
+The residual analysis found a *real* dispersion difference of ~13 stdev points.
+**The artifact is several times larger than the signal.** Feeding real variance
+into this objective would swamp the signal, and the resulting backtest would read
+as "variance doesn't help" when the truth is "the objective cannot use it."
+
+---
+
+## 6. Realistic weekly lineups are variance-*averse* — the sign flips
+
+`python -m fantasyprep.research.lineup_hindsight`
+
+The suspected root cause of #5 is not the objective but the **scoring**: one
+season total per player, then a lineup chosen with perfect hindsight. Three
+scorers on the same 200 random rosters and the same real 2023 weekly data, with
+a mean-preserving spread applied to WR *weekly* outcomes that leaves each
+player's season total exactly unchanged:
+
+| scorer | ×1.25 | ×1.5 | ×2.0 | mean roster score |
+|---|---|---|---|---|
+| season_hindsight *(what the engine does)* | +0.0 | +0.0 | +0.0 | 1478.0 |
+| weekly_hindsight | +15.6 | +34.0 | **+76.6** | 1690.1 |
+| weekly_realistic | −3.9 | −9.0 | **−21.8** | 1529.5 |
+
+`season_hindsight` reading exactly +0.0 is the sanity check that the spread is
+genuinely total-preserving.
+
+**The finding is the sign flip.** Hindsight weekly lineups reward volatility
+heavily — you can start a player precisely on his boom weeks. Realistic weekly
+lineups (rank by what a player had averaged over weeks *already played*, then
+score what those starters actually did) **penalise** it, because nobody can
+predict which weeks boom, so a volatile player gets started on his busts and
+benched on his booms.
+
+**Boom/bust players are systematically overvalued by any hindsight-based scorer,
+and the current engine is hindsight-based.**
+
+Second finding: the current scorer is wrong in two directions at once. Its mean
+roster score (1478.0) is *below* realistic weekly management (1529.5) — a premium
+of **−51.4** — because season totals ignore that a manager rotates players across
+a season and extracts value from more than N of them. It simultaneously
+understates roster value and is blind to weekly consistency.
+
+---
+
+## 7. Fixing the upside under-coverage
+
+`python -m fantasyprep.research.calibration`
+
+Experiment 2 found the buckets under-cover the upside. Diagnosed by segment, the
+defect is badly non-uniform and worst where it matters most:
+
+| ADP tier | p50 | p75 | p90 | p95 |
+|---|---|---|---|---|
+| 1–6 | 0.46 | **0.64** | **0.80** | **0.85** |
+| 49+ | 0.57 | 0.81 | 0.91 | 0.95 |
+
+An elite player beats his bucket's stated P90 about **20%** of the time instead
+of 10%.
+
+Four corrections tried, all via PIT recalibration (fit `G`, the empirical CDF of
+the probability integral transform, on strictly-prior seasons; read the raw
+distribution at `G⁻¹(q)`):
+
+| arm | coverage err | CRPS | note |
+|---|---|---|---|
+| incumbent | 0.0149 | 35.716 | |
+| global | 0.0172 | 35.879 | fixes the tail but **shifts the median** (.50→.53) |
+| per_tier | 0.0349 | 36.089 | **fragments the sample** — worst of all |
+| tail_only | **0.0097** | 35.746 | median anchored; best marginal calibration |
+| smooth | 0.0206 | **35.359** | best CRPS, and best where it matters |
+
+`per_tier` failing is the **third consecutive instance** of the fragmentation
+lesson, after 2D bucketing and rookie specialisation.
+
+**`smooth` is the synthesis.** Kernel-weight the recalibration by distance in ADP
+rank, so every training observation contributes to every estimate and no cell can
+go empty, while the correction still varies continuously with rank —
+*conditioning without fragmenting*. On the target segment:
+
+| tier 1–6 | p75 | p90 | p95 | coverage err | CRPS |
+|---|---|---|---|---|---|
+| incumbent | 0.64 | 0.80 | 0.85 | 0.0583 | 43.751 |
+| **smooth** | **0.71** | **0.87** | **0.93** | **0.0311** | **42.567** |
+
+Coverage error nearly halved on the segment that decides drafts, CRPS better in
+essentially every tier, median held at 0.50 exactly.
+
+**Not yet wired into the engine.** Changing the distributions the simulator
+samples from deserves its own A/B like every other engine change here.
+
+---
+
+## Revised roadmap
+
+The Part II results reorder what Part I suggested:
+
+1. **Fix the scorer before the variance model.** Realistic weekly lineup scoring
+   is now a *prerequisite*, not a later enhancement — building a variance model
+   on top of a hindsight scorer would push recommendations toward volatile
+   players when reality penalises them.
+2. **Ship the `smooth` recalibration**, behind its own A/B.
+3. **Then** the variance model, which finally has a channel that can carry it.
+4. **Decision-value testing throughout**, not at the end. A 3% CRPS gain means
+   nothing until it changes a pick.
+
+**The fragmentation lesson now has four instances** (2D buckets, rookie
+specialisation, per-tier recalibration — and the kernel-weighted fix that finally
+works). It should be treated as a standing constraint on this project's
+modeling, not a series of coincidences.
