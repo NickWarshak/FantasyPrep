@@ -44,6 +44,7 @@ from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor, sample_p
 from fantasyprep.historical.sources.fantasypros_rankings import load_fantasypros_rankings
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.simulate import (
+    best_value_within_position,
     current_pick_number,
     pick_owner,
     position_confidence,
@@ -341,7 +342,20 @@ def create_app(
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
             })
-        return jsonify({"rows": results, "confidence": confidence})
+
+        # Within-position comparison for the #1 recommended position: is the
+        # best-ADP player actually the best real value, using ESPN's
+        # per-player projections (the one source of genuine player-specific
+        # signal in this codebase) -- the historical bucket model can't
+        # differentiate two players at the same rank, so this only makes
+        # sense against real named-player data, regardless of which
+        # points_source the main recommendation used.
+        value_pick = None
+        if rows:
+            espn_points = get_points_model("espn").espn_points
+            value_pick = best_value_within_position(rows[0][0], undrafted, espn_points)
+
+        return jsonify({"rows": results, "confidence": confidence, "value_pick": value_pick})
 
     @app.get("/api/now-vs-wait")
     def now_vs_wait():

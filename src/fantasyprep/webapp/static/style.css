@@ -460,6 +460,39 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 .nvw-detail strong { color: var(--text); font-variant-numeric: tabular-nums; }
 .nvw-loading { color: var(--text-faint); font-size: 0.78rem; }
 
+/* --- Within-position value pick card ------------------------------------
+   "differs" reuses the accent ("pay attention") language the confidence
+   badge's tossup state and now-vs-wait's urgent state already use --
+   a later-ADP player beating chalk is the case worth flagging. "agrees"
+   reuses --safe, the same reassuring tone as a confident recommendation. */
+
+#value-pick-card {
+  margin-top: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+#value-pick-card.differs { border-color: var(--accent-dim); background: color-mix(in srgb, var(--surface-2) 85%, var(--accent) 6%); }
+#value-pick-card.agrees { border-color: var(--safe-dim); background: color-mix(in srgb, var(--surface-2) 85%, var(--safe) 6%); }
+
+.vp-verdict {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+.vp-verdict.differs { color: var(--accent); }
+.vp-verdict.agrees { color: var(--safe); }
+.vp-verdict-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+
+.vp-detail { color: var(--text-dim); font-size: 0.8rem; line-height: 1.5; }
+.vp-detail strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
 /* --- Picker modal -------------------------------------------------------- */
 
 #picker-overlay {

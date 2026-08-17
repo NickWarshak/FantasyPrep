@@ -143,6 +143,7 @@ function render(state) {
   } else {
     document.getElementById("recommend-list").hidden = true;
     document.getElementById("recommend-confidence").hidden = true;
+    document.getElementById("value-pick-card").hidden = true;
     document.getElementById("now-vs-wait-card").hidden = true;
     document.getElementById("recommend-status").textContent = hasSlot
       ? "Recommendations appear automatically once it's your turn."
@@ -400,6 +401,7 @@ async function loadRecommendations() {
   status.textContent = "Simulating... this takes several seconds.";
   list.hidden = true;
   document.getElementById("recommend-confidence").hidden = true;
+  document.getElementById("value-pick-card").hidden = true;
 
   try {
     const res = await fetch("/api/recommend");
@@ -412,6 +414,7 @@ async function loadRecommendations() {
 
     status.textContent = "";
     renderConfidence(data.confidence, rows);
+    renderValuePick(data.value_pick);
     list.innerHTML = "";
     rows.forEach((row, i) => {
       const card = document.createElement("div");
@@ -434,12 +437,40 @@ async function loadRecommendations() {
 
     // Draft Now vs. Wait for the top pick specifically: not "what's best"
     // (the list above already answers that) but "does it matter if I wait
-    // a round" -- a genuinely different question neither the cross-position
-    // ranking nor a within-position comparison (not built yet) answers.
+    // a round" -- a genuinely different question from cross-position
+    // ranking or within-position value (see renderValuePick).
     if (rows.length >= 2) loadNowVsWait(rows[0].position, rows[1].position);
   } finally {
     recommendInFlight = false;
   }
+}
+
+// Within-position comparison: is the model's best-ADP ("chalk") player at
+// the top position actually the best real value, per ESPN's per-player
+// projections -- the one source of genuine player-specific signal in this
+// tool (the historical bucket model can't tell same-rank players apart).
+// A real "checked, and they agree" result (is_different: false) is shown
+// too, not just disagreements -- it's informative that the pick holds up.
+function renderValuePick(valuePick) {
+  const card = document.getElementById("value-pick-card");
+  if (!valuePick) {
+    card.hidden = true;
+    return;
+  }
+  const gap = valuePick.value_points - valuePick.chalk_points;
+  if (!valuePick.is_different) {
+    card.className = "agrees";
+    card.innerHTML =
+      `<div class="vp-verdict agrees"><span class="vp-verdict-dot"></span>${valuePick.chalk_player} is the value pick too</div>` +
+      `<div class="vp-detail">Checked against real per-player projections -- no later-ADP player at this position projects higher.</div>`;
+  } else {
+    card.className = "differs";
+    card.innerHTML =
+      `<div class="vp-verdict differs"><span class="vp-verdict-dot"></span>Better value: ${valuePick.value_player}</div>` +
+      `<div class="vp-detail">${valuePick.value_player} (ADP ${valuePick.value_adp.toFixed(1)}) projects <strong>${gap.toFixed(0)}</strong> ` +
+      `points higher than ${valuePick.chalk_player} (ADP ${valuePick.chalk_adp.toFixed(1)}), the chalk pick.</div>`;
+  }
+  card.hidden = false;
 }
 
 async function loadNowVsWait(target, alternative) {

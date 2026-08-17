@@ -238,6 +238,53 @@ def position_confidence(rows: list[tuple[str, float, float, float]]) -> float | 
     return 1.0 / (1.0 + math.exp(-margin / spread))
 
 
+def best_value_within_position(
+    position: str,
+    undrafted: list[ffc.FfcPlayer],
+    espn_points: dict[str, float],
+    adp_window: int = 8,
+) -> dict | None:
+    """Within-position comparison: among the top `adp_window` undrafted
+    candidates at `position` by ADP, is the best-ADP ("chalk") player
+    actually the best real value, or is a slightly-later player projected
+    to score more?
+
+    This is a genuinely different question than anything `recommend_positions`
+    answers. That function (and every strategy built on it -- Draft Now vs.
+    Wait, the confidence badge) only ever resolves a recommended position
+    down to its single best-ADP player, because the historical bootstrap
+    points model has no way to differentiate two players at the same ADP
+    rank -- they draw from the identical bucket. `espn_points` (real,
+    named-player projections) is the one source of genuine per-player
+    signal already in this codebase (see `points_model.EspnProjectionModel`)
+    -- this is the first place it's used to compare players against each
+    other rather than just to score whoever ADP already picked.
+
+    Returns None if there's no real signal to compare with (nobody in the
+    window has an ESPN projection) -- degrades to "can't tell", not a
+    false-confident pick. `is_different` is False (not None) whenever the
+    chalk player IS the best value -- a real, informative "checked, and
+    they agree" result, not the same as "couldn't check."""
+    candidates = sorted((p for p in undrafted if p.position == position), key=lambda p: p.adp)[:adp_window]
+    if not candidates:
+        return None
+    chalk = candidates[0]
+
+    scored = [(p, espn_points.get(normalize_name(p.name))) for p in candidates]
+    with_signal = [(p, pts) for p, pts in scored if pts is not None]
+    if not with_signal:
+        return None
+
+    value_player, value_points = max(with_signal, key=lambda t: t[1])
+    chalk_points = espn_points.get(normalize_name(chalk.name))
+
+    return {
+        "chalk_player": chalk.name, "chalk_adp": chalk.adp, "chalk_points": chalk_points,
+        "value_player": value_player.name, "value_adp": value_player.adp, "value_points": value_points,
+        "is_different": normalize_name(value_player.name) != normalize_name(chalk.name),
+    }
+
+
 def build_points_model(
     points_source: str,
     settings: LeagueSettings,

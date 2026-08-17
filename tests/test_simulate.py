@@ -8,6 +8,7 @@ from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_fl
 from fantasyprep.draft_sim.opponent import OpponentSampler as real_opponent_sampler
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel
 from fantasyprep.draft_sim.simulate import (
+    best_value_within_position,
     build_points_model,
     current_pick_number,
     load_draft_state,
@@ -314,3 +315,67 @@ def test_parse_args_points_source_rejects_invalid_choice():
 def test_build_points_model_historical_does_not_need_network(tmp_path: Path):
     model = build_points_model("historical", SETTINGS, year=2026, raw_dir=tmp_path, distributions=DISTRIBUTIONS)
     assert isinstance(model, HistoricalBootstrapModel)
+
+
+# --- best_value_within_position: within-position comparison using real
+# per-player ESPN signal, since the historical bucket model can't tell two
+# same-ADP-rank players apart (2026-08-16). ---
+
+
+def test_best_value_within_position_finds_a_better_value_than_adp_chalk():
+    pool = [
+        _p("Chalk WR", "WR", adp=10.0),
+        _p("Value WR", "WR", adp=14.0),  # later ADP, but projects higher
+        _p("Irrelevant RB", "RB", adp=11.0),
+    ]
+    espn_points = {"chalk wr": 180.0, "value wr": 220.0}
+
+    result = best_value_within_position("WR", pool, espn_points, adp_window=8)
+
+    assert result is not None
+    assert result["chalk_player"] == "Chalk WR"
+    assert result["chalk_adp"] == 10.0
+    assert result["chalk_points"] == 180.0
+    assert result["value_player"] == "Value WR"
+    assert result["value_points"] == 220.0
+    assert result["is_different"] is True
+
+
+def test_best_value_within_position_agrees_with_chalk_when_chalk_really_is_best():
+    pool = [
+        _p("Chalk WR", "WR", adp=10.0),
+        _p("Worse WR", "WR", adp=14.0),
+    ]
+    espn_points = {"chalk wr": 220.0, "worse wr": 150.0}
+
+    result = best_value_within_position("WR", pool, espn_points, adp_window=8)
+
+    assert result is not None
+    assert result["value_player"] == "Chalk WR"
+    assert result["is_different"] is False  # checked, and chalk really is the value pick
+
+
+def test_best_value_within_position_none_when_no_candidates_at_position():
+    pool = [_p("Some RB", "RB", adp=5.0)]
+    result = best_value_within_position("WR", pool, espn_points={}, adp_window=8)
+    assert result is None
+
+
+def test_best_value_within_position_none_when_no_espn_signal_in_window():
+    # Real players exist at the position, but none of them have an ESPN
+    # projection -- must degrade to "can't tell," not silently pick one.
+    pool = [_p("Mystery WR", "WR", adp=10.0), _p("Other Mystery WR", "WR", adp=12.0)]
+    result = best_value_within_position("WR", pool, espn_points={"someone else": 100.0}, adp_window=8)
+    assert result is None
+
+
+def test_best_value_within_position_ignores_candidates_outside_adp_window():
+    pool = [_p(f"WR{i}", "WR", adp=float(i)) for i in range(1, 15)]
+    # WR14 (adp=14) projects huge, but is outside a window of 5 -- must not surface it.
+    espn_points = {f"wr{i}": 100.0 for i in range(1, 15)}
+    espn_points["wr14"] = 999.0
+
+    result = best_value_within_position("WR", pool, espn_points, adp_window=5)
+
+    assert result is not None
+    assert result["value_player"] != "WR14"

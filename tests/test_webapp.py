@@ -56,7 +56,10 @@ def _make_app(tmp_path: Path, state_name: str = "draft_state.json", espn_points=
         settings=SETTINGS,
         live_pool=list(FIXTURE_POOL),
         distributions=FIXTURE_DISTRIBUTIONS,
-        espn_points=espn_points,
+        # Default to an empty (not None) dict -- None means "fetch for
+        # real over the network" in create_app, which every test not
+        # specifically exercising ESPN behavior should never trigger.
+        espn_points=espn_points if espn_points is not None else {},
         espn_players=espn_players,
     )
 
@@ -352,6 +355,47 @@ def test_recommend_espn_points_source_uses_injected_projection(tmp_path: Path):
     # in the roster value -- historical (max real fixture outcome ~350) can't.
     assert espn_best > hist_best
     assert espn_best >= 999.0
+
+
+# --- value_pick: within-position comparison using real ESPN per-player
+# signal (2026-08-16) -- separate from points_source, which only controls
+# what scores whoever ADP already picked. ---
+
+
+def test_recommend_value_pick_null_when_no_espn_signal(client):
+    # Default client fixture injects no ESPN data (empty dict) -- must
+    # degrade to null, not error or silently omit the key.
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    resp = client.get("/api/recommend?seed=1")
+    data = resp.get_json()
+    assert "value_pick" in data
+    assert data["value_pick"] is None
+
+
+def test_recommend_value_pick_surfaces_a_later_adp_player_as_better_value(tmp_path: Path):
+    # Every position's *second*-best-ADP player projects far higher than
+    # its chalk (best-ADP) player -- whichever position the model
+    # recommends #1, the value pick should differ from chalk.
+    value_espn_points = {
+        "RB One": 100.0, "RB Two": 300.0,
+        "WR One": 100.0, "WR Two": 300.0,
+        "QB One": 100.0, "QB Two": 300.0,
+        "TE One": 100.0, "TE Two": 300.0,
+    }
+    app = _make_app(tmp_path, espn_points=value_espn_points)
+    client = app.test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    resp = client.get("/api/recommend?seed=1")
+    data = resp.get_json()
+
+    top_position = data["rows"][0]["position"]
+    value_pick = data["value_pick"]
+    assert value_pick is not None
+    assert value_pick["chalk_player"] == f"{top_position} One"
+    assert value_pick["value_player"] == f"{top_position} Two"
+    assert value_pick["value_points"] == 300.0
+    assert value_pick["is_different"] is True
 
 
 def test_next_pick_is_mine_hint(client):
