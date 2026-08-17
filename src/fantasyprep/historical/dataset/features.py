@@ -33,6 +33,7 @@ from __future__ import annotations
 import pandas as pd
 
 from fantasyprep.historical.dataset.canonical import _safe_divide
+from fantasyprep.historical.dataset.market import MARKET_FEATURE_COLUMNS
 from fantasyprep.historical.dataset.metadata import METADATA_FEATURE_COLUMNS
 
 # Prior-season values worth carrying forward as model inputs. Ranks are included
@@ -98,6 +99,12 @@ PRE_SEASON_COLUMNS = frozenset(
     | {f"prev_{c}" for c in LAG_SOURCE_COLUMNS}
     | {"prev_season", "seasons_of_history"}
     | set(METADATA_FEATURE_COLUMNS)
+    # Draft-time market expectation. An ADP is measured *before* the season it
+    # describes, which is exactly what makes it a legal model input -- and why
+    # it needs no `prev_` lag either. Omitting these was a real bug caught by
+    # the fail-closed classification: unlisted columns default to outcomes, so
+    # `preseason_frame()` silently stripped ADP and no model could have used it.
+    | set(MARKET_FEATURE_COLUMNS)
 )
 
 

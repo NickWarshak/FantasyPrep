@@ -1,0 +1,590 @@
+{
+  "adp_match_report": {
+    "adp_entries": 2457,
+    "ambiguous_names_dropped": {
+      "n_entries_dropped": 8,
+      "names": [
+        "mike williams",
+        "steve smith"
+      ]
+    },
+    "by_season": {
+      "2010": {
+        "adp_entries": 183,
+        "match_rate": 0.9836,
+        "matched": 180
+      },
+      "2011": {
+        "adp_entries": 161,
+        "match_rate": 0.9876,
+        "matched": 159
+      },
+      "2012": {
+        "adp_entries": 92,
+        "match_rate": 0.9783,
+        "matched": 90
+      },
+      "2013": {
+        "adp_entries": 162,
+        "match_rate": 0.9815,
+        "matched": 159
+      },
+      "2014": {
+        "adp_entries": 165,
+        "match_rate": 0.9636,
+        "matched": 159
+      },
+      "2015": {
+        "adp_entries": 172,
+        "match_rate": 0.9709,
+        "matched": 167
+      },
+      "2016": {
+        "adp_entries": 163,
+        "match_rate": 0.9816,
+        "matched": 160
+      },
+      "2017": {
+        "adp_entries": 163,
+        "match_rate": 0.9755,
+        "matched": 159
+      },
+      "2018": {
+        "adp_entries": 168,
+        "match_rate": 0.9762,
+        "matched": 164
+      },
+      "2019": {
+        "adp_entries": 170,
+        "match_rate": 0.9706,
+        "matched": 165
+      },
+      "2020": {
+        "adp_entries": 174,
+        "match_rate": 0.977,
+        "matched": 170
+      },
+      "2021": {
+        "adp_entries": 183,
+        "match_rate": 0.9672,
+        "matched": 177
+      },
+      "2022": {
+        "adp_entries": 146,
+        "match_rate": 0.9863,
+        "matched": 144
+      },
+      "2023": {
+        "adp_entries": 177,
+        "match_rate": 0.9887,
+        "matched": 175
+      },
+      "2024": {
+        "adp_entries": 178,
+        "match_rate": 0.9831,
+        "matched": 175
+      }
+    },
+    "matched": 2403,
+    "overall_match_rate": 0.978,
+    "player_seasons_total": 14045,
+    "player_seasons_with_adp": 2406
+  },
+  "by_position": {
+    "QB": {
+      "both": {
+        "mae": 80.63,
+        "n": 220,
+        "pearson": 0.302,
+        "r2": 0.0728,
+        "rmse": 102.18,
+        "spearman": 0.3165
+      },
+      "history": {
+        "mae": 82.5,
+        "n": 220,
+        "pearson": 0.2099,
+        "r2": 0.0201,
+        "rmse": 105.04,
+        "spearman": 0.1953
+      },
+      "market": {
+        "mae": 80.04,
+        "n": 220,
+        "pearson": 0.314,
+        "r2": 0.0783,
+        "rmse": 101.88,
+        "spearman": 0.3446
+      }
+    },
+    "RB": {
+      "both": {
+        "mae": 60.31,
+        "n": 496,
+        "pearson": 0.4968,
+        "r2": 0.2393,
+        "rmse": 75.96,
+        "spearman": 0.4911
+      },
+      "history": {
+        "mae": 64.26,
+        "n": 496,
+        "pearson": 0.405,
+        "r2": 0.1585,
+        "rmse": 79.9,
+        "spearman": 0.4056
+      },
+      "market": {
+        "mae": 60.31,
+        "n": 496,
+        "pearson": 0.4905,
+        "r2": 0.2289,
+        "rmse": 76.48,
+        "spearman": 0.487
+      }
+    },
+    "TE": {
+      "both": {
+        "mae": 46.44,
+        "n": 174,
+        "pearson": 0.4043,
+        "r2": 0.1372,
+        "rmse": 59.8,
+        "spearman": 0.3839
+      },
+      "history": {
+        "mae": 46.99,
+        "n": 174,
+        "pearson": 0.3817,
+        "r2": 0.1357,
+        "rmse": 59.85,
+        "spearman": 0.3796
+      },
+      "market": {
+        "mae": 47.14,
+        "n": 174,
+        "pearson": 0.3682,
+        "r2": 0.1164,
+        "rmse": 60.51,
+        "spearman": 0.3426
+      }
+    },
+    "WR": {
+      "both": {
+        "mae": 53.94,
+        "n": 568,
+        "pearson": 0.547,
+        "r2": 0.2955,
+        "rmse": 68.01,
+        "spearman": 0.5438
+      },
+      "history": {
+        "mae": 56.78,
+        "n": 568,
+        "pearson": 0.4856,
+        "r2": 0.2346,
+        "rmse": 70.89,
+        "spearman": 0.4912
+      },
+      "market": {
+        "mae": 54.94,
+        "n": 568,
+        "pearson": 0.5283,
+        "r2": 0.2776,
+        "rmse": 68.87,
+        "spearman": 0.5329
+      }
+    }
+  },
+  "by_season": {
+    "2015": {
+      "both": {
+        "mae": 63.13,
+        "n": 146,
+        "pearson": 0.5764,
+        "r2": 0.3133,
+        "rmse": 80.74,
+        "spearman": 0.5424
+      },
+      "history": {
+        "mae": 65.86,
+        "n": 146,
+        "pearson": 0.5351,
+        "r2": 0.2662,
+        "rmse": 83.46,
+        "spearman": 0.4675
+      },
+      "market": {
+        "mae": 62.72,
+        "n": 146,
+        "pearson": 0.5922,
+        "r2": 0.3432,
+        "rmse": 78.96,
+        "spearman": 0.5637
+      }
+    },
+    "2016": {
+      "both": {
+        "mae": 59.61,
+        "n": 145,
+        "pearson": 0.623,
+        "r2": 0.3768,
+        "rmse": 75.08,
+        "spearman": 0.5579
+      },
+      "history": {
+        "mae": 59.9,
+        "n": 145,
+        "pearson": 0.615,
+        "r2": 0.3626,
+        "rmse": 75.93,
+        "spearman": 0.539
+      },
+      "market": {
+        "mae": 59.62,
+        "n": 145,
+        "pearson": 0.6182,
+        "r2": 0.3795,
+        "rmse": 74.92,
+        "spearman": 0.5595
+      }
+    },
+    "2017": {
+      "both": {
+        "mae": 56.21,
+        "n": 141,
+        "pearson": 0.6405,
+        "r2": 0.3845,
+        "rmse": 72.69,
+        "spearman": 0.6342
+      },
+      "history": {
+        "mae": 55.78,
+        "n": 141,
+        "pearson": 0.6387,
+        "r2": 0.3788,
+        "rmse": 73.03,
+        "spearman": 0.6448
+      },
+      "market": {
+        "mae": 57.43,
+        "n": 141,
+        "pearson": 0.627,
+        "r2": 0.3734,
+        "rmse": 73.34,
+        "spearman": 0.6127
+      }
+    },
+    "2018": {
+      "both": {
+        "mae": 60.98,
+        "n": 146,
+        "pearson": 0.6671,
+        "r2": 0.408,
+        "rmse": 77.33,
+        "spearman": 0.624
+      },
+      "history": {
+        "mae": 63.65,
+        "n": 146,
+        "pearson": 0.6426,
+        "r2": 0.3692,
+        "rmse": 79.82,
+        "spearman": 0.5893
+      },
+      "market": {
+        "mae": 62.73,
+        "n": 146,
+        "pearson": 0.6313,
+        "r2": 0.3745,
+        "rmse": 79.49,
+        "spearman": 0.5947
+      }
+    },
+    "2019": {
+      "both": {
+        "mae": 55.19,
+        "n": 146,
+        "pearson": 0.6484,
+        "r2": 0.4165,
+        "rmse": 73.88,
+        "spearman": 0.6585
+      },
+      "history": {
+        "mae": 59.83,
+        "n": 146,
+        "pearson": 0.5836,
+        "r2": 0.3344,
+        "rmse": 78.9,
+        "spearman": 0.578
+      },
+      "market": {
+        "mae": 55.59,
+        "n": 146,
+        "pearson": 0.6373,
+        "r2": 0.3977,
+        "rmse": 75.06,
+        "spearman": 0.6474
+      }
+    },
+    "2020": {
+      "both": {
+        "mae": 60.09,
+        "n": 148,
+        "pearson": 0.6823,
+        "r2": 0.4556,
+        "rmse": 79.54,
+        "spearman": 0.6606
+      },
+      "history": {
+        "mae": 66.79,
+        "n": 148,
+        "pearson": 0.6169,
+        "r2": 0.3733,
+        "rmse": 85.34,
+        "spearman": 0.5954
+      },
+      "market": {
+        "mae": 58.62,
+        "n": 148,
+        "pearson": 0.7168,
+        "r2": 0.4943,
+        "rmse": 76.66,
+        "spearman": 0.6686
+      }
+    },
+    "2021": {
+      "both": {
+        "mae": 56.01,
+        "n": 155,
+        "pearson": 0.7263,
+        "r2": 0.5147,
+        "rmse": 72.54,
+        "spearman": 0.6617
+      },
+      "history": {
+        "mae": 59.82,
+        "n": 155,
+        "pearson": 0.6841,
+        "r2": 0.461,
+        "rmse": 76.45,
+        "spearman": 0.5794
+      },
+      "market": {
+        "mae": 57.15,
+        "n": 155,
+        "pearson": 0.7141,
+        "r2": 0.4919,
+        "rmse": 74.22,
+        "spearman": 0.6581
+      }
+    },
+    "2022": {
+      "both": {
+        "mae": 57.71,
+        "n": 125,
+        "pearson": 0.6475,
+        "r2": 0.4173,
+        "rmse": 73.78,
+        "spearman": 0.6156
+      },
+      "history": {
+        "mae": 60.89,
+        "n": 125,
+        "pearson": 0.6108,
+        "r2": 0.3669,
+        "rmse": 76.91,
+        "spearman": 0.6021
+      },
+      "market": {
+        "mae": 57.83,
+        "n": 125,
+        "pearson": 0.6232,
+        "r2": 0.3853,
+        "rmse": 75.79,
+        "spearman": 0.6043
+      }
+    },
+    "2023": {
+      "both": {
+        "mae": 60.85,
+        "n": 155,
+        "pearson": 0.6196,
+        "r2": 0.3782,
+        "rmse": 76.96,
+        "spearman": 0.6042
+      },
+      "history": {
+        "mae": 61.95,
+        "n": 155,
+        "pearson": 0.6047,
+        "r2": 0.3652,
+        "rmse": 77.76,
+        "spearman": 0.5864
+      },
+      "market": {
+        "mae": 62.02,
+        "n": 155,
+        "pearson": 0.5968,
+        "r2": 0.3494,
+        "rmse": 78.72,
+        "spearman": 0.583
+      }
+    },
+    "2024": {
+      "both": {
+        "mae": 62.29,
+        "n": 151,
+        "pearson": 0.6212,
+        "r2": 0.3839,
+        "rmse": 76.08,
+        "spearman": 0.5813
+      },
+      "history": {
+        "mae": 65.42,
+        "n": 151,
+        "pearson": 0.5648,
+        "r2": 0.3185,
+        "rmse": 80.02,
+        "spearman": 0.5348
+      },
+      "market": {
+        "mae": 62.09,
+        "n": 151,
+        "pearson": 0.62,
+        "r2": 0.3754,
+        "rmse": 76.6,
+        "spearman": 0.574
+      }
+    }
+  },
+  "each_arm_own_population": {
+    "history_on_all_returning_players": {
+      "mae": 47.79,
+      "n": 4179,
+      "pearson": 0.7391,
+      "r2": 0.5463,
+      "rmse": 65.2,
+      "spearman": 0.689
+    },
+    "market_on_all_players_with_adp": {
+      "mae": 59.27,
+      "n": 1656,
+      "pearson": 0.6386,
+      "r2": 0.4052,
+      "rmse": 75.85,
+      "spearman": 0.6024
+    }
+  },
+  "headline_common_population": {
+    "both": {
+      "mae": 59.24,
+      "n": 1458,
+      "pearson": 0.6435,
+      "r2": 0.4124,
+      "rmse": 75.94,
+      "spearman": 0.6149
+    },
+    "history": {
+      "mae": 62.03,
+      "n": 1458,
+      "pearson": 0.6056,
+      "r2": 0.3661,
+      "rmse": 78.88,
+      "spearman": 0.5715
+    },
+    "market": {
+      "mae": 59.62,
+      "n": 1458,
+      "pearson": 0.6386,
+      "r2": 0.4049,
+      "rmse": 76.42,
+      "spearman": 0.6074
+    }
+  },
+  "incremental_value": {
+    "adp_adds_over_history": {
+      "mae": -2.79,
+      "r2": 0.0463,
+      "spearman": 0.0434
+    },
+    "history_adds_over_adp": {
+      "mae": -0.38,
+      "r2": 0.0075,
+      "spearman": 0.0075
+    }
+  },
+  "populations": {
+    "common_population_adp_and_history": 1458,
+    "rookies": 1552,
+    "rookies_with_adp": 198,
+    "total_player_seasons": 5731,
+    "with_adp": 1656
+  },
+  "robustness_history_trained_on_all_rows": {
+    "mae": 64.77,
+    "n": 1458,
+    "pearson": 0.5703,
+    "r2": 0.2812,
+    "rmse": 83.99,
+    "spearman": 0.5506
+  },
+  "rookies_with_adp": {
+    "both": {
+      "mae": 57.66,
+      "n": 198,
+      "pearson": 0.5347,
+      "r2": 0.2796,
+      "rmse": 72.54,
+      "spearman": 0.4993
+    },
+    "history": {
+      "mae": 64.94,
+      "n": 198,
+      "pearson": 0.3457,
+      "r2": 0.1139,
+      "rmse": 80.46,
+      "spearman": 0.2833
+    },
+    "market": {
+      "mae": 56.72,
+      "n": 198,
+      "pearson": 0.5514,
+      "r2": 0.3004,
+      "rmse": 71.49,
+      "spearman": 0.517
+    }
+  },
+  "rookies_without_adp": {
+    "history": {
+      "mae": 96.15,
+      "n": 1354,
+      "pearson": 0.2699,
+      "r2": -4.1968,
+      "rmse": 105.25,
+      "spearman": 0.2322
+    }
+  },
+  "test_seasons": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "veterans_without_adp": {
+    "history": {
+      "mae": 71.52,
+      "n": 2721,
+      "pearson": 0.3491,
+      "r2": -1.3324,
+      "rmse": 85.58,
+      "spearman": 0.2645
+    }
+  }
+}
