@@ -70,6 +70,7 @@ from fantasyprep.historical import weekly_stats
 from fantasyprep.historical.outcomes import (
     DEFAULT_HISTORICAL_YEARS,
     OutcomeDistribution,
+    TAIL_POOLING_MODES,
     build_outcome_distributions,
     outcome_for_rank,
 )
@@ -484,14 +485,25 @@ def replay_one(
 
 
 def leakage_safe_distributions(
-    settings: LeagueSettings, test_year: int, raw_dir: Path, force_refresh: bool = False
+    settings: LeagueSettings,
+    test_year: int,
+    raw_dir: Path,
+    force_refresh: bool = False,
+    tail_pooling: str = "pooled",
 ):
     """Outcome buckets for evaluating `test_year`, built only from seasons
-    strictly before it -- see module docstring point 1."""
+    strictly before it -- see module docstring point 1.
+
+    Leakage-safety is unaffected by `tail_pooling`: pooling only merges buckets
+    within an already-prior-years-only set, so it can't pull in a future season.
+    The cache stores raw unpooled buckets and pooling is applied on read, so
+    both A/B arms share one cache file per test year.
+    """
     prior_years = [y for y in DEFAULT_HISTORICAL_YEARS if y < test_year]
     cache_path = raw_dir / f".outcomes_{settings.teams}_pre{test_year}.json"
     return build_outcome_distributions(
-        settings, years=prior_years, cache_path=cache_path, adp_cache_dir=raw_dir, force_refresh=force_refresh
+        settings, years=prior_years, cache_path=cache_path, adp_cache_dir=raw_dir,
+        force_refresh=force_refresh, tail_pooling=tail_pooling,
     )
 
 
@@ -506,6 +518,7 @@ def run_backtest(
     scoring_mode: str = "season-total",
     vor_rank_cutoff_mode: str = "derived",
     opponent_model: str = "gaussian",
+    tail_pooling: str = "pooled",
 ) -> list[ReplayResult]:
     """Replay every (year, slot), each with `num_seeds` independent
     opponent-room draws (still paired between baseline/model within a
@@ -564,7 +577,7 @@ def run_backtest(
         live_cache = raw_dir / f".ffc_{settings.teams}_{year}.json"
         live_pool = ffc.fetch_adp(year, teams=settings.teams, cache_path=live_cache)
 
-        distributions = leakage_safe_distributions(settings, year, raw_dir)
+        distributions = leakage_safe_distributions(settings, year, raw_dir, tail_pooling=tail_pooling)
         points_model = HistoricalBootstrapModel(distributions)
 
         vor_rank_cutoff = DEFAULT_RANK_CUTOFF if vor_rank_cutoff_mode == "legacy" else None
@@ -768,6 +781,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "replacement level. 'legacy' pins it to the old hardcoded {QB:15,RB:30,WR:30,TE:15} "
                          "guess -- for a controlled A/B against 'derived' (ADP+need/pure-ADP/model results "
                          "are identical either way, since only VOR/waiver-adjusted scoring use this).")
+    parser.add_argument("--tail-pooling", choices=list(TAIL_POOLING_MODES), default="pooled",
+                        help="'pooled' merges each position's starved deepest outcome buckets into "
+                             "one real distribution (default); 'legacy' is the original unpooled "
+                             "behaviour, where e.g. every TE past rank 21 sampled a single value.")
     parser.add_argument("--opponent-model", choices=list(OPPONENT_WEIGHT_FN), default="gaussian",
                          help="'gaussian' (default) is the original opponent pick-weight model, used by every "
                          "existing/currently-running backtest. 'gaussian-tail-floor' fixes the 'stuck player' "
@@ -790,7 +807,7 @@ def run(args: argparse.Namespace) -> list[ReplayResult]:
     results = run_backtest(
         args.years, args.slots, settings, args.data_dir, args.num_sims, args.seed, args.num_seeds,
         scoring_mode=args.scoring_mode, vor_rank_cutoff_mode=args.vor_rank_cutoff_mode,
-        opponent_model=args.opponent_model,
+        opponent_model=args.opponent_model, tail_pooling=args.tail_pooling,
     )
     _summarize(results)
 
@@ -805,6 +822,7 @@ def run(args: argparse.Namespace) -> list[ReplayResult]:
             "years": args.years, "slots": args.slots, "num_sims": args.num_sims,
             "num_seeds": args.num_seeds, "seed": args.seed, "scoring_mode": args.scoring_mode,
             "vor_rank_cutoff_mode": args.vor_rank_cutoff_mode, "opponent_model": args.opponent_model,
+            "tail_pooling": args.tail_pooling,
         }
         path = log_experiment(
             args.data_dir, args.experiment_name, args.experiment_notes, params, _compact_summary(results),
