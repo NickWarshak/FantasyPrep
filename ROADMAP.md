@@ -567,13 +567,40 @@ before adding features," agreed with)
   Results: `data/overnight_backtest_gaussian.json` /
   `data/overnight_backtest_tailfloor.json` (both committed), logged
   experiments `overnight_ab_gaussian_2026-08-16` /
-  `overnight_ab_tailfloor_2026-08-16`. **Not yet done**: rerunning the
-  TE-hindsight comparison above under tail-floor (it was deliberately
-  Gaussian-only, for comparability with the old headline) and rerunning
-  the headline table itself under tail-floor — until both land, treat
-  the "model beats a realistic ADP+need drafter" claim as unresolved
-  under the opponent model the live tool actually uses, now the highest
-  STATUS.md priority.
+  `overnight_ab_tailfloor_2026-08-16`. Headline table itself not yet
+  rerun under tail-floor at full scope — see the TE-hindsight tail-floor
+  confirmation immediately below, which does independently cross-validate
+  this finding at 10x this entry's n (n=2000 vs. n=200): ADP+need also
+  flips to a losing record (47% win, mean -17.0 to -21.0, entirely
+  negative CI) in that larger run.
+- ✅ **TE-hindsight verdict confirmed under tail-floor too** (2026-08-17,
+  Mac mini) — reran both scoring modes above a second time, swapping only
+  `--opponent-model gaussian` → `gaussian-tail-floor`, identical
+  20-seed/`num_sims=300`/n=2000 scope for direct comparability, completing
+  the 2×2 (scoring-mode × opponent-model) grid. **The edge doesn't just
+  survive — it's substantially stronger** under the realistic opponent
+  model: vs-VOR TE-specific delta more than doubles (+52.8/+48.6 under
+  Gaussian → **+127.2/+137.1** under tail-floor, season-total/
+  waiver-adjusted respectively), RB's deficit widens similarly
+  (-40.5/-44.1 → -92.8/-104.8), and the 2nd-TE rostering split widens
+  further (91%/4% model/VOR under Gaussian → **96%/2%** under tail-floor).
+  Critically for the hindsight question specifically: waiver-adjusted's TE
+  delta (+137.1) is not smaller than season-total's (+127.2) here — if
+  anything larger — the strongest evidence yet against the hindsight-
+  artifact hypothesis, now confirmed under both opponent models. Overall
+  vs-VOR win rate: 61% (season-total) / 60% (waiver-adjusted) tail-floor
+  vs. 58%/58% Gaussian — also stronger, consistent with Windows's finding
+  that VOR gets stronger under tail-floor generally. Results:
+  `data/backtest_macmini_seasontotal_20seed_300sims_tailfloor.json` /
+  `data/backtest_macmini_waiver_20seed_300sims_tailfloor.json` (both
+  committed), logged experiments
+  `mac-mini-seasontotal-20seed-300sims-tailfloor` /
+  `mac-mini-waiver-adjusted-20seed-300sims-tailfloor`. **This closes out
+  the opponent-model-reversal open item as far as the TE-hindsight
+  question goes** — the report redesign (STATUS.md #2) can now proceed
+  without an asterisk on the verdict, though it should present tail-floor
+  numbers as primary (the live tool's actual model) rather than the
+  Gaussian ones above.
 
 **Phase 3 — Player-Level Decision Engine**
 - ✅ **Built as a standalone diagnostic** (2026-08-16/17, Mac mini,
