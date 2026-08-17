@@ -1,0 +1,68 @@
+{
+  "baseline_top_recommendation": "RB",
+  "conditions": [
+    {
+      "expected_value_by_position": {
+        "QB": 1688.7,
+        "RB": 1708.3,
+        "TE": 1671.6,
+        "WR": 1708.2
+      },
+      "spread_factor": 1.0,
+      "spread_position_value": 1708.2,
+      "top_recommendation": "RB"
+    },
+    {
+      "expected_value_by_position": {
+        "QB": 1711.7,
+        "RB": 1729.9,
+        "TE": 1694.9,
+        "WR": 1737.9
+      },
+      "spread_factor": 1.25,
+      "spread_position_value": 1737.9,
+      "top_recommendation": "WR"
+    },
+    {
+      "expected_value_by_position": {
+        "QB": 1736.0,
+        "RB": 1752.8,
+        "TE": 1719.2,
+        "WR": 1769.2
+      },
+      "spread_factor": 1.5,
+      "spread_position_value": 1769.2,
+      "top_recommendation": "WR"
+    },
+    {
+      "expected_value_by_position": {
+        "QB": 1787.2,
+        "RB": 1801.2,
+        "TE": 1770.0,
+        "WR": 1834.3
+      },
+      "spread_factor": 2.0,
+      "spread_position_value": 1834.3,
+      "top_recommendation": "WR"
+    }
+  ],
+  "num_sims": 400,
+  "seed": 0,
+  "slot": 5,
+  "spread_position": "WR",
+  "verdict": {
+    "note": "Mean held exactly fixed, so every point of gain is variance alone. A flipped recommendation means the objective preferred WR purely for being more volatile.",
+    "objective_is_variance_seeking": true,
+    "recommendation_flipped_at_factors": [
+      1.25,
+      1.5,
+      2.0
+    ],
+    "value_gain_from_pure_variance": {
+      "1.25": 29.7,
+      "1.5": 61.0,
+      "2.0": 126.1
+    }
+  },
+  "year": 2024
+}
