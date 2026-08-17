@@ -517,16 +517,83 @@ before adding features," agreed with)
   (a deliberate, measured choice, not a guess) — full convergence
   behavior and whether decision-level calibration (see above) should
   surface "how close was this call" to the user is follow-up work.
+- ✅ **The TE-hindsight question, resolved** (2026-08-17, Mac mini): the
+  #1 open question as of the previous session (does the model's TE-driven
+  edge over VOR survive `--scoring-mode waiver-adjusted`, or is it
+  substantially a same-position-hindsight artifact of season-total
+  scoring?) — see the position-level breakdown entry above for the
+  original finding (TE +50.8, RB -42.9, WR +12.2, QB +7.7 at n=100).
+  Answer: **the edge is real, not primarily hindsight.** Ran season-total
+  and waiver-adjusted back-to-back at identical, much larger scope (full
+  10yr×10slot grid, 20 seeds/cell — 10x the original headline —
+  `num_sims=300`, `n=2000` each) for a true apples-to-apples comparison at
+  matched statistical power, not just against the old n=100/1-seed
+  headline. vs-VOR win rate is **literally identical (58%)** across
+  scoring modes; the TE-specific delta only shrinks ~8% (+52.8 →
+  +48.6) under the scorer that removes the hindsight quirk, and the
+  2nd-TE rostering rate (91% model vs. 4% VOR) is identical by
+  construction (scoring mode doesn't change draft decisions, only how
+  the resulting roster is scored). Mean/median deltas across all four
+  baselines drop a more real ~25-30% under waiver-adjusted scoring
+  (e.g. vs-VOR mean +32.7 → +23.6), consistent with *some* hindsight
+  inflation, but nowhere near enough to explain the edge away. Results:
+  `data/backtest_macmini_seasontotal_20seed_300sims.json` /
+  `data/backtest_macmini_waiver_20seed_300sims.json` (both committed),
+  logged experiments `mac-mini-seasontotal-20seed-300sims` /
+  `mac-mini-waiver-adjusted-20seed-300sims`. Two Windows-side attempts at
+  this same test were killed earlier due to real CPU contention on that
+  machine's 4-core ULV chip before producing output — this Mac-side run
+  (post-vectorization, `be8d0fa`/`cfaf38e`) is the first one to actually
+  finish. Unblocks the report redesign (STATUS.md's former #2 priority,
+  deferred pending exactly this verdict) — not done yet.
 
 **Phase 3 — Player-Level Decision Engine**
-- Replace "pick a position, then take best-ADP-available" with real
-  counterfactual player evaluation: for each realistic candidate at the
-  recommended position (capped to roughly the top 3-5 by ADP, not every
-  player on the board — full enumeration is a real combinatorial cost,
-  worth being explicit about instead of letting it become an unbounded
-  one later), simulate the rest of the draft and compare completed-roster
-  distributions directly. Every live recommendation should end up naming
-  an actual player, not just a position.
+- ✅ **Built as a standalone diagnostic** (2026-08-16/17, Mac mini,
+  `draft_sim/player_choice.py` + `draft_sim/player_choice_backtest.py`) —
+  same posture as Phase 5's Draft Now vs. Wait: not wired into live
+  recommendations yet, validate first. `simulate_player_choice`/
+  `recommend_players` extend the existing Monte Carlo lookahead to
+  simulate the top `top_n` (default 3, matching this phase's original
+  "top 3-5" plan) undrafted players at a recommended position
+  *individually* as "my pick now," ranking them by simulated
+  completed-roster EV — instead of `simulate_position_choice`'s
+  always-best-ADP default. A close variant, not a modification of the
+  validated original (same pattern every other diagnostic in this
+  project uses).
+
+  One caveat baked into the points model, documented in both new
+  modules' docstrings: `HistoricalBootstrapModel` pools outcomes into
+  3-rank buckets (`outcomes.py`'s `BUCKET_WIDTH`) — two players in the
+  same bucket are statistically identical to it, so this can only find a
+  real difference between players in *different* buckets. This is a real
+  ceiling on how often the feature could possibly matter under the
+  default points source, not a bug.
+
+  `player_choice_backtest.py` runs the actual test, same rigor as the
+  headline backtest: two full real-draft replays per (year, slot, seed)
+  under common random numbers — the current model's naive-best-ADP
+  strategy vs. the new player-choice strategy — scored on real historical
+  points, same season-clustered CIs
+  (`cluster_bootstrap_ci`/`wilson_interval` reused directly from
+  `backtest.py` via duck typing, not reimplemented).
+
+  Discovered while building this: Windows was concurrently building a
+  related-but-different answer to the same underlying gap (commits
+  `670ce61`/`a39d573`, `resolve_pick`/`best_value_within_position` — a
+  much cheaper direct ESPN-projection-window comparison, already wired
+  into the live webapp). Complementary, not duplicate/conflicting code —
+  no file overlap. Worth a future comparison: does the heavier
+  full-roster-simulation approach here ever beat the cheaper live-wired
+  one, or is the live one already sufficient?
+
+  A 2-replay smoke test (`num_sims=30`) showed the player-choice branch
+  losing badly (0/2, mean -200) — not concerning at n=2 given the
+  bucket-pooling caveat above (near-zero real signal expected under the
+  historical points model specifically), but flagged rather than assumed
+  away. **Overnight 20-seed/`num_sims=100` full-grid backtest launched
+  2026-08-16 ~23:15 EDT to get a real answer** (`data/backtest_player_choice_20seed.json`,
+  experiment `player-choice-vs-current-model-20seed`) — result not yet in
+  as of this entry; check STATUS.md's dedicated section for the outcome.
 - DST/K: deliberately *not* a target for modeling investment here (one
   low-value late slot, high year-to-year noise, streaming-friendly) —
   now that `historical/sources/ffc.py`'s DEF/PK position-code bug is
