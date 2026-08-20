@@ -379,8 +379,8 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 
 .rec-card {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.7rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -400,10 +400,21 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 }
 .rec-main { min-width: 0; }
 .rec-player { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rec-meta { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; }
+/* Wraps, because this row grew from two chips to five (position, team, ADP,
+   positional scarcity, market ceiling). Without wrapping it overflowed its grid
+   column and printed on top of the points column, which is how it shipped and
+   how it looked wrong in a real draft. */
+.rec-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.4rem;
+  margin-top: 0.15rem;
+  min-width: 0;
+}
 .rec-meta .team-label { font-size: 0.72rem; }
 .rec-meta .adp { font-size: 0.7rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
-.rec-stats { text-align: right; }
+.rec-stats { text-align: right; white-space: nowrap; justify-self: end; }
 .rec-expected { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
 .rec-range { font-size: 0.66rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
