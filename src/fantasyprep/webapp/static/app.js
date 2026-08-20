@@ -24,8 +24,18 @@ async function fetchState() {
   return res.json();
 }
 
-function cellLabel(round, team) {
-  return `${round}.${team}`;
+// Cells are labelled by position WITHIN THE ROUND, not by team number.
+// `round.team` looked plausible but hid the serpentine entirely: every row
+// renders teams left to right, so round 2 read "2.5 ... 2.10" when the actual
+// order that round is team 10 first. Labelling by pick-in-round makes the
+// reversal legible from the numbers alone -- in an even round the "2.1" sits on
+// the right-hand side, which is exactly what a snake draft does.
+function pickInRound(round, team, teams) {
+  return round % 2 === 1 ? team : teams - team + 1;
+}
+
+function cellLabel(round, team, teams) {
+  return `${round}.${pickInRound(round, team, teams)}`;
 }
 
 function posChip(position) {
@@ -39,6 +49,9 @@ function renderGrid(state) {
 
   const thead = document.createElement("thead");
   const headRow = document.createElement("tr");
+  const corner = document.createElement("th");
+  corner.className = "round-rail-head";
+  headRow.appendChild(corner);
   for (let team = 1; team <= state.teams; team++) {
     const th = document.createElement("th");
     th.textContent = `Team ${team}`;
@@ -51,6 +64,14 @@ function renderGrid(state) {
   const tbody = document.createElement("tbody");
   for (let round = 1; round <= state.total_rounds; round++) {
     const tr = document.createElement("tr");
+    // Direction rail: the arrow is the whole point -- it says which way this
+    // round actually runs, which the left-to-right cell layout cannot.
+    const rail = document.createElement("th");
+    rail.className = "round-rail";
+    rail.innerHTML =
+      `<span class="round-n">R${round}</span>` +
+      `<span class="round-dir">${round % 2 === 1 ? "\u2192" : "\u2190"}</span>`;
+    tr.appendChild(rail);
     for (let team = 1; team <= state.teams; team++) {
       const pickNum = pickNumberFor(round, team, state.teams);
       const td = document.createElement("td");
@@ -64,12 +85,12 @@ function renderGrid(state) {
         if (info.position) td.classList.add(`pos-${info.position}`);
         if (info.is_keeper) td.classList.add("keeper");
         td.innerHTML =
-          `<div class="pick-num">${cellLabel(round, team)}${info.is_keeper ? '<span class="keeper-badge" title="Keeper -- survives Reset Draft">K</span>' : ""}</div>` +
+          `<div class="pick-num">${cellLabel(round, team, state.teams)}${info.is_keeper ? '<span class="keeper-badge" title="Keeper -- survives Reset Draft">K</span>' : ""}</div>` +
           `<div class="player-name">${info.player}</div>` +
           `<div class="player-meta">${posChip(info.position)}<span class="team-label">${info.team || ""}</span></div>`;
         td.addEventListener("click", () => clearPick(pickNum));
       } else {
-        td.innerHTML = `<div class="pick-num">${cellLabel(round, team)}</div><div class="claim">+</div>`;
+        td.innerHTML = `<div class="pick-num">${cellLabel(round, team, state.teams)}</div><div class="claim">+</div>`;
         td.addEventListener("click", () => openPicker(pickNum, round, team));
       }
       tr.appendChild(td);
@@ -173,7 +194,7 @@ function openPicker(pickNum, round, team) {
   pendingPickNumber = pickNum;
   pendingWasCurrentPick = currentState && pickNum === currentState.current_pick;
   document.getElementById("picker-title").textContent =
-    `Assign pick ${cellLabel(round, team)}` + (pendingWasCurrentPick ? "" : " (keeper -- ahead of the current pick)");
+    `Assign pick ${cellLabel(round, team, currentState.teams)}` + (pendingWasCurrentPick ? "" : " (keeper -- ahead of the current pick)");
   document.getElementById("picker-overlay").hidden = false;
   document.getElementById("player-search").value = "";
   // Show best-available-by-ADP immediately, before any typing -- an empty

@@ -712,3 +712,41 @@ td.cell.my-team:not(.filled) {
   accent-color: var(--accent);
   cursor: pointer;
 }
+
+
+/* ---- snake-draft direction rail ----
+   The board renders teams left-to-right in every round, so nothing in the
+   layout itself communicates that even rounds run backwards. The rail states
+   it outright, and the cell labels (round.pick-in-round) corroborate it. */
+#draft-grid th.round-rail {
+  background: var(--surface);
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  padding: 0.3rem 0.5rem;
+  min-width: 3.1rem;
+  border-radius: 8px;
+  vertical-align: middle;
+  line-height: 1.15;
+}
+#draft-grid th.round-rail-head {
+  background: var(--surface);
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  min-width: 3.1rem;
+}
+.round-n {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.round-dir {
+  display: block;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-faint);
+}

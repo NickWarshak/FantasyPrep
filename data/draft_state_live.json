@@ -3,20 +3,56 @@
   "my_draft_slot": 9,
   "picks": [
     {
-      "pick": 1,
-      "player": "Ja'Marr Chase"
+      "pick": 41,
+      "player": "TreVeyon Henderson"
     },
     {
       "pick": 2,
+      "player": "Bijan Robinson"
+    },
+    {
+      "pick": 43,
+      "player": "Emeka Egbuka"
+    },
+    {
+      "pick": 24,
+      "player": "Omarion Hampton"
+    },
+    {
+      "pick": 45,
+      "player": "Breece Hall"
+    },
+    {
+      "pick": 46,
+      "player": "Javonte Williams"
+    },
+    {
+      "pick": 7,
       "player": "Jahmyr Gibbs"
     },
     {
-      "pick": 3,
+      "pick": 28,
+      "player": "Jaxon Smith-Njigba"
+    },
+    {
+      "pick": 32,
+      "player": "Kenneth Walker III"
+    },
+    {
+      "pick": 30,
+      "player": "James Cook III"
+    },
+    {
+      "pick": 1,
       "player": "Puka Nacua"
     },
     {
+      "pick": 3,
+      "player": "Christian McCaffrey"
+    },
+    {
       "pick": 4,
-      "player": "Bijan Robinson"
+      "player": "Jonathan Taylor"
     },
     {
       "pick": 5,
@@ -24,11 +60,7 @@
     },
     {
       "pick": 6,
-      "player": "Jaxon Smith-Njigba"
-    },
-    {
-      "pick": 7,
-      "player": "Christian McCaffrey"
+      "player": "CeeDee Lamb"
     },
     {
       "pick": 8,
@@ -36,16 +68,117 @@
     },
     {
       "pick": 9,
-      "player": "CeeDee Lamb"
-    },
-    {
-      "pick": 10,
       "player": "Justin Jefferson"
     },
     {
+      "pick": 10,
+      "player": "Ja'Marr Chase"
+    },
+    {
       "pick": 11,
-      "player": "James Cook III"
+      "player": "A.J. Brown"
+    },
+    {
+      "pick": 12,
+      "player": "Ashton Jeanty"
+    },
+    {
+      "pick": 13,
+      "player": "Drake London"
+    },
+    {
+      "pick": 14,
+      "player": "Trey McBride"
+    },
+    {
+      "pick": 15,
+      "player": "Saquon Barkley"
+    },
+    {
+      "pick": 16,
+      "player": "Jeremiyah Love"
+    },
+    {
+      "pick": 17,
+      "player": "Rashee Rice"
+    },
+    {
+      "pick": 18,
+      "player": "Josh Allen"
+    },
+    {
+      "pick": 19,
+      "player": "Chase Brown"
+    },
+    {
+      "pick": 20,
+      "player": "George Pickens"
+    },
+    {
+      "pick": 21,
+      "player": "Brock Bowers"
+    },
+    {
+      "pick": 22,
+      "player": "Derrick Henry"
+    },
+    {
+      "pick": 23,
+      "player": "Garrett Wilson"
+    },
+    {
+      "pick": 25,
+      "player": "Josh Jacobs"
+    },
+    {
+      "pick": 26,
+      "player": "Nico Collins"
+    },
+    {
+      "pick": 27,
+      "player": "Chris Olave"
     }
   ],
-  "keepers": []
+  "keepers": [
+    {
+      "pick": 41,
+      "player": "TreVeyon Henderson"
+    },
+    {
+      "pick": 2,
+      "player": "Bijan Robinson"
+    },
+    {
+      "pick": 43,
+      "player": "Emeka Egbuka"
+    },
+    {
+      "pick": 24,
+      "player": "Omarion Hampton"
+    },
+    {
+      "pick": 45,
+      "player": "Breece Hall"
+    },
+    {
+      "pick": 46,
+      "player": "Javonte Williams"
+    },
+    {
+      "pick": 7,
+      "player": "Jahmyr Gibbs"
+    },
+    {
+      "pick": 28,
+      "player": "Jaxon Smith-Njigba"
+    },
+    {
+      "pick": 32,
+      "player": "Kenneth Walker III"
+    },
+    {
+      "pick": 30,
+      "player": "James Cook III"
+    }
+  ]
 }
