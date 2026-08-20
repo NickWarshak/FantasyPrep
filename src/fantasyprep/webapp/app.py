@@ -142,8 +142,16 @@ class DraftSession:
         self.keepers = [p for p in self.keepers if p["pick"] != pick_number]
         self.save()
 
-    def reset_draft(self) -> None:
-        """Wipe picks back down to just the saved keepers, not to nothing."""
+    def reset_draft(self, clear_keepers: bool = False) -> None:
+        """Wipe picks back down to just the saved keepers, not to nothing.
+
+        `clear_keepers` is the genuine full wipe. Without it there was no way to
+        drop every keeper at once -- they had to be cleared one cell at a time,
+        which is a real gap given the reset button's own wording implied they
+        were being removed anyway.
+        """
+        if clear_keepers:
+            self.keepers = []
         self.picks = list(self.keepers)
         self.save()
 
@@ -173,6 +181,10 @@ class DraftSession:
             "total_rounds": total_rounds,
             "total_picks": total_picks,
             "picks": by_pick,
+            # The UI needs the keeper count to say honestly what a reset will
+            # preserve -- without it the reset dialog silently fell back to
+            # "no keepers" and offered the wrong choice.
+            "keepers": list(self.keepers),
             "next_pick_is_mine": (
                 pick_owner(self.settings.teams, current) == self.my_draft_slot
                 if self.my_draft_slot is not None
@@ -360,8 +372,16 @@ def create_app(
 
     @app.post("/api/reset")
     def reset():
-        session.reset_draft()  # back to just the saved keepers, not to nothing
-        return jsonify(session.to_dict())
+        body = request.get_json(silent=True) or {}
+        clear_keepers = bool(body.get("clear_keepers", False))
+        session.reset_draft(clear_keepers=clear_keepers)
+        payload = session.to_dict()
+        # The count is surfaced so the UI can state what actually survived
+        # rather than leaving the user to guess -- the old flow wiped the board
+        # under a dialog that said "Reset the whole draft?" while silently
+        # keeping every keeper.
+        payload["keepers_kept"] = 0 if clear_keepers else len(session.keepers)
+        return jsonify(payload)
 
     @app.get("/api/recommend")
     def recommend():
@@ -486,6 +506,8 @@ def create_app(
             "wait_mean": result.wait_mean, "wait_p25": result.wait_p25, "wait_p75": result.wait_p75,
             "survival_probability": result.survival_probability,
             "cost_of_waiting": result.cost_of_waiting,
+            "verdict": result.verdict,
+            "decisiveness": result.decisiveness,
         })
 
     @app.post("/api/simulate/step")

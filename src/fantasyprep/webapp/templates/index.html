@@ -74,7 +74,9 @@
           <button id="recommend-btn" class="btn btn-ghost btn-sm">Refresh</button>
         </div>
         <p class="hint">Updates automatically on your turn. Each row is the specific best-available player at that
-          position -- who you'd actually get, ranked by real value, not just which position to target.</p>
+          position -- who you'd actually get. Rows are ranked by the simulated value of
+          taking that <em>position</em>; the player shown is the best-ADP one there, which is
+          why the value check below can still name someone better.</p>
         <p id="recommend-status"></p>
         <div id="recommend-confidence" hidden></div>
         <div id="recommend-list" hidden></div>

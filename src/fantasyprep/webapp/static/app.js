@@ -277,10 +277,39 @@ async function clearPick(pickNum) {
 }
 
 document.getElementById("reset-btn").addEventListener("click", async () => {
-  if (!confirm("Reset the whole draft?")) return;
-  const res = await fetch("/api/reset", { method: "POST" });
-  render(await res.json());
+  // Reset has always preserved keepers, but the dialog said "Reset the whole
+  // draft?", so there was no way to know that -- and no way to drop them all
+  // either. Both are now explicit.
+  const keeperCount = currentState && currentState.keepers ? currentState.keepers.length : 0;
+
+  if (keeperCount === 0) {
+    if (!confirm("Clear every pick and start over?")) return;
+    render(await postReset(false));
+    return;
+  }
+
+  const keepThem = confirm(
+    `Clear all picks but KEEP your ${keeperCount} keeper${keeperCount === 1 ? "" : "s"}?\n\n` +
+    `OK  = clear picks, keep keepers\n` +
+    `Cancel = choose whether to wipe keepers too`
+  );
+  if (keepThem) {
+    render(await postReset(false));
+    return;
+  }
+  if (confirm(`Also permanently remove all ${keeperCount} keepers? This cannot be undone.`)) {
+    render(await postReset(true));
+  }
 });
+
+async function postReset(clearKeepers) {
+  const res = await fetch("/api/reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clear_keepers: clearKeepers }),
+  });
+  return res.json();
+}
 
 document.getElementById("change-team-btn").addEventListener("click", showSlotPicker);
 
@@ -543,13 +572,22 @@ async function loadNowVsWait(target, alternative) {
     return;
   }
 
-  const urgent = data.cost_of_waiting > 0;
+  // Three states, not two. The old binary read the SIGN of cost_of_waiting, so
+  // a 4-point edge on a ~1845 roster rendered as a confident "Draft TE now"
+  // right above "100% chance a top TE is still there next round".
+  const verdict = data.verdict || (data.cost_of_waiting > 0 ? "draft_now" : "safe_to_wait");
+  const urgent = verdict === "draft_now";
+  const tooClose = verdict === "too_close";
   const survivalPct = Math.round(data.survival_probability * 100);
   card.className = urgent ? "urgent" : "safe";
   card.innerHTML =
-    `<div class="nvw-verdict ${urgent ? "urgent" : "safe"}">` +
+    `<div class="nvw-verdict ${urgent ? "urgent" : tooClose ? "close" : "safe"}">` +
     `<span class="nvw-verdict-dot"></span>` +
-    (urgent ? `Draft ${data.position} now` : `Safe to wait on ${data.position}`) +
+    (urgent
+      ? `Draft ${data.position} now`
+      : tooClose
+        ? `Too close to call on ${data.position}`
+        : `Safe to wait on ${data.position}`) +
     `</div>` +
     `<div class="nvw-detail">` +
     `${survivalPct}% chance a top ${data.position} is still there next round. ` +

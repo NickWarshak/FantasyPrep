@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import random
 import statistics
+import math
 from dataclasses import dataclass
 
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
@@ -163,6 +164,15 @@ def survival_probability(
     return survived / num_sims
 
 
+# Below this, the EV edge is not big enough relative to the outcome spread to
+# call -- see NowVsWaitResult.verdict. 0.55 corresponds to a margin of roughly a
+# fifth of the pooled P25-P75 spread.
+MIN_DECISIVENESS = 0.55
+
+# At or above this survival probability, waiting is effectively free.
+NEAR_CERTAIN_SURVIVAL = 0.90
+
+
 @dataclass(frozen=True)
 class NowVsWaitResult:
     position: str
@@ -183,6 +193,46 @@ class NowVsWaitResult:
         now) -- can genuinely happen, e.g. if the alternative position is
         itself scarce this exact pick."""
         return self.now_mean - self.wait_mean
+
+    @property
+    def decisiveness(self) -> float:
+        """How much bigger the edge is than the noise, as 0.5-1.0.
+
+        Same logistic-of-margin-over-pooled-spread shape as
+        `simulate.position_confidence`, deliberately: a wide outcome spread
+        should demand a bigger raw-point edge before a call counts as
+        confident, and the two surfaces of this app should not use two
+        different notions of "close".
+        """
+        margin = abs(self.cost_of_waiting)
+        spread = ((self.now_p75 - self.now_p25) + (self.wait_p75 - self.wait_p25)) / 2 or 1.0
+        return 1.0 / (1.0 + math.exp(-margin / spread))
+
+    @property
+    def verdict(self) -> str:
+        """'draft_now', 'safe_to_wait', or 'too_close'.
+
+        This used to be a bare sign test on `cost_of_waiting`, which produced a
+        genuine contradiction on screen: a +4 edge on a ~1845 roster (0.2%)
+        rendered as a confident "Draft TE now" directly above the sentence
+        "100% chance a top TE is still there next round". Both statements came
+        from the same result object, and only one of them could be acted on.
+
+        A sign test is the wrong instrument here because the measured decision
+        margins in this project are tiny -- the median is about 1.3% of roster
+        value -- so the sign of a small difference is mostly simulation noise.
+        Below MIN_DECISIVENESS the honest answer is that it does not matter.
+
+        Survival is the second guard. If the player is nearly certain to still
+        be there, waiting is close to free whatever a marginal EV edge says,
+        so an indecisive "now" collapses to "safe to wait" rather than
+        pretending urgency.
+        """
+        if self.decisiveness < MIN_DECISIVENESS:
+            if self.survival_probability >= NEAR_CERTAIN_SURVIVAL:
+                return "safe_to_wait"
+            return "too_close"
+        return "draft_now" if self.cost_of_waiting > 0 else "safe_to_wait"
 
 
 def compare_now_vs_wait(

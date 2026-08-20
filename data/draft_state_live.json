@@ -48,83 +48,83 @@
     },
     {
       "pick": 3,
-      "player": "Christian McCaffrey"
-    },
-    {
-      "pick": 4,
-      "player": "Jonathan Taylor"
-    },
-    {
-      "pick": 5,
-      "player": "Amon-Ra St. Brown"
-    },
-    {
-      "pick": 6,
-      "player": "CeeDee Lamb"
-    },
-    {
-      "pick": 8,
-      "player": "De'Von Achane"
-    },
-    {
-      "pick": 9,
-      "player": "Justin Jefferson"
-    },
-    {
-      "pick": 10,
       "player": "Ja'Marr Chase"
     },
     {
-      "pick": 11,
-      "player": "A.J. Brown"
+      "pick": 4,
+      "player": "Christian McCaffrey"
     },
     {
-      "pick": 12,
+      "pick": 5,
+      "player": "Jonathan Taylor"
+    },
+    {
+      "pick": 6,
+      "player": "Amon-Ra St. Brown"
+    },
+    {
+      "pick": 8,
+      "player": "CeeDee Lamb"
+    },
+    {
+      "pick": 9,
       "player": "Ashton Jeanty"
     },
     {
-      "pick": 13,
-      "player": "Drake London"
+      "pick": 10,
+      "player": "De'Von Achane"
     },
     {
-      "pick": 14,
-      "player": "Trey McBride"
+      "pick": 11,
+      "player": "Justin Jefferson"
     },
     {
-      "pick": 15,
-      "player": "Saquon Barkley"
-    },
-    {
-      "pick": 16,
-      "player": "Jeremiyah Love"
-    },
-    {
-      "pick": 17,
-      "player": "Rashee Rice"
-    },
-    {
-      "pick": 18,
-      "player": "Josh Allen"
-    },
-    {
-      "pick": 19,
-      "player": "Chase Brown"
-    },
-    {
-      "pick": 20,
-      "player": "George Pickens"
-    },
-    {
-      "pick": 21,
+      "pick": 12,
       "player": "Brock Bowers"
     },
     {
-      "pick": 22,
+      "pick": 13,
+      "player": "Saquon Barkley"
+    },
+    {
+      "pick": 14,
+      "player": "Drake London"
+    },
+    {
+      "pick": 15,
+      "player": "Jeremiyah Love"
+    },
+    {
+      "pick": 16,
+      "player": "Trey McBride"
+    },
+    {
+      "pick": 17,
       "player": "Derrick Henry"
     },
     {
+      "pick": 18,
+      "player": "Chase Brown"
+    },
+    {
+      "pick": 19,
+      "player": "Josh Allen"
+    },
+    {
+      "pick": 20,
+      "player": "Rashee Rice"
+    },
+    {
+      "pick": 21,
+      "player": "A.J. Brown"
+    },
+    {
+      "pick": 22,
+      "player": "George Pickens"
+    },
+    {
       "pick": 23,
-      "player": "Garrett Wilson"
+      "player": "Nico Collins"
     },
     {
       "pick": 25,
@@ -132,11 +132,79 @@
     },
     {
       "pick": 26,
-      "player": "Nico Collins"
+      "player": "Garrett Wilson"
     },
     {
       "pick": 27,
       "player": "Chris Olave"
+    },
+    {
+      "pick": 29,
+      "player": "DeVonta Smith"
+    },
+    {
+      "pick": 31,
+      "player": "Malik Nabers"
+    },
+    {
+      "pick": 33,
+      "player": "Lamar Jackson"
+    },
+    {
+      "pick": 34,
+      "player": "Tetairoa McMillan"
+    },
+    {
+      "pick": 35,
+      "player": "Zay Flowers"
+    },
+    {
+      "pick": 36,
+      "player": "Kyren Williams"
+    },
+    {
+      "pick": 37,
+      "player": "Cam Skattebo"
+    },
+    {
+      "pick": 38,
+      "player": "Colston Loveland"
+    },
+    {
+      "pick": 39,
+      "player": "Tyler Warren"
+    },
+    {
+      "pick": 40,
+      "player": "Davante Adams"
+    },
+    {
+      "pick": 42,
+      "player": "Drake Maye"
+    },
+    {
+      "pick": 44,
+      "player": "Joe Burrow"
+    },
+    {
+      "pick": 47,
+      "player": "Travis Etienne Jr."
+    },
+    {
+      "pick": 48,
+      "player": "Jayden Daniels"
+    },
+    {
+      "pick": 49,
+      "player": "Jaylen Waddle"
+    },
+    {
+      "pick": 50,
+      "player": "Ladd McConkey"
+    },
+    {
+      "pick": 51,
+      "player": "Jalen Hurts"
     }
   ],
   "keepers": [

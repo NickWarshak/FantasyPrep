@@ -409,3 +409,68 @@ def test_validate_against_real_outcome_averaged_actually_averages():
 
     assert now_avg == pytest.approx(30.0)  # mean of 0, 30, 60
     assert wait_avg == pytest.approx(20.0)  # mean of 0, 60, 0
+
+
+# --- verdict thresholding ---------------------------------------------------
+
+def _result(now_mean, wait_mean, survival, spread=260.0):
+    """A result with a controllable edge, spread and survival probability."""
+    from fantasyprep.draft_sim.draft_now_vs_wait import NowVsWaitResult
+
+    half = spread / 2
+    return NowVsWaitResult(
+        position="TE",
+        now_mean=now_mean, now_p25=now_mean - half, now_p75=now_mean + half,
+        wait_alternative_position="RB",
+        wait_mean=wait_mean, wait_p25=wait_mean - half, wait_p75=wait_mean + half,
+        survival_probability=survival,
+    )
+
+
+def test_tiny_edge_with_certain_survival_is_not_urgent():
+    """The exact contradiction from a real screenshot: a +4 edge on a ~1845
+    roster rendered as a confident "Draft TE now" directly above the sentence
+    "100% chance a top TE is still there next round"."""
+    result = _result(now_mean=1845.0, wait_mean=1841.0, survival=1.0)
+
+    assert result.cost_of_waiting == pytest.approx(4.0)
+    assert result.decisiveness < 0.55
+    assert result.verdict == "safe_to_wait"
+
+
+def test_tiny_edge_without_certain_survival_is_too_close():
+    result = _result(now_mean=1845.0, wait_mean=1841.0, survival=0.35)
+
+    # No urgency claim, but no "safe to wait" promise either -- the honest
+    # answer is that the simulation cannot tell.
+    assert result.verdict == "too_close"
+
+
+def test_a_large_edge_with_low_survival_still_says_draft_now():
+    """The threshold must not neuter the feature -- a real edge still calls."""
+    result = _result(now_mean=1900.0, wait_mean=1780.0, survival=0.05)
+
+    assert result.decisiveness >= 0.55
+    assert result.verdict == "draft_now"
+
+
+def test_a_large_negative_edge_says_wait():
+    result = _result(now_mean=1780.0, wait_mean=1900.0, survival=0.5)
+
+    assert result.cost_of_waiting < 0
+    assert result.verdict == "safe_to_wait"
+
+
+def test_decisiveness_scales_with_the_outcome_spread():
+    """The same raw point edge means more when outcomes are tightly clustered."""
+    wide = _result(now_mean=1900.0, wait_mean=1850.0, survival=0.5, spread=400.0)
+    tight = _result(now_mean=1900.0, wait_mean=1850.0, survival=0.5, spread=80.0)
+
+    assert tight.decisiveness > wide.decisiveness
+
+
+def test_decisiveness_is_symmetric_in_direction():
+    now = _result(now_mean=1900.0, wait_mean=1800.0, survival=0.5)
+    wait = _result(now_mean=1800.0, wait_mean=1900.0, survival=0.5)
+
+    assert now.decisiveness == pytest.approx(wait.decisiveness)

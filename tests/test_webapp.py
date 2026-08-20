@@ -647,3 +647,44 @@ def test_unpriced_players_are_null_in_search_too(tmp_path):
 
     assert results["RB One"]["upside_rank"] is None
     assert results["RB One"]["upside_probability"] is None
+
+
+def test_reset_keeps_keepers_by_default(tmp_path):
+    """Reset has always preserved keepers -- this pins it, since the dialog
+    used to say "Reset the whole draft?" and gave no way to know."""
+    client = _make_app(tmp_path).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/1", json={"player_name": "RB One"})     # live pick
+    client.put("/api/picks/25", json={"player_name": "WR One"})    # keeper
+
+    data = client.post("/api/reset", json={}).get_json()
+
+    assert data["keepers_kept"] == 1
+    remaining = {p["player"] for p in data["picks"].values()}
+    assert remaining == {"WR One"}
+
+
+def test_reset_can_clear_keepers_too(tmp_path):
+    """The genuine full wipe -- previously impossible without clearing each
+    keeper cell one at a time."""
+    client = _make_app(tmp_path).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/25", json={"player_name": "WR One"})
+
+    data = client.post("/api/reset", json={"clear_keepers": True}).get_json()
+
+    assert data["keepers_kept"] == 0
+    assert data["picks"] == {}
+    assert data["keepers"] == []
+
+
+def test_cleared_keepers_do_not_come_back_on_a_later_reset(tmp_path):
+    client = _make_app(tmp_path).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    client.put("/api/picks/25", json={"player_name": "WR One"})
+    client.post("/api/reset", json={"clear_keepers": True})
+
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+    data = client.post("/api/reset", json={}).get_json()
+
+    assert data["picks"] == {}

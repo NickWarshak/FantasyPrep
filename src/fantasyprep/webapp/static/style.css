@@ -750,3 +750,9 @@ td.cell.my-team:not(.filled) {
   line-height: 1;
   color: var(--text-faint);
 }
+
+
+/* "Too close to call" is a real answer, not a degraded one, so it gets its own
+   neutral treatment rather than borrowing the urgent or safe colour. */
+.nvw-verdict.close { color: var(--text-dim); }
+.nvw-verdict.close .nvw-verdict-dot { background: var(--text-faint); }
