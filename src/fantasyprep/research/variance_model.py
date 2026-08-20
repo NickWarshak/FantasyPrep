@@ -68,9 +68,23 @@ TARGETS = ("weekly_stdev", "weekly_cv")
 def build_weekly_volatility(
     seasons: list[int], cache_path: Path = WEEKLY_CACHE, force_refresh: bool = False
 ) -> pd.DataFrame:
-    """Per player-season weekly volatility, cached because the pulls are slow."""
+    """Per player-season weekly volatility, cached because the pulls are slow.
+
+    The cache is only honoured when it actually covers every requested season.
+    Returning it unconditionally would be the quiet kind of wrong this project
+    keeps finding: a caller asking for 1999-2024 would silently receive whatever
+    narrower range happened to be cached, and every downstream number would be
+    computed on a different sample than the one requested, with nothing raising.
+
+    The returned frame is also filtered to exactly the requested seasons, so a
+    *wider* cache cannot smuggle extra seasons into a deliberately narrow run.
+    """
     if cache_path.exists() and not force_refresh:
-        return pd.read_parquet(cache_path)
+        cached = pd.read_parquet(cache_path)
+        if set(seasons) <= set(cached["season"].unique()):
+            return cached[cached["season"].isin(seasons)].reset_index(drop=True)
+        missing = sorted(set(seasons) - set(cached["season"].unique()))
+        print(f"  cache missing {missing} -- rebuilding")
 
     scoring = default_settings().scoring
     rows = []
@@ -96,7 +110,7 @@ def build_weekly_volatility(
     frame = pd.DataFrame(rows)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_parquet(cache_path, index=False)
-    return frame
+    return frame[frame["season"].isin(seasons)].reset_index(drop=True)
 
 
 def attach_volatility(modeling_frame: pd.DataFrame, volatility: pd.DataFrame) -> pd.DataFrame:
