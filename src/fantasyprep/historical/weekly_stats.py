@@ -140,3 +140,102 @@ def waiver_adjusted_actual_points(
     """
     weekly = weekly_actual_points(year, scoring)
     return _waiver_adjusted_totals(weekly, rank_cutoff)
+
+
+# How many weeks of real production a manager needs before he'll rank a player
+# on his own average rather than on where he was drafted. Before this, draft
+# order stands in -- which is what a manager actually does in September.
+MIN_WEEKS_FOR_EXPECTATION = 3
+
+
+def weekly_points_by_player(
+    year: int, scoring: ScoringSettings
+) -> dict[str, dict[int, float]]:
+    """normalized player name -> {week: points} for a whole season."""
+    table: dict[str, dict[int, float]] = defaultdict(dict)
+    for outcome in weekly_actual_points(year, scoring):
+        table[normalize_name(outcome.name)][outcome.week] = outcome.points
+    return table
+
+
+def realistic_weekly_roster_points(
+    roster: list[tuple[str, str]],
+    weekly: dict[str, dict[int, float]],
+    settings,
+    hindsight: bool = False,
+) -> float:
+    """Score a roster by summing weekly lineups a manager could actually set.
+
+    WHY THIS EXISTS, and why it is not just a refinement of season-total scoring:
+    the default scorer takes one season total per player and starts the best.
+    That is a lineup chosen with perfect hindsight -- it benches a player because
+    of how his whole season turned out, which nobody can do in September.
+
+    Measured consequence (see research/lineup_hindsight.py): hindsight scoring
+    REWARDS volatility, realistic scoring PENALISES it, and the sign genuinely
+    flips. A mean-preserving spread of 2x on weekly outcomes is worth +76.6
+    points under hindsight and -21.8 under realistic management. So any
+    player-variance work built on hindsight scoring would push recommendations
+    toward exactly the players a real manager should avoid.
+
+    Here a player is ranked each week by what he has averaged over weeks
+    *already played*, and then scored on what he actually did. A player who ends
+    up busting still occupies a starting slot for the weeks before anyone could
+    have known -- which is the cost hindsight scoring erases.
+
+    `hindsight=True` ranks by that week's actual points instead, giving the
+    unattainable upper bound. Useful for measuring the premium, not for scoring
+    a real comparison.
+
+    Missing week = did not play, the same signal the rest of this module uses,
+    so an injured player simply cannot be started.
+    """
+    weeks = sorted({w for points in weekly.values() for w in points})
+    history: dict[str, list[float]] = defaultdict(list)
+    total = 0.0
+
+    for week in weeks:
+        candidates = []
+        for order, (name, position) in enumerate(roster):
+            actual = weekly.get(name, {}).get(week)
+            if actual is None:
+                continue
+            if hindsight:
+                rank_value = actual
+            else:
+                past = history[name]
+                rank_value = (
+                    sum(past) / len(past)
+                    if len(past) >= MIN_WEEKS_FOR_EXPECTATION
+                    else float(len(roster) - order)
+                )
+            candidates.append((rank_value, actual, name, position))
+
+        total += sum(actual for _, actual, _, _ in _weekly_lineup(candidates, settings))
+        for _, actual, name, _ in candidates:
+            history[name].append(actual)
+
+    return total
+
+
+def _weekly_lineup(candidates: list[tuple], settings) -> list[tuple]:
+    """Greedy slot fill by rank value, mirroring `roster.starting_lineup_value`
+    so the two scorers differ only in *what they rank on*, never in how slots
+    are assigned."""
+    from fantasyprep.league.settings import LeagueSettings
+
+    remaining = sorted(candidates, key=lambda c: c[0], reverse=True)
+    started = []
+    for position, count in settings.roster_slots.items():
+        if position == "FLEX":
+            continue
+        eligible = [c for c in remaining if c[3] == position][:count]
+        started.extend(eligible)
+        for c in eligible:
+            remaining.remove(c)
+    flex_count = settings.roster_slots.get("FLEX", 0)
+    if flex_count:
+        started.extend(
+            [c for c in remaining if c[3] in LeagueSettings.FLEX_ELIGIBLE][:flex_count]
+        )
+    return started

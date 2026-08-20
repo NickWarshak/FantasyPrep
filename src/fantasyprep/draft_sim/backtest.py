@@ -276,15 +276,37 @@ def run_full_draft(
 
 
 def score_roster(
-    players: list[FfcPlayer], actual_points: dict[str, float], settings: LeagueSettings
+    players: list[FfcPlayer],
+    actual_points: dict[str, float],
+    settings: LeagueSettings,
+    weekly: dict[str, dict[int, float]] | None = None,
 ) -> tuple[float, list[tuple[str, str, float]]]:
+    """Real points a roster earned, plus a per-player breakdown.
+
+    `weekly` selects the scorer. None (the default) keeps the original
+    season-total behaviour exactly, so every existing call site and every
+    recorded result is unchanged. Passing weekly data switches to realistic
+    weekly lineups -- see `weekly_stats.realistic_weekly_roster_points` for why
+    that matters, and why the two scorers disagree about volatile players in
+    opposite directions.
+
+    The per-player detail stays season-total in both modes: it exists for the
+    position-breakdown analysis, which attributes value to a player rather than
+    to a week, and there is no unambiguous way to split a weekly lineup total
+    back onto individual players anyway.
+    """
     drafted = []
     detail = []
     for p in players:
         pts = actual_points.get(normalize_name(p.name), 0.0)
         drafted.append(DraftedPlayer(name=p.name, position=p.position, points=pts))
         detail.append((p.name, p.position, pts))
-    return starting_lineup_value(drafted, settings), detail
+
+    if weekly is None:
+        return starting_lineup_value(drafted, settings), detail
+
+    roster = [(normalize_name(p.name), p.position) for p in players]
+    return weekly_stats.realistic_weekly_roster_points(roster, weekly, settings), detail
 
 
 def confidence_weighted_pick_value(
@@ -412,6 +434,7 @@ def replay_one(
     seed_index: int = 0,
     vor_rank_cutoff: dict[str, int] | None = None,
     opponent_weight_fn=pick_weight,
+    weekly: dict[str, dict[int, float]] | None = None,
 ) -> ReplayResult:
     total_rounds = sum(settings.roster_slots.values()) + settings.bench
     teams = settings.teams
@@ -469,10 +492,10 @@ def replay_one(
         opponent_rng=random.Random(seed), opponent_weight_fn=opponent_weight_fn,  # same seed as baseline -> CRN
     )
 
-    baseline_points, baseline_detail = score_roster(baseline_result.my_players, actual_points, settings)
-    model_points, model_detail = score_roster(model_result.my_players, actual_points, settings)
-    pure_adp_points, pure_adp_detail = score_roster(pure_adp_result.my_players, actual_points, settings)
-    vor_points, vor_detail = score_roster(vor_result.my_players, actual_points, settings)
+    baseline_points, baseline_detail = score_roster(baseline_result.my_players, actual_points, settings, weekly)
+    model_points, model_detail = score_roster(model_result.my_players, actual_points, settings, weekly)
+    pure_adp_points, pure_adp_detail = score_roster(pure_adp_result.my_players, actual_points, settings, weekly)
+    vor_points, vor_detail = score_roster(vor_result.my_players, actual_points, settings, weekly)
 
     return ReplayResult(
         year=year, my_slot=my_slot, seed_index=seed_index,
@@ -582,6 +605,12 @@ def run_backtest(
 
         vor_rank_cutoff = DEFAULT_RANK_CUTOFF if vor_rank_cutoff_mode == "legacy" else None
 
+        weekly_table = (
+            weekly_stats.weekly_points_by_player(year, settings.scoring)
+            if scoring_mode == "weekly-realistic"
+            else None
+        )
+
         if scoring_mode == "waiver-adjusted":
             weekly_rank_cutoff = DEFAULT_RANK_CUTOFF if vor_rank_cutoff_mode == "legacy" else ffc.derive_rank_cutoff(live_pool, settings)
             actual_points = weekly_stats.waiver_adjusted_actual_points(year, settings.scoring, weekly_rank_cutoff)
@@ -595,7 +624,7 @@ def run_backtest(
                     year, slot, settings, live_pool, points_model, distributions, actual_points,
                     num_sims, seed=seed + year * 10_000 + slot * 100 + seed_index,
                     seed_index=seed_index, vor_rank_cutoff=vor_rank_cutoff,
-                    opponent_weight_fn=opponent_weight_fn,
+                    opponent_weight_fn=opponent_weight_fn, weekly=weekly_table,
                 )
                 results.append(result)
 
@@ -770,7 +799,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "(draft_sim/convergence.py)")
     parser.add_argument("--num-seeds", type=int, default=1,
                          help="opponent-room draws per (year, slot) cell, paired via common random numbers")
-    parser.add_argument("--scoring-mode", choices=["season-total", "waiver-adjusted"], default="season-total",
+    parser.add_argument("--scoring-mode",
+                        choices=["season-total", "waiver-adjusted", "weekly-realistic"],
+                        default="season-total",
                          help="'season-total' (default) scores rosters on raw actual points -- an empty/"
                          "injured slot implicitly scores 0 the rest of the season. 'waiver-adjusted' credits "
                          "real replacement-level production for weeks a player's data shows they didn't play "

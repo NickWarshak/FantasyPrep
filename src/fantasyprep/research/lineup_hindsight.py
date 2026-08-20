@@ -62,15 +62,6 @@ MIN_WEEKS_FOR_EXPECTATION = 3
 SPREAD_FACTORS = (1.0, 1.25, 1.5, 2.0)
 
 
-def weekly_points_by_player(year: int, settings: LeagueSettings) -> dict[str, dict[int, float]]:
-    """normalized name -> {week: points} for a season."""
-    outcomes = weekly_stats.weekly_actual_points(year, settings.scoring)
-    table: dict[str, dict[int, float]] = defaultdict(dict)
-    for outcome in outcomes:
-        table[normalize_name(outcome.name)][outcome.week] = outcome.points
-    return table
-
-
 def score_season_hindsight(
     roster: list[tuple[str, str]], weekly: dict[str, dict[int, float]], settings: LeagueSettings
 ) -> float:
@@ -88,62 +79,15 @@ def score_weekly(
     settings: LeagueSettings,
     realistic: bool,
 ) -> float:
-    """Sum of weekly lineups, chosen either with hindsight or without.
+    """Weekly lineups, delegated to the engine-side implementation.
 
-    The realistic variant ranks players by what they had averaged over weeks
-    already played -- information a manager genuinely has on Sunday morning --
-    and then scores whatever those starters actually did. A player who ends up
-    busting still occupies a starting slot for the weeks before anyone could
-    have known, which is precisely the cost hindsight scoring erases.
+    Deliberately a thin wrapper rather than a second copy: this module's whole
+    claim is about how the *engine* scores rosters, so measuring a research-local
+    reimplementation would prove nothing about the engine.
     """
-    weeks = sorted({w for points in weekly.values() for w in points})
-    total = 0.0
-    history: dict[str, list[float]] = defaultdict(list)
-
-    for week in weeks:
-        candidates = []
-        for order, (name, position) in enumerate(roster):
-            actual = weekly.get(name, {}).get(week)
-            if actual is None:
-                continue  # didn't play: cannot be started
-            if realistic:
-                past = history[name]
-                # Preseason draft order stands in for expectation until enough
-                # weeks exist to form one -- a manager's real September default.
-                rank_value = (
-                    statistics.mean(past)
-                    if len(past) >= MIN_WEEKS_FOR_EXPECTATION
-                    else float(len(roster) - order)
-                )
-            else:
-                rank_value = actual
-            candidates.append((rank_value, actual, name, position))
-
-        started = _pick_lineup(candidates, settings)
-        total += sum(actual for _, actual, _, _ in started)
-
-        for _, actual, name, _ in candidates:
-            history[name].append(actual)
-
-    return total
-
-
-def _pick_lineup(candidates: list[tuple], settings: LeagueSettings) -> list[tuple]:
-    """Greedy slot fill by `rank_value`, mirroring `starting_lineup_value`."""
-    remaining = sorted(candidates, key=lambda c: c[0], reverse=True)
-    started = []
-    for position, count in settings.roster_slots.items():
-        if position == "FLEX":
-            continue
-        eligible = [c for c in remaining if c[3] == position][:count]
-        started.extend(eligible)
-        for c in eligible:
-            remaining.remove(c)
-    flex_count = settings.roster_slots.get("FLEX", 0)
-    if flex_count:
-        eligible = [c for c in remaining if c[3] in LeagueSettings.FLEX_ELIGIBLE][:flex_count]
-        started.extend(eligible)
-    return started
+    return weekly_stats.realistic_weekly_roster_points(
+        roster, weekly, settings, hindsight=not realistic
+    )
 
 
 def spread_weekly(
@@ -198,7 +142,7 @@ def build_rosters(
 def run(year: int = 2023, n_rosters: int = 200, seed: int = 0) -> dict:
     settings = default_settings()
     outcomes = weekly_stats.weekly_actual_points(year, settings.scoring)
-    weekly = weekly_points_by_player(year, settings)
+    weekly = weekly_stats.weekly_points_by_player(year, settings.scoring)
     positions = {normalize_name(o.name): o.position for o in outcomes}
 
     rosters = build_rosters(weekly, positions, settings, n_rosters, seed)
