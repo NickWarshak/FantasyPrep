@@ -559,3 +559,18 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
   border-radius: 999px;
   white-space: nowrap;
 }
+
+/* Market-implied ceiling, from OPOY award futures. Distinct from the ADP and
+   scarcity chips because it answers a different question: ADP says where a
+   player goes, this says what the market thinks his upside is -- the one thing
+   the outcome distributions were measured to understate for early picks. */
+.upside {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--accent, #d9a45e);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0.9;
+}

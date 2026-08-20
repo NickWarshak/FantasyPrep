@@ -47,7 +47,8 @@ FIXTURE_ESPN_PLAYERS = [
 ]
 
 
-def _make_app(tmp_path: Path, state_name: str = "draft_state.json", espn_points=None, espn_players=None):
+def _make_app(tmp_path: Path, state_name: str = "draft_state.json", espn_points=None,
+              espn_players=None, upside_scores=None):
     return create_app(
         year=2026,
         draft_state_path=tmp_path / state_name,
@@ -56,6 +57,9 @@ def _make_app(tmp_path: Path, state_name: str = "draft_state.json", espn_points=
         settings=SETTINGS,
         live_pool=list(FIXTURE_POOL),
         distributions=FIXTURE_DISTRIBUTIONS,
+        # Empty (not None) by default: None means "go fetch live odds", which
+        # would put a network call in every webapp test.
+        upside_scores={} if upside_scores is None else upside_scores,
         # Default to an empty (not None) dict -- None means "fetch for
         # real over the network" in create_app, which every test not
         # specifically exercising ESPN behavior should never trigger.
@@ -537,3 +541,47 @@ def test_rank_among_remaining_counts_only_undrafted_players(client):
     assert after["RB"]["player"] == "RB Two"
     # An untouched position is unaffected.
     assert after["WR"]["remaining_at_position"] == before["WR"]["remaining_at_position"]
+
+
+def test_upside_rank_is_reported_when_odds_are_available(tmp_path):
+    # RB Two has the highest market-implied ceiling despite RB One's better ADP
+    # -- exactly the case where the signal earns its place, since ADP already
+    # tells you the ordering and this does not.
+    client = _make_app(
+        tmp_path,
+        upside_scores={"rb one": 0.02, "rb two": 0.09, "wr one": 0.05},
+    ).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+    by_position = {r["position"]: r for r in rows}
+
+    assert by_position["RB"]["player"] == "RB One"
+    assert by_position["RB"]["upside_probability"] == 0.02
+    # WR One (0.05) and RB Two (0.09) both outrank RB One's ceiling.
+    assert by_position["RB"]["upside_rank"] == 3
+
+
+def test_upside_is_null_for_players_the_market_did_not_price(tmp_path):
+    # A player with no odds is not a player with zero ceiling -- he is one the
+    # market did not price, and the UI must not imply otherwise.
+    client = _make_app(tmp_path, upside_scores={"wr one": 0.05}).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+    by_position = {r["position"]: r for r in rows}
+
+    assert by_position["RB"]["upside_probability"] is None
+    assert by_position["RB"]["upside_rank"] is None
+    assert by_position["WR"]["upside_rank"] == 1
+
+
+def test_recommendations_still_work_with_no_odds_at_all(tmp_path):
+    # A live draft must never break because an odds endpoint is unreachable.
+    client = _make_app(tmp_path, upside_scores={}).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    response = client.get("/api/recommend?seed=1")
+
+    assert response.status_code == 200
+    assert all(r["upside_rank"] is None for r in response.get_json()["rows"])

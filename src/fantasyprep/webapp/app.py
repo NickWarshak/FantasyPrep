@@ -54,7 +54,7 @@ from fantasyprep.draft_sim.simulate import (
 )
 from fantasyprep.historical.outcomes import build_outcome_distributions
 from fantasyprep.historical.sources import ffc
-from fantasyprep.sources import espn
+from fantasyprep.sources import espn, espn_futures
 from fantasyprep.league.settings import LeagueSettings, default_settings
 from fantasyprep.players.normalize import normalize_name
 
@@ -199,9 +199,11 @@ def create_app(
     distributions=None,
     espn_points: dict[str, float] | None = None,
     espn_players: list[espn.EspnPlayer] | None = None,
+    upside_scores: dict[str, float] | None = None,
 ) -> Flask:
     """Build the Flask app. `live_pool`/`distributions`/`espn_points`/
-    `espn_players` can be injected (e.g. small fixtures in tests) to skip
+    `espn_players`/`upside_scores` can be injected (e.g. small fixtures in
+    tests) to skip
     the live-network/historical-build cost at startup."""
     app = Flask(__name__, template_folder=str(TEMPLATE_DIR), static_folder=str(STATIC_DIR))
     settings = settings or default_settings()
@@ -245,6 +247,36 @@ def create_app(
                 players = espn.fetch_espn_players(year, cache_path=espn_cache)
             espn_players_cache["players"] = players
         return espn_players_cache["players"]
+
+    upside_cache: dict[str, dict[str, float]] = {}
+
+    def get_upside() -> dict[str, float]:
+        """Market-implied ceiling per player, from OPOY futures.
+
+        A deliberately different signal from ADP rather than another projection.
+        The research established that the market already prices the MEDIAN well
+        (prior production adds +0.0075 r2 on top of ADP), while the system's
+        worst measured calibration defect is understated UPSIDE for exactly the
+        early picks that decide a draft. Award futures speak to the second.
+
+        Degrades to an empty mapping rather than failing the recommendation: a
+        live draft must never break because an odds endpoint is unreachable.
+        """
+        if "scores" not in upside_cache:
+            if upside_scores is not None:
+                upside_cache["scores"] = upside_scores
+                return upside_cache["scores"]
+            try:
+                futures = espn_futures.fetch_award_futures(
+                    year, cache_path=raw_dir / f".espn_futures_{year}.json"
+                )
+                name_by_id = {
+                    str(p.espn_id): normalize_name(p.name) for p in get_espn_players()
+                }
+                upside_cache["scores"] = espn_futures.upside_by_name(futures, name_by_id)
+            except Exception:
+                upside_cache["scores"] = {}
+        return upside_cache["scores"]
 
     session = DraftSession(draft_state_path, settings, live_pool)
 
@@ -362,11 +394,28 @@ def create_app(
             rank_among_remaining = next(
                 (i for i, c in enumerate(by_adp, start=1) if c.name == player.name), None
             )
+            # Where this player's market-implied ceiling sits among everyone
+            # still available -- rank, not the raw probability, because a 3.9%
+            # OPOY chance means nothing to a drafter in isolation but "2nd
+            # highest ceiling left on the board" is immediately actionable.
+            upside = get_upside()
+            player_key = normalize_name(player.name)
+            upside_score = upside.get(player_key)
+            upside_rank = None
+            if upside_score is not None:
+                better = sum(
+                    1 for c in undrafted
+                    if upside.get(normalize_name(c.name), -1.0) > upside_score
+                )
+                upside_rank = better + 1
+
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
                 "rank_among_remaining": rank_among_remaining,
                 "remaining_at_position": len(candidates),
+                "upside_probability": upside_score,
+                "upside_rank": upside_rank,
             })
 
         # Within-position comparison for the #1 recommended position: is the

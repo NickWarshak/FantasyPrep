@@ -430,6 +430,12 @@ async function loadRecommendations() {
           ? `<span class="pos-left">${row.position}${row.rank_among_remaining} left ` +
             `&middot; ${row.remaining_at_position} avail</span>`
           : "") +
+        (row.upside_rank
+          ? `<span class="upside" title="Market-implied ceiling from OPOY futures: ` +
+            `${(row.upside_probability * 100).toFixed(1)}% of the de-vigged field. ` +
+            `Rank is among players still available.">` +
+            `↑ ceiling #${row.upside_rank}</span>`
+          : "") +
         `</div>` +
         `</div>` +
         `<div class="rec-stats">` +
