@@ -83,23 +83,38 @@ def parse_american(value: str) -> int | None:
         return None
 
 
+def fetch_raw_futures(year: int, timeout: int = 30) -> dict:
+    """The unparsed futures payload, all award markets.
+
+    Split out so the daily market snapshot can archive everything ESPN returns
+    rather than only the one market that happens to be interesting today -- the
+    other 22 cost nothing to keep, and none of them can be recovered later.
+    """
+    response = requests.get(
+        FUTURES_URL.format(year=year), params={"limit": 100}, timeout=timeout
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def fetch_award_futures(
     year: int,
     award: str = OFFENSIVE_PLAYER_OF_THE_YEAR,
     cache_path: Path | None = None,
     force_refresh: bool = False,
     timeout: int = 30,
+    raw: dict | None = None,
 ) -> list[FutureOdds]:
     """Every priced runner for one award, de-vigged.
 
     Cached the same way the other ESPN and FFC fetches are, so repeat calls and
-    offline runs cost nothing.
+    offline runs cost nothing. `raw` lets a caller that already holds the
+    payload (the snapshot writer) parse it without a second request.
     """
-    raw = _load_cached(cache_path) if cache_path and not force_refresh else None
     if raw is None:
-        response = requests.get(FUTURES_URL.format(year=year), params={"limit": 100}, timeout=timeout)
-        response.raise_for_status()
-        raw = response.json()
+        raw = _load_cached(cache_path) if cache_path and not force_refresh else None
+    if raw is None:
+        raw = fetch_raw_futures(year, timeout=timeout)
         if cache_path:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             cache_path.write_text(json.dumps(raw), encoding="utf-8")

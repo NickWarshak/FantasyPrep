@@ -106,17 +106,49 @@ Two deliberate failure behaviours:
 
 ---
 
+## The signal cannot currently be validated — and that caps what it may be used for
+
+An earlier draft of this document said the OPOY signal was testable against
+history because "award futures exist back several seasons." **That was wrong, and
+probing it directly disproved it:**
+
+| season | award markets returned | OPOY runners priced |
+|---|---|---|
+| 2020 | 11 | **0** |
+| 2022 | 11 | **0** |
+| 2023 | 12 | **0** |
+| 2024 | 30 | **0** |
+| 2025 | 20 | 22 *(truncated remnant, vintage unknown)* |
+| 2026 | 23 | **108** |
+
+ESPN does not preserve historical futures prices. This is the same pattern
+ROADMAP.md already recorded for ESPN ADP — a rolling current-season snapshot, not
+an archive. The 2025 entry is worse than useless for validation: 22 runners
+against 2026's 108, with no way to tell whether those prices are preseason or
+post-settlement.
+
+**Consequence, stated plainly: there is no held-out test set for this signal.**
+Every other input in this project has been validated on strictly-prior seasons
+before being trusted, and this one cannot be, with this source.
+
+So the OPOY chip is **informational only**. It is displayed to the drafter, who
+can weigh it themselves, and it is deliberately *not* fed into the outcome
+distributions, the simulator, or any recommendation ranking. Wiring an
+unvalidated signal into the engine would break the discipline that the rest of
+this project's results rest on.
+
 ## Recommended next steps
 
-1. **Test whether OPOY rank predicts residual upside.** The signal is now
-   available and displayed, but it has *not* been validated against outcomes.
-   The honest next experiment: do players with high market-implied ceiling
-   actually beat their ADP-bucket P90 more often? Award futures exist back
-   several seasons, so this is testable, and it is the difference between an
-   interesting chip and a real input.
-2. **If it validates, feed it into the distributions rather than the median** —
-   as an upside-shaping term, consistent with everything the research found.
-3. **Leave team implied totals for the weekly-lineup work**, where they belong.
+1. **Start archiving futures now.** A weekly snapshot of the current season's
+   award markets costs almost nothing (the fetch is already written and cached)
+   and is the only way this signal ever becomes testable. One season of
+   preseason-stamped archive makes the validation possible in 2027; doing
+   nothing makes it permanently impossible.
+2. **Do not feed OPOY into the model until it validates**, however plausible it
+   looks. The measured defect it targets is real; that is an argument for
+   testing it, not for trusting it.
+3. **Leave team implied totals for the weekly-lineup work**, where they belong —
+   they are in-season game data and a draft happens before any of it exists.
 
 ## Sources
 

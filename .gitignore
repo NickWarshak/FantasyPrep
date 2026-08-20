@@ -12,4 +12,12 @@ adp_gap_report.csv
 data/validation_report.html
 data/backtest_report.html
 data/backtest_results*.json
-data/snapshots/
+data/snapshots/*
+# ...except the futures archive. The other snapshot sources are recoverable:
+# FFC's historical ADP was probed and found FROZEN (a fresh 2015 fetch matches a
+# months-old cache for all 201 players), and ESPN rankings are re-derivable.
+# ESPN preserves NO historical award futures at all -- 2020-2024 return zero
+# priced runners -- so these files are the only record that will ever exist, and
+# leaving them on one machine's disk is a single point of failure for data that
+# cannot be re-fetched. See docs/VEGAS_DATA_RESEARCH.md.
+!data/snapshots/futures_*.json
