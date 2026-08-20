@@ -585,3 +585,130 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
   white-space: nowrap;
   opacity: 0.9;
 }
+
+/* ---------------------------------------------------------------------
+   Sleek pass (2026-08-20). The palette and tokens above were already
+   deliberate; what made the board feel flat was density and hierarchy:
+
+   - every empty cell rendered a visible "+", so a 10x15 grid showed 150
+     plus signs competing with the ~12 cells that actually held anything
+   - filled cells were distinguished only by a 3px left border, so the
+     board read as uniform grey regardless of what was drafted
+   - the recommendation row grew to five chips all at one weight, so
+     nothing in it was findable at a glance
+
+   The fixes are all contrast-of-attention rather than new colour: let the
+   empty state recede, let the filled state carry its position, and let
+   the number a drafter actually reads dominate its card.
+--------------------------------------------------------------------- */
+
+/* Empty cells recede. The "+" appears on hover, where it is a real
+   affordance, instead of permanently tiling the board. */
+td.cell:not(.filled) {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+}
+td.cell .claim {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+td.cell:hover .claim,
+td.cell.current-pick .claim {
+  opacity: 1;
+}
+
+/* Filled cells carry their position as a tint, not just an edge -- this is
+   what lets you read the shape of a roster across the board at a glance. */
+td.cell.filled { border-left-width: 3px; }
+td.cell.filled.pos-RB { background: color-mix(in srgb, var(--surface-2) 88%, var(--rb) 12%); }
+td.cell.filled.pos-WR { background: color-mix(in srgb, var(--surface-2) 88%, var(--wr) 12%); }
+td.cell.filled.pos-QB { background: color-mix(in srgb, var(--surface-2) 88%, var(--qb) 12%); }
+td.cell.filled.pos-TE { background: color-mix(in srgb, var(--surface-2) 88%, var(--te) 12%); }
+td.cell.filled.pos-DST { background: color-mix(in srgb, var(--surface-2) 90%, var(--dst) 10%); }
+
+td.cell.filled:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+/* Tighter type inside a cell: the name is what you scan for. */
+td.cell .player-name {
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+td.cell .player-meta { opacity: 0.82; }
+td.cell .pick-num { opacity: 0.55; }
+td.cell.filled .pick-num { opacity: 0.4; }
+
+/* My column reads as mine without shouting over the position tints. */
+td.cell.my-team:not(.filled) {
+  background: color-mix(in srgb, var(--surface) 70%, var(--accent) 5%);
+  box-shadow: inset 1px 0 0 var(--accent-dim);
+}
+
+/* ---- recommendation cards: one clear focal point per row ---- */
+
+/* The projected points is the number being compared between rows, so it
+   gets the size and the tabular alignment; everything else steps down. */
+.rec-expected {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.rec-range {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.1rem;
+}
+.rec-player {
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Chips are context, not headline -- one quiet weight for all of them, so
+   the eye lands on the player and the number first. */
+.rec-meta .adp,
+.pos-left,
+.upside {
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+.pos-left,
+.upside {
+  padding: 0.05rem 0.38rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+.pos-left { color: var(--text-faint); }
+.upside {
+  color: var(--te);
+  border-color: color-mix(in srgb, var(--te) 40%, transparent);
+  background: color-mix(in srgb, var(--te) 10%, transparent);
+}
+
+.rec-card {
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+}
+.rec-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* The auto-advance toggle sits with the other sim controls. */
+.field-inline.toggle {
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+}
+.field-inline.toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}

@@ -231,10 +231,18 @@ async function assignPick(pickNum, playerName) {
   }
   closePicker();
   render(data);
-  // Rapid live-draft entry: assigning the actual current pick immediately
-  // reopens the picker for the new current pick, so typing+Enter can repeat
-  // without touching the mouse. Out-of-order (keeper) entry does not chain.
-  if (wasCurrentPick) openPickerForCurrentPick();
+  // Out-of-order (keeper) entry never chains -- only assigning the real current
+  // pick advances the draft.
+  if (!wasCurrentPick) return;
+
+  // With auto-advance on, finishing my pick rolls straight into simulating the
+  // opponents and stops again when I am back on the clock. Off, it just
+  // reopens the picker so keyboard entry can repeat without the mouse.
+  if (autoAdvanceEnabled() && !data.next_pick_is_mine && data.current_pick <= data.total_picks) {
+    await runSimulation();
+  } else {
+    openPickerForCurrentPick();
+  }
 }
 
 async function clearPick(pickNum) {
@@ -319,7 +327,16 @@ function setSimulateButtons(running) {
   document.getElementById("simulate-stop-btn").hidden = !running;
 }
 
-document.getElementById("simulate-btn").addEventListener("click", async () => {
+function autoAdvanceEnabled() {
+  const box = document.getElementById("auto-advance");
+  return !box || box.checked;
+}
+
+// Runs opponent picks until it is my turn again. Extracted from the button
+// handler so it can also be resumed automatically the moment I finish a pick --
+// during a real draft the picks come every 30-90 seconds and re-clicking
+// "Simulate" each time is pure friction.
+async function runSimulation() {
   closePicker();
   simRunning = true;
   setSimulateButtons(true);
@@ -363,7 +380,9 @@ document.getElementById("simulate-btn").addEventListener("click", async () => {
   simRunning = false;
   setSimulateButtons(false);
   if (data && data.next_pick_is_mine) openPickerForCurrentPick();
-});
+}
+
+document.getElementById("simulate-btn").addEventListener("click", runSimulation);
 
 document.getElementById("simulate-stop-btn").addEventListener("click", () => {
   simRunning = false;
