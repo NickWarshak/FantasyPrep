@@ -1,0 +1,628 @@
+{
+  "changed_by_round": {
+    "1": 6,
+    "2": 6,
+    "3": 5,
+    "4": 6,
+    "5": 6,
+    "6": 6
+  },
+  "comparisons": [
+    {
+      "changed": false,
+      "corrected_margin": 3.09,
+      "corrected_top": "RB",
+      "incumbent_margin": 32.13,
+      "incumbent_top": "RB",
+      "pick": 1,
+      "round": 1,
+      "slot": 1
+    },
+    {
+      "changed": true,
+      "corrected_margin": 16.56,
+      "corrected_top": "RB",
+      "incumbent_margin": 11.52,
+      "incumbent_top": "WR",
+      "pick": 20,
+      "round": 2,
+      "slot": 1
+    },
+    {
+      "changed": false,
+      "corrected_margin": 18.67,
+      "corrected_top": "WR",
+      "incumbent_margin": 26.3,
+      "incumbent_top": "WR",
+      "pick": 21,
+      "round": 3,
+      "slot": 1
+    },
+    {
+      "changed": true,
+      "corrected_margin": 14.46,
+      "corrected_top": "RB",
+      "incumbent_margin": 6.7,
+      "incumbent_top": "WR",
+      "pick": 40,
+      "round": 4,
+      "slot": 1
+    },
+    {
+      "changed": true,
+      "corrected_margin": 10.62,
+      "corrected_top": "WR",
+      "incumbent_margin": 25.09,
+      "incumbent_top": "RB",
+      "pick": 41,
+      "round": 5,
+      "slot": 1
+    },
+    {
+      "changed": true,
+      "corrected_margin": 30.66,
+      "corrected_top": "RB",
+      "incumbent_margin": 39.59,
+      "incumbent_top": "WR",
+      "pick": 60,
+      "round": 6,
+      "slot": 1
+    },
+    {
+      "changed": true,
+      "corrected_margin": 33.12,
+      "corrected_top": "RB",
+      "incumbent_margin": 1.31,
+      "incumbent_top": "WR",
+      "pick": 2,
+      "round": 1,
+      "slot": 2
+    },
+    {
+      "changed": true,
+      "corrected_margin": 38.04,
+      "corrected_top": "RB",
+      "incumbent_margin": 50.76,
+      "incumbent_top": "WR",
+      "pick": 19,
+      "round": 2,
+      "slot": 2
+    },
+    {
+      "changed": true,
+      "corrected_margin": 31.32,
+      "corrected_top": "RB",
+      "incumbent_margin": 22.72,
+      "incumbent_top": "WR",
+      "pick": 22,
+      "round": 3,
+      "slot": 2
+    },
+    {
+      "changed": true,
+      "corrected_margin": 13.12,
+      "corrected_top": "WR",
+      "incumbent_margin": 28.03,
+      "incumbent_top": "RB",
+      "pick": 39,
+      "round": 4,
+      "slot": 2
+    },
+    {
+      "changed": false,
+      "corrected_margin": 7.25,
+      "corrected_top": "WR",
+      "incumbent_margin": 23.8,
+      "incumbent_top": "WR",
+      "pick": 42,
+      "round": 5,
+      "slot": 2
+    },
+    {
+      "changed": true,
+      "corrected_margin": 25.43,
+      "corrected_top": "WR",
+      "incumbent_margin": 5.76,
+      "incumbent_top": "RB",
+      "pick": 59,
+      "round": 6,
+      "slot": 2
+    },
+    {
+      "changed": false,
+      "corrected_margin": 4.29,
+      "corrected_top": "RB",
+      "incumbent_margin": 18.06,
+      "incumbent_top": "RB",
+      "pick": 3,
+      "round": 1,
+      "slot": 3
+    },
+    {
+      "changed": true,
+      "corrected_margin": 10.26,
+      "corrected_top": "RB",
+      "incumbent_margin": 17.69,
+      "incumbent_top": "WR",
+      "pick": 18,
+      "round": 2,
+      "slot": 3
+    },
+    {
+      "changed": true,
+      "corrected_margin": 55.55,
+      "corrected_top": "RB",
+      "incumbent_margin": 52.97,
+      "incumbent_top": "WR",
+      "pick": 23,
+      "round": 3,
+      "slot": 3
+    },
+    {
+      "changed": false,
+      "corrected_margin": 34.68,
+      "corrected_top": "WR",
+      "incumbent_margin": 16.31,
+      "incumbent_top": "WR",
+      "pick": 38,
+      "round": 4,
+      "slot": 3
+    },
+    {
+      "changed": true,
+      "corrected_margin": 7.61,
+      "corrected_top": "RB",
+      "incumbent_margin": 32.1,
+      "incumbent_top": "WR",
+      "pick": 43,
+      "round": 5,
+      "slot": 3
+    },
+    {
+      "changed": true,
+      "corrected_margin": 19.36,
+      "corrected_top": "WR",
+      "incumbent_margin": 0.25,
+      "incumbent_top": "RB",
+      "pick": 58,
+      "round": 6,
+      "slot": 3
+    },
+    {
+      "changed": true,
+      "corrected_margin": 15.83,
+      "corrected_top": "WR",
+      "incumbent_margin": 15.34,
+      "incumbent_top": "RB",
+      "pick": 4,
+      "round": 1,
+      "slot": 4
+    },
+    {
+      "changed": false,
+      "corrected_margin": 4.67,
+      "corrected_top": "WR",
+      "incumbent_margin": 5.69,
+      "incumbent_top": "WR",
+      "pick": 17,
+      "round": 2,
+      "slot": 4
+    },
+    {
+      "changed": true,
+      "corrected_margin": 22.38,
+      "corrected_top": "RB",
+      "incumbent_margin": 17.83,
+      "incumbent_top": "WR",
+      "pick": 24,
+      "round": 3,
+      "slot": 4
+    },
+    {
+      "changed": true,
+      "corrected_margin": 38.75,
+      "corrected_top": "RB",
+      "incumbent_margin": 11.79,
+      "incumbent_top": "WR",
+      "pick": 37,
+      "round": 4,
+      "slot": 4
+    },
+    {
+      "changed": true,
+      "corrected_margin": 9.02,
+      "corrected_top": "RB",
+      "incumbent_margin": 31.73,
+      "incumbent_top": "WR",
+      "pick": 44,
+      "round": 5,
+      "slot": 4
+    },
+    {
+      "changed": true,
+      "corrected_margin": 16.7,
+      "corrected_top": "WR",
+      "incumbent_margin": 35.0,
+      "incumbent_top": "RB",
+      "pick": 57,
+      "round": 6,
+      "slot": 4
+    },
+    {
+      "changed": true,
+      "corrected_margin": 37.91,
+      "corrected_top": "RB",
+      "incumbent_margin": 1.67,
+      "incumbent_top": "WR",
+      "pick": 5,
+      "round": 1,
+      "slot": 5
+    },
+    {
+      "changed": true,
+      "corrected_margin": 13.78,
+      "corrected_top": "RB",
+      "incumbent_margin": 40.13,
+      "incumbent_top": "WR",
+      "pick": 16,
+      "round": 2,
+      "slot": 5
+    },
+    {
+      "changed": false,
+      "corrected_margin": 0.15,
+      "corrected_top": "WR",
+      "incumbent_margin": 24.61,
+      "incumbent_top": "WR",
+      "pick": 25,
+      "round": 3,
+      "slot": 5
+    },
+    {
+      "changed": false,
+      "corrected_margin": 25.71,
+      "corrected_top": "WR",
+      "incumbent_margin": 41.47,
+      "incumbent_top": "WR",
+      "pick": 36,
+      "round": 4,
+      "slot": 5
+    },
+    {
+      "changed": false,
+      "corrected_margin": 8.74,
+      "corrected_top": "WR",
+      "incumbent_margin": 13.24,
+      "incumbent_top": "WR",
+      "pick": 45,
+      "round": 5,
+      "slot": 5
+    },
+    {
+      "changed": false,
+      "corrected_margin": 20.86,
+      "corrected_top": "WR",
+      "incumbent_margin": 15.18,
+      "incumbent_top": "WR",
+      "pick": 56,
+      "round": 6,
+      "slot": 5
+    },
+    {
+      "changed": true,
+      "corrected_margin": 1.21,
+      "corrected_top": "RB",
+      "incumbent_margin": 15.17,
+      "incumbent_top": "WR",
+      "pick": 6,
+      "round": 1,
+      "slot": 6
+    },
+    {
+      "changed": false,
+      "corrected_margin": 8.99,
+      "corrected_top": "WR",
+      "incumbent_margin": 2.89,
+      "incumbent_top": "WR",
+      "pick": 15,
+      "round": 2,
+      "slot": 6
+    },
+    {
+      "changed": false,
+      "corrected_margin": 4.81,
+      "corrected_top": "RB",
+      "incumbent_margin": 6.11,
+      "incumbent_top": "RB",
+      "pick": 26,
+      "round": 3,
+      "slot": 6
+    },
+    {
+      "changed": true,
+      "corrected_margin": 25.7,
+      "corrected_top": "WR",
+      "incumbent_margin": 38.67,
+      "incumbent_top": "RB",
+      "pick": 35,
+      "round": 4,
+      "slot": 6
+    },
+    {
+      "changed": true,
+      "corrected_margin": 0.43,
+      "corrected_top": "WR",
+      "incumbent_margin": 23.46,
+      "incumbent_top": "RB",
+      "pick": 46,
+      "round": 5,
+      "slot": 6
+    },
+    {
+      "changed": false,
+      "corrected_margin": 6.68,
+      "corrected_top": "WR",
+      "incumbent_margin": 36.78,
+      "incumbent_top": "WR",
+      "pick": 55,
+      "round": 6,
+      "slot": 6
+    },
+    {
+      "changed": false,
+      "corrected_margin": 11.15,
+      "corrected_top": "RB",
+      "incumbent_margin": 27.38,
+      "incumbent_top": "RB",
+      "pick": 7,
+      "round": 1,
+      "slot": 7
+    },
+    {
+      "changed": false,
+      "corrected_margin": 22.56,
+      "corrected_top": "WR",
+      "incumbent_margin": 16.14,
+      "incumbent_top": "WR",
+      "pick": 14,
+      "round": 2,
+      "slot": 7
+    },
+    {
+      "changed": false,
+      "corrected_margin": 34.45,
+      "corrected_top": "RB",
+      "incumbent_margin": 33.48,
+      "incumbent_top": "RB",
+      "pick": 27,
+      "round": 3,
+      "slot": 7
+    },
+    {
+      "changed": true,
+      "corrected_margin": 21.6,
+      "corrected_top": "WR",
+      "incumbent_margin": 20.32,
+      "incumbent_top": "RB",
+      "pick": 34,
+      "round": 4,
+      "slot": 7
+    },
+    {
+      "changed": true,
+      "corrected_margin": 28.8,
+      "corrected_top": "WR",
+      "incumbent_margin": 5.28,
+      "incumbent_top": "RB",
+      "pick": 47,
+      "round": 5,
+      "slot": 7
+    },
+    {
+      "changed": false,
+      "corrected_margin": 12.69,
+      "corrected_top": "WR",
+      "incumbent_margin": 36.54,
+      "incumbent_top": "WR",
+      "pick": 54,
+      "round": 6,
+      "slot": 7
+    },
+    {
+      "changed": true,
+      "corrected_margin": 0.91,
+      "corrected_top": "RB",
+      "incumbent_margin": 7.07,
+      "incumbent_top": "WR",
+      "pick": 8,
+      "round": 1,
+      "slot": 8
+    },
+    {
+      "changed": true,
+      "corrected_margin": 0.87,
+      "corrected_top": "RB",
+      "incumbent_margin": 18.83,
+      "incumbent_top": "WR",
+      "pick": 13,
+      "round": 2,
+      "slot": 8
+    },
+    {
+      "changed": true,
+      "corrected_margin": 16.95,
+      "corrected_top": "RB",
+      "incumbent_margin": 22.99,
+      "incumbent_top": "WR",
+      "pick": 28,
+      "round": 3,
+      "slot": 8
+    },
+    {
+      "changed": false,
+      "corrected_margin": 35.89,
+      "corrected_top": "WR",
+      "incumbent_margin": 6.22,
+      "incumbent_top": "WR",
+      "pick": 33,
+      "round": 4,
+      "slot": 8
+    },
+    {
+      "changed": false,
+      "corrected_margin": 39.44,
+      "corrected_top": "WR",
+      "incumbent_margin": 10.22,
+      "incumbent_top": "WR",
+      "pick": 48,
+      "round": 5,
+      "slot": 8
+    },
+    {
+      "changed": false,
+      "corrected_margin": 99.14,
+      "corrected_top": "WR",
+      "incumbent_margin": 18.57,
+      "incumbent_top": "WR",
+      "pick": 53,
+      "round": 6,
+      "slot": 8
+    },
+    {
+      "changed": false,
+      "corrected_margin": 13.83,
+      "corrected_top": "RB",
+      "incumbent_margin": 7.62,
+      "incumbent_top": "RB",
+      "pick": 9,
+      "round": 1,
+      "slot": 9
+    },
+    {
+      "changed": false,
+      "corrected_margin": 23.17,
+      "corrected_top": "WR",
+      "incumbent_margin": 36.2,
+      "incumbent_top": "WR",
+      "pick": 12,
+      "round": 2,
+      "slot": 9
+    },
+    {
+      "changed": true,
+      "corrected_margin": 2.82,
+      "corrected_top": "RB",
+      "incumbent_margin": 34.13,
+      "incumbent_top": "WR",
+      "pick": 29,
+      "round": 3,
+      "slot": 9
+    },
+    {
+      "changed": false,
+      "corrected_margin": 41.87,
+      "corrected_top": "RB",
+      "incumbent_margin": 35.84,
+      "incumbent_top": "RB",
+      "pick": 32,
+      "round": 4,
+      "slot": 9
+    },
+    {
+      "changed": false,
+      "corrected_margin": 39.59,
+      "corrected_top": "WR",
+      "incumbent_margin": 1.92,
+      "incumbent_top": "WR",
+      "pick": 49,
+      "round": 5,
+      "slot": 9
+    },
+    {
+      "changed": true,
+      "corrected_margin": 24.02,
+      "corrected_top": "RB",
+      "incumbent_margin": 50.53,
+      "incumbent_top": "WR",
+      "pick": 52,
+      "round": 6,
+      "slot": 9
+    },
+    {
+      "changed": true,
+      "corrected_margin": 30.37,
+      "corrected_top": "RB",
+      "incumbent_margin": 33.61,
+      "incumbent_top": "WR",
+      "pick": 10,
+      "round": 1,
+      "slot": 10
+    },
+    {
+      "changed": true,
+      "corrected_margin": 1.76,
+      "corrected_top": "WR",
+      "incumbent_margin": 6.7,
+      "incumbent_top": "RB",
+      "pick": 11,
+      "round": 2,
+      "slot": 10
+    },
+    {
+      "changed": false,
+      "corrected_margin": 51.86,
+      "corrected_top": "WR",
+      "incumbent_margin": 22.8,
+      "incumbent_top": "WR",
+      "pick": 30,
+      "round": 3,
+      "slot": 10
+    },
+    {
+      "changed": true,
+      "corrected_margin": 9.05,
+      "corrected_top": "RB",
+      "incumbent_margin": 38.9,
+      "incumbent_top": "WR",
+      "pick": 31,
+      "round": 4,
+      "slot": 10
+    },
+    {
+      "changed": true,
+      "corrected_margin": 2.81,
+      "corrected_top": "WR",
+      "incumbent_margin": 5.97,
+      "incumbent_top": "RB",
+      "pick": 50,
+      "round": 5,
+      "slot": 10
+    },
+    {
+      "changed": true,
+      "corrected_margin": 14.51,
+      "corrected_top": "RB",
+      "incumbent_margin": 27.65,
+      "incumbent_top": "WR",
+      "pick": 51,
+      "round": 6,
+      "slot": 10
+    }
+  ],
+  "decisions_by_round": {
+    "1": 10,
+    "2": 10,
+    "3": 10,
+    "4": 10,
+    "5": 10,
+    "6": 10
+  },
+  "median_margin_all": 21.52,
+  "median_margin_changed": 22.72,
+  "n_changed": 35,
+  "n_decisions": 60,
+  "num_sims": 200,
+  "seed": 0,
+  "share_changed": 0.5833,
+  "year": 2024
+}
