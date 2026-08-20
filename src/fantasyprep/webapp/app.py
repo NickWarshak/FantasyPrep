@@ -52,7 +52,7 @@ from fantasyprep.draft_sim.simulate import (
     resolve_pick,
     state_from_picks,
 )
-from fantasyprep.historical.outcomes import build_outcome_distributions
+from fantasyprep.historical.outcomes import BUCKET_WIDTH, build_outcome_distributions
 from fantasyprep.historical.sources import ffc
 from fantasyprep.sources import espn, espn_futures
 from fantasyprep.league.settings import LeagueSettings, default_settings
@@ -426,6 +426,8 @@ def create_app(
         # player always matches what was actually simulated (best-ADP
         # unless points_source=espn asked for value-aware selection).
         undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
+        # The same fixed preseason ranks `simulate_position_choice` samples on.
+        pos_ranks_full = ffc.position_ranks(live_pool)
         results = []
         for pos, mean, p25, p75 in rows:
             candidates = [p for p in undrafted if p.position == pos]
@@ -452,6 +454,27 @@ def create_app(
             upside_score = upside.get(player_key)
             upside_rank = _rank_by_upside(undrafted, upside).get(player_key)
 
+            # WHAT THE PROJECTION IS ACTUALLY OF.
+            #
+            # Under the historical points model the player's NAME contributes
+            # nothing. `HistoricalBootstrapModel.sample` looks up his preseason
+            # positional ADP rank, maps it to a 3-rank bucket, and draws from
+            # that bucket's real outcomes. Verified directly: Trey McBride
+            # (ADP 33.4), Brock Bowers (39.7) and Colston Loveland (58.8) all
+            # share bucket TE1-3 and produce the IDENTICAL distribution, mean
+            # 131.2 -- a 25-point ADP gap moves the model not at all.
+            #
+            # So the number belongs to a TIER, not to a person, and the card
+            # said otherwise. Note this is the preseason full-pool rank, which
+            # is deliberately NOT `rank_among_remaining` above -- that one
+            # shifts as the draft empties, while the modelled rank is fixed
+            # because that is what maps to a stable outcome bucket.
+            modeled_rank = pos_ranks_full.get(player.name)
+            modeled_tier = None
+            if modeled_rank is not None:
+                low = ((modeled_rank - 1) // BUCKET_WIDTH) * BUCKET_WIDTH + 1
+                modeled_tier = f"{pos}{low}-{low + BUCKET_WIDTH - 1}"
+
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
@@ -459,6 +482,9 @@ def create_app(
                 "remaining_at_position": len(candidates),
                 "upside_probability": upside_score,
                 "upside_rank": upside_rank,
+                "modeled_rank": modeled_rank,
+                "modeled_tier": modeled_tier,
+                "player_specific": points_source == "espn",
             })
 
         # Within-position comparison for the #1 recommended position: is the

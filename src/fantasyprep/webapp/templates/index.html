@@ -74,9 +74,11 @@
           <button id="recommend-btn" class="btn btn-ghost btn-sm">Refresh</button>
         </div>
         <p class="hint">Updates automatically on your turn. Each row is the specific best-available player at that
-          position -- who you'd actually get. Rows are ranked by the simulated value of
-          taking that <em>position</em>; the player shown is the best-ADP one there, which is
-          why the value check below can still name someone better.</p>
+          position &mdash; who you'd actually get. The projection belongs to the
+          <em>tier</em>, not the player: every player in a 3-rank tier draws from the same
+          historical bucket, so the name does not move the number. Rows rank the value of
+          taking that position; the player shown is the best-ADP one there, which is why the
+          value check below can still name someone better.</p>
         <p id="recommend-status"></p>
         <div id="recommend-confidence" hidden></div>
         <div id="recommend-list" hidden></div>

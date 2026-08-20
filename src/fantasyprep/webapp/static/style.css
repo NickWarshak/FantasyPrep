@@ -756,3 +756,19 @@ td.cell.my-team:not(.filled) {
    neutral treatment rather than borrowing the urgent or safe colour. */
 .nvw-verdict.close { color: var(--text-dim); }
 .nvw-verdict.close .nvw-verdict-dot { background: var(--text-faint); }
+
+
+/* What the projection is actually OF. Under the historical points model the
+   number belongs to a 3-rank tier, not to the named player -- every player in
+   the tier draws from the same bucket. Styled like the other context chips
+   because it is context, but it is the one that keeps the big number honest. */
+.tier {
+  font-size: 0.68rem;
+  line-height: 1.5;
+  padding: 0.05rem 0.38rem;
+  border-radius: 999px;
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+  color: var(--text-dim);
+  white-space: nowrap;
+}

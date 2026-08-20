@@ -505,6 +505,12 @@ async function loadRecommendations() {
           ? `<span class="pos-left">${row.position}${row.rank_among_remaining} left ` +
             `&middot; ${row.remaining_at_position} avail</span>`
           : "") +
+        (row.modeled_tier && !row.player_specific
+          ? `<span class="tier" title="The projection is for this TIER, not this player. ` +
+            `Under the historical model every player in ${row.modeled_tier} draws from the ` +
+            `same real-outcome bucket, so the name does not change the number.">` +
+            `models as ${row.modeled_tier}</span>`
+          : "") +
         (row.upside_rank
           ? `<span class="upside" title="Market-implied ceiling from OPOY futures: ` +
             `${(row.upside_probability * 100).toFixed(1)}% of the de-vigged field. ` +

@@ -688,3 +688,40 @@ def test_cleared_keepers_do_not_come_back_on_a_later_reset(tmp_path):
     data = client.post("/api/reset", json={}).get_json()
 
     assert data["picks"] == {}
+
+
+def test_recommendation_says_which_tier_the_projection_is_for(client):
+    """The projection belongs to a 3-rank tier, not the named player.
+
+    Verified against the real model: Trey McBride (ADP 33.4), Brock Bowers
+    (39.7) and Colston Loveland (58.8) all share bucket TE1-3 and sample the
+    IDENTICAL distribution -- a 25-point ADP gap moves it not at all. The card
+    previously implied a player-specific projection.
+    """
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+
+    for row in rows:
+        assert row["modeled_rank"] >= 1
+        # e.g. "RB1-3" -- position prefix plus the tier the bucket covers.
+        assert row["modeled_tier"].startswith(row["position"])
+        assert "-" in row["modeled_tier"]
+        assert row["player_specific"] is False
+
+
+def test_modeled_rank_is_the_fixed_preseason_rank_not_rank_among_remaining(client):
+    """These are different numbers and the card shows both, so they must not be
+    conflated: `rank_among_remaining` shifts as the board empties, while the
+    modelled rank is fixed because that is what maps to a stable bucket."""
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    before = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    # Take the top RB off the board.
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+    after = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    # The next RB up is now "RB1 left"...
+    assert after["RB"]["rank_among_remaining"] == 1
+    # ...but his modelled rank is still his own preseason standing, which is
+    # deeper than the player who was just drafted.
+    assert after["RB"]["modeled_rank"] > before["RB"]["modeled_rank"]
