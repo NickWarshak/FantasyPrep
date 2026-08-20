@@ -379,3 +379,110 @@ The Part II results reorder what Part I suggested:
 specialisation, per-tier recalibration — and the kernel-weighted fix that finally
 works). It should be treated as a standing constraint on this project's
 modeling, not a series of coincidences.
+
+---
+
+# Part III: the payoff
+
+Part II ended by reordering the plan — fix the scorer before the variance model,
+because the engine could not have consumed variance honestly. That reordering
+turned out to matter more than expected: **it changed what the right variance
+target even was**, and the retargeted question produced the strongest predictive
+result in the project.
+
+---
+
+## 8. Does a better distribution change a pick? (the gate)
+
+`python -m fantasyprep.research.decision_impact`
+
+Every distributional result so far was statistical. A 3% CRPS gain that never
+flips a recommendation is worth nothing at the draft table, so this ran before
+any further modeling investment.
+
+60 real 2024 draft states (10 slots × 6 rounds), common random numbers,
+incumbent bucket distributions vs the smooth-recalibrated ones:
+
+```
+recommendations changed : 35 of 60 (58.3%)
+median decision margin  : 21.52 points
+...on changed decisions : 22.72 points
+changed evenly across all six rounds
+```
+
+**The channel is wide open** — but the second number is a warning as much as an
+opportunity. A 21.5-point margin on a ~1700-point roster is **1.3%**, so most
+recommendations are near-ties that a small change in distribution shape can flip.
+Taken with the variance-seeking result, the engine's decisions are considerably
+more fragile than its headline win rates suggest.
+
+---
+
+## 9. Weekly volatility is predictable — the first real signal beyond ADP
+
+`python -m fantasyprep.research.variance_model`
+
+Experiment 3 found season-level dispersion barely predictable (Spearman +0.09).
+Experiment 6 explained why acting on it would have backfired. Together they
+imply a different target: what costs a real manager is not uncertainty about a
+player's season *level* — that mostly resolves into "he was good" or "he
+wasn't" — but **week-to-week volatility**, because a lineup must be committed
+every Sunday without knowing which weeks boom.
+
+Walk-forward, 1,502 held-out player-seasons:
+
+| target | predictor | Spearman | R² | MAE |
+|---|---|---|---|---|
+| **weekly CV** | model (profile) | **0.5126** | **0.2123** | 0.130 |
+| weekly CV | naive: last season's | 0.3791 | **−0.2392** | 0.160 |
+| weekly stdev | model (profile) | 0.4765 | 0.2154 | 1.570 |
+| weekly stdev | naive: last season's | 0.3475 | −0.2878 | 2.000 |
+
+Two things make this more than a number:
+
+- It is **five times** the season-level dispersion signal.
+- It decisively beats the obvious naive rival. Last season's own volatility
+  posts a **negative R²** — worse than just predicting the average. So volatility
+  is a predictable property, but it is *not* simply a stable player trait, which
+  is what a naive implementation would have assumed.
+
+Coefficient of variation is the headline target deliberately: raw stdev is
+mechanically larger for high scorers, so a model predicting it would largely be
+rediscovering ADP. CV is scale-free, and it is the stronger result anyway.
+
+**By position the signal is concentrated where roster decisions are**: RB 0.52
+and WR 0.36 on CV, TE 0.25, and QB essentially nothing (0.03 on stdev). Worth
+knowing before anyone applies it uniformly.
+
+---
+
+## Where this leaves the project
+
+The arc, end to end:
+
+1. The market prices the median; player history adds ~nothing on top of ADP.
+2. The incumbent distributions are already well calibrated on average.
+3. Season-level risk is barely predictable.
+4. Every attempt to condition by *splitting* the sample lost to pooling — four
+   times.
+5. The objective is structurally variance-seeking, and the scorer is why.
+6. Under realistic weekly lineups the sign of the variance effect **flips**.
+7. A kernel-weighted recalibration fixes the upside defect without fragmenting.
+8. Distributional changes do move real picks — 58% of them.
+9. **Weekly volatility is genuinely predictable, and it is the thing realistic
+   management actually prices.**
+
+**The single most useful conclusion**: FantasyPrep's edge is not going to come
+from predicting *how much* a player scores — the market has that. It may come
+from predicting *how reliably* he scores it, which the market prices far less
+efficiently and which only an honest weekly scorer can even value correctly.
+
+### What is deliberately NOT done
+
+- The variance model is **not wired into the engine**. It should not be until a
+  backtest under `--scoring-mode weekly-realistic` shows it helps.
+- The OPOY ceiling signal is **displayed but not modelled** — ESPN preserves no
+  historical futures, so it has no held-out test set. Archiving started so that
+  changes.
+- `BUCKET_WIDTH` is **unchanged**, and the recalibration layer is **not shipped**
+  into the live distributions. Both deserve their own A/B.
