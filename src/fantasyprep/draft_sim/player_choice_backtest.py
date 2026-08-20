@@ -129,6 +129,7 @@ def run_backtest(
     scoring_mode: str = "season-total",
     top_n: int = 3,
     opponent_model: str = "gaussian-tail-floor",
+    points_source: str = "historical",
 ) -> list[PlayerChoiceReplayResult]:
     """Same year/slot/seed loop and seeding scheme as `backtest.run_backtest`
     (`seed + year * 10_000 + slot * 100 + seed_index`) so results from the
@@ -148,6 +149,18 @@ def run_backtest(
 
         distributions = leakage_safe_distributions(settings, year, raw_dir)
         points_model = HistoricalBootstrapModel(distributions)
+
+        if points_source == "profile":
+            # The whole point of re-running this experiment. Under the bucket
+            # model two candidates in the same 3-rank bucket are statistically
+            # IDENTICAL, so "simulate each individually" was comparing noise --
+            # which is exactly what the original negative result concluded.
+            # Profile distributions are fitted on strictly-prior seasons only,
+            # so this stays leakage-safe.
+            from fantasyprep.research.profile_points_model import build_profile_points_model
+
+            points_model = build_profile_points_model(year, fallback=points_model)
+            print(f"  {year}: {points_model.coverage} players have their own distribution")
 
         if scoring_mode == "waiver-adjusted":
             weekly_rank_cutoff = ffc.derive_rank_cutoff(live_pool, settings)
@@ -243,6 +256,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-seeds", type=int, default=1)
     parser.add_argument("--top-n", type=int, default=3, help="how many top-ADP players per position to compare")
     parser.add_argument("--scoring-mode", choices=["season-total", "waiver-adjusted"], default="season-total")
+    parser.add_argument("--points-source", choices=["historical", "profile"], default="historical",
+                        help="'historical' (default) is the bucket bootstrap, under which two "
+                             "candidates in the same 3-rank bucket are statistically IDENTICAL -- "
+                             "the condition the original negative result was measured under. "
+                             "'profile' gives every player his own quantile distribution, fitted "
+                             "on strictly-prior seasons, so candidates are genuinely different.")
     parser.add_argument(
         "--opponent-model", choices=list(OPPONENT_WEIGHT_FN), default="gaussian-tail-floor",
     )
@@ -258,10 +277,11 @@ def run(args: argparse.Namespace) -> list[PlayerChoiceReplayResult]:
     settings = default_settings()
     print(f"Player-choice backtest: years={args.years} slots={args.slots} num_sims={args.num_sims} "
           f"num_seeds={args.num_seeds} top_n={args.top_n} scoring_mode={args.scoring_mode} "
-          f"opponent_model={args.opponent_model}")
+          f"opponent_model={args.opponent_model} points_source={args.points_source}")
     results = run_backtest(
         args.years, args.slots, settings, args.data_dir, args.num_sims, args.seed, args.num_seeds,
         scoring_mode=args.scoring_mode, top_n=args.top_n, opponent_model=args.opponent_model,
+        points_source=args.points_source,
     )
     _summarize(results)
 
@@ -276,6 +296,7 @@ def run(args: argparse.Namespace) -> list[PlayerChoiceReplayResult]:
             "years": args.years, "slots": args.slots, "num_sims": args.num_sims,
             "num_seeds": args.num_seeds, "top_n": args.top_n, "seed": args.seed,
             "scoring_mode": args.scoring_mode, "opponent_model": args.opponent_model,
+            "points_source": args.points_source,
         }
         path = log_experiment(
             args.data_dir, args.experiment_name, args.experiment_notes, params, _compact_summary(results),
