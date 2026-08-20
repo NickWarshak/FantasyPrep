@@ -481,19 +481,26 @@ the main 3-way backtest (`backtest.py`) as an official 4th condition.
 
 ## Tool: Market Snapshot Logger
 
-Daily timestamped ADP/rankings snapshot, captured now independent of
-whether anything downstream uses it yet — history not collected today
-can't be reconstructed later. (Confirmed concretely while building the
-backtest: FFC's own "historical" ADP for a past season isn't a frozen
-archive, it drifts slightly over time.)
+Daily timestamped market snapshot — ADP, rankings, and award-futures
+odds — captured now independent of whether anything downstream uses it
+yet, because history not collected today can't be reconstructed later.
+
+That principle turned out to apply unevenly, which is worth knowing. An
+earlier note here said FFC's historical ADP "drifts" over time; retesting
+**disproved it** (a fresh 2015 fetch matches a months-old cache for all
+201 players), so FFC history is recoverable. **Award futures are not** —
+ESPN preserves none at all, and 2020–2024 return zero priced runners. The
+futures archive is therefore the one part of this that genuinely cannot
+be rebuilt, and the only part committed to git.
 
 ```
 python -m fantasyprep.market.snapshot --year 2026
 ```
 
-Writes `data/snapshots/espn_YYYY-MM-DD.json` and `ffc_YYYY-MM-DD.json`,
-always fetched live (no cache reuse — the point is a real point-in-time
-reading). One source failing doesn't block the other. FantasyPros ECR is
+Writes `data/snapshots/espn_YYYY-MM-DD.json`, `ffc_YYYY-MM-DD.json` and
+`futures_YYYY-MM-DD.json`, always fetched live (no cache reuse — the
+point is a real point-in-time reading). One source failing doesn't block
+the others. FantasyPros ECR is
 intentionally not auto-fetched here — no clean free programmatic endpoint
 for it, so it stays on the existing manual `sharp_adp_YYYY-MM-DD.csv`
 process (`sources/manual_adp.py`).
@@ -505,6 +512,53 @@ particular session; check/manage it via Task Scheduler or
 `schtasks /query /tn "FantasyPrep Market Snapshot"`. The `--year` is
 hardcoded to 2026 in the batch script; bump it once next season's draft
 prep begins.
+
+## Historical Data & Modeling Research
+
+Two additions that sit *alongside* the draft engine rather than inside it.
+Neither changes a recommendation; they exist to decide what is worth
+changing.
+
+**`fantasyprep.historical.dataset`** — a leakage-safe 1999–2024
+player-season foundation built from a frozen nflverse snapshot.
+
+```
+python -m fantasyprep.historical.dataset.build
+```
+
+Deterministic and offline. Writes `data/historical/player_seasons.parquet`,
+`player_season_features.parquet`, an outcome-bucket study, and a generated
+`docs/HISTORICAL_DATA_AUDIT.md`. Leakage is enforced in code rather than by
+convention: every column is classified into `PRE_SEASON_COLUMNS` or its
+*complement*, so an unclassified new column is treated as an outcome and
+fails closed, and `preseason_frame()` is the only sanctioned way to build
+model inputs.
+
+**`fantasyprep.research`** — nine walk-forward experiments. Needs the
+optional extra: `pip install -e ".[research]"`.
+
+```
+python -m fantasyprep.research.benchmark              # ADP vs player history
+python -m fantasyprep.research.distribution_benchmark # calibration vs the incumbent
+python -m fantasyprep.research.residual_analysis      # is risk separable from rank?
+python -m fantasyprep.research.rookie_model           # do rookies need their own model?
+python -m fantasyprep.research.variance_sensitivity   # is the objective variance-seeking?
+python -m fantasyprep.research.lineup_hindsight       # what hindsight scoring costs
+python -m fantasyprep.research.calibration            # fixing the upside defect
+python -m fantasyprep.research.decision_impact        # does any of it change a pick?
+python -m fantasyprep.research.variance_model         # predicting weekly volatility
+```
+
+The short version, with full detail in `docs/MODELING_RESEARCH.md`: the
+market already prices *how much* a player scores (player history adds
++0.0075 R² on top of ADP) and the incumbent distributions are already
+well calibrated (1.5pp coverage error). The opening is *how reliably* he
+scores it — weekly volatility predicts at 0.51 Spearman, five times the
+season-level signal — and only realistic weekly scoring can value that
+correctly, because hindsight scoring gets the sign backwards.
+
+Four separate attempts to condition by *splitting* the sample lost to
+pooling. Treat that as a standing constraint, not a coincidence.
 
 ## Tests
 
