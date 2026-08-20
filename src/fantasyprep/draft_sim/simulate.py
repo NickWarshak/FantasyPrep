@@ -34,14 +34,18 @@ import numpy as np
 
 from fantasyprep.draft_sim.opponent import OpponentSampler, pick_weight
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
-from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
+from fantasyprep.draft_sim.roster import (
+    CANDIDATE_POSITIONS,
+    DraftedPlayer,
+    positions_of_need,
+    starting_lineup_value,
+)
 from fantasyprep.historical.outcomes import build_outcome_distributions
 from fantasyprep.historical.sources import ffc
 from fantasyprep.sources import espn
 from fantasyprep.league.settings import LeagueSettings, default_settings
 from fantasyprep.players.normalize import normalize_name
 
-CANDIDATE_POSITIONS = ("QB", "RB", "WR", "TE")
 
 # How many ADP-ranked candidates at a position count as "reachable" for a
 # real-value comparison -- shared by resolve_pick (drives which player the
@@ -146,6 +150,7 @@ def simulate_position_choice(
     rng: random.Random,
     opponent_weight_fn=pick_weight,
     player_points: dict[str, float] | None = None,
+    need_aware_future: bool = False,
 ) -> list[float] | None:
     # Position rank reflects each player's fixed standing in the full live
     # ADP universe -- not shifting as the draft progresses -- since that's
@@ -195,9 +200,23 @@ def simulate_position_choice(
             if not available.any():
                 break
             idx = sampler.sample(pick_num, available, rng)
-            available[idx] = False
             if pick_num in my_pick_set:
+                # MY future picks. Historically these came straight off the
+                # OPPONENT sampler, i.e. the simulation modelled me as a random
+                # ADP-follower with no positional need logic at all. Measured
+                # consequence: it routinely handed me three or four
+                # quarterbacks when only one starts, and 5% of simulated
+                # rosters missed the RB2 or WR2 starting minimums outright.
+                #
+                # That is not a cosmetic problem. With future picks random in
+                # both branches, "take QB now" versus "take RB now" collapses
+                # to roughly one player's draw inside a lot of shared noise, so
+                # the lookahead cannot value filling a need -- which is exactly
+                # what the ADP+need baseline it loses to does do.
+                if need_aware_future:
+                    idx = _need_aware_index(pool, available, my_team, settings, idx)
                 my_team.append(pool[idx])
+            available[idx] = False
 
         drafted = [
             DraftedPlayer(
@@ -210,6 +229,25 @@ def simulate_position_choice(
         results.append(starting_lineup_value(drafted, settings))
 
     return results
+
+
+def _need_aware_index(pool, available, my_team, settings, fallback_index: int) -> int:
+    """Best-ADP available player among positions this roster still needs.
+
+    Falls back to the sampled index when nothing is needed (roster full) or no
+    needed position has anyone left, so the behaviour degrades to the original
+    rather than failing.
+    """
+    needed = positions_of_need([p.position for p in my_team], settings)
+    if not needed:
+        return fallback_index
+    best_index, best_adp = None, None
+    for i, player in enumerate(pool):
+        if not available[i] or player.position not in needed:
+            continue
+        if best_adp is None or player.adp < best_adp:
+            best_index, best_adp = i, player.adp
+    return fallback_index if best_index is None else best_index
 
 
 def recommend_positions(

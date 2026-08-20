@@ -11,7 +11,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from collections import Counter
+
 from fantasyprep.league.settings import LeagueSettings
+
+# The positions the draft engine ever proposes. Lives here rather than in
+# simulate.py because `positions_of_need` needs it and roster.py must stay
+# import-free of simulate.py -- simulate imports roster, not the other way.
+CANDIDATE_POSITIONS = ("QB", "RB", "WR", "TE")
 
 
 @dataclass(frozen=True)
@@ -71,3 +78,36 @@ def starting_lineup_value_by_position(players: list[DraftedPlayer], settings: Le
             by_position[p.position] = by_position.get(p.position, 0.0) + p.points
 
     return by_position
+
+
+def positions_of_need(drafted_positions: list[str], settings: LeagueSettings) -> set[str]:
+    """Which positions a roster still needs, given what's drafted so far.
+
+    Fixed slots first, then FLEX-eligible overflow (RB/WR/TE beyond their
+    own fixed count still count against FLEX), then -- once every starting
+    slot including FLEX is filled -- "any skill position" for open bench
+    spots. Empty once the whole roster (starting + bench) is full.
+    """
+    counts = Counter(drafted_positions)
+    needed: set[str] = set()
+
+    for position, required in settings.roster_slots.items():
+        if position == "FLEX":
+            continue
+        if counts[position] < required:
+            needed.add(position)
+
+    flex_required = settings.roster_slots.get("FLEX", 0)
+    if flex_required:
+        flex_surplus = sum(
+            max(0, counts[pos] - settings.roster_slots.get(pos, 0)) for pos in LeagueSettings.FLEX_ELIGIBLE
+        )
+        if flex_surplus < flex_required:
+            needed.update(LeagueSettings.FLEX_ELIGIBLE)
+
+    if not needed:
+        total_roster = sum(settings.roster_slots.values()) + settings.bench
+        if len(drafted_positions) < total_roster:
+            needed.update(CANDIDATE_POSITIONS)
+
+    return needed

@@ -27,10 +27,6 @@
       "player": "Javonte Williams"
     },
     {
-      "pick": 7,
-      "player": "Jahmyr Gibbs"
-    },
-    {
       "pick": 28,
       "player": "Jaxon Smith-Njigba"
     },
@@ -44,167 +40,319 @@
     },
     {
       "pick": 1,
-      "player": "Puka Nacua"
+      "player": "Steelers D/ST"
     },
     {
       "pick": 3,
-      "player": "Ja'Marr Chase"
+      "player": "Kendrick Bourne"
     },
     {
       "pick": 4,
-      "player": "Christian McCaffrey"
+      "player": "Joshua Cephus"
     },
     {
       "pick": 5,
-      "player": "Jonathan Taylor"
+      "player": "Deuce Vaughn"
     },
     {
       "pick": 6,
-      "player": "Amon-Ra St. Brown"
+      "player": "Bucky Irving"
     },
     {
       "pick": 8,
-      "player": "CeeDee Lamb"
+      "player": "Jeff Wilson Jr."
     },
     {
       "pick": 9,
-      "player": "Ashton Jeanty"
+      "player": "Ja'Marr Chase"
     },
     {
       "pick": 10,
-      "player": "De'Von Achane"
+      "player": "CeeDee Lamb"
     },
     {
       "pick": 11,
-      "player": "Justin Jefferson"
+      "player": "Puka Nacua"
     },
     {
       "pick": 12,
-      "player": "Brock Bowers"
+      "player": "Amon-Ra St. Brown"
     },
     {
       "pick": 13,
-      "player": "Saquon Barkley"
+      "player": "Christian McCaffrey"
     },
     {
       "pick": 14,
-      "player": "Drake London"
+      "player": "Jonathan Taylor"
     },
     {
       "pick": 15,
-      "player": "Jeremiyah Love"
+      "player": "De'Von Achane"
     },
     {
       "pick": 16,
-      "player": "Trey McBride"
+      "player": "Justin Jefferson"
     },
     {
       "pick": 17,
-      "player": "Derrick Henry"
+      "player": "Ashton Jeanty"
     },
     {
       "pick": 18,
-      "player": "Chase Brown"
+      "player": "Drake London"
     },
     {
       "pick": 19,
-      "player": "Josh Allen"
+      "player": "Saquon Barkley"
     },
     {
       "pick": 20,
-      "player": "Rashee Rice"
+      "player": "Derrick Henry"
     },
     {
       "pick": 21,
-      "player": "A.J. Brown"
+      "player": "Jeremiyah Love"
     },
     {
       "pick": 22,
-      "player": "George Pickens"
+      "player": "Trey McBride"
     },
     {
       "pick": 23,
-      "player": "Nico Collins"
+      "player": "Josh Allen"
     },
     {
       "pick": 25,
-      "player": "Josh Jacobs"
+      "player": "Rashee Rice"
     },
     {
       "pick": 26,
-      "player": "Garrett Wilson"
+      "player": "Chase Brown"
     },
     {
       "pick": 27,
-      "player": "Chris Olave"
+      "player": "George Pickens"
     },
     {
       "pick": 29,
-      "player": "DeVonta Smith"
+      "player": "A.J. Brown"
     },
     {
       "pick": 31,
-      "player": "Malik Nabers"
+      "player": "Brock Bowers"
     },
     {
       "pick": 33,
-      "player": "Lamar Jackson"
+      "player": "Nico Collins"
     },
     {
       "pick": 34,
-      "player": "Tetairoa McMillan"
+      "player": "Josh Jacobs"
     },
     {
       "pick": 35,
-      "player": "Zay Flowers"
+      "player": "Chris Olave"
     },
     {
       "pick": 36,
-      "player": "Kyren Williams"
+      "player": "Garrett Wilson"
     },
     {
       "pick": 37,
-      "player": "Cam Skattebo"
+      "player": "Malik Nabers"
     },
     {
       "pick": 38,
-      "player": "Colston Loveland"
+      "player": "Lamar Jackson"
     },
     {
       "pick": 39,
-      "player": "Tyler Warren"
+      "player": "DeVonta Smith"
     },
     {
       "pick": 40,
-      "player": "Davante Adams"
+      "player": "Tetairoa McMillan"
     },
     {
       "pick": 42,
-      "player": "Drake Maye"
+      "player": "Kyren Williams"
     },
     {
       "pick": 44,
-      "player": "Joe Burrow"
+      "player": "Cam Skattebo"
     },
     {
       "pick": 47,
-      "player": "Travis Etienne Jr."
+      "player": "Zay Flowers"
     },
     {
       "pick": 48,
-      "player": "Jayden Daniels"
+      "player": "Drake Maye"
     },
     {
       "pick": 49,
-      "player": "Jaylen Waddle"
+      "player": "Tee Higgins"
     },
     {
       "pick": 50,
-      "player": "Ladd McConkey"
+      "player": "Travis Etienne Jr."
     },
     {
       "pick": 51,
+      "player": "Colston Loveland"
+    },
+    {
+      "pick": 52,
+      "player": "Ladd McConkey"
+    },
+    {
+      "pick": 53,
       "player": "Jalen Hurts"
+    },
+    {
+      "pick": 54,
+      "player": "Tyler Warren"
+    },
+    {
+      "pick": 55,
+      "player": "Quinshon Judkins"
+    },
+    {
+      "pick": 56,
+      "player": "Davante Adams"
+    },
+    {
+      "pick": 57,
+      "player": "Jayden Daniels"
+    },
+    {
+      "pick": 58,
+      "player": "Joe Burrow"
+    },
+    {
+      "pick": 59,
+      "player": "Jaylen Waddle"
+    },
+    {
+      "pick": 60,
+      "player": "Terry McLaurin"
+    },
+    {
+      "pick": 61,
+      "player": "Sam LaPorta"
+    },
+    {
+      "pick": 62,
+      "player": "Kyle Pitts Sr."
+    },
+    {
+      "pick": 63,
+      "player": "Jameson Williams"
+    },
+    {
+      "pick": 64,
+      "player": "Carnell Tate"
+    },
+    {
+      "pick": 65,
+      "player": "DJ Moore"
+    },
+    {
+      "pick": 66,
+      "player": "D'Andre Swift"
+    },
+    {
+      "pick": 67,
+      "player": "Rome Odunze"
+    },
+    {
+      "pick": 68,
+      "player": "Jaxson Dart"
+    },
+    {
+      "pick": 69,
+      "player": "Luther Burden III"
+    },
+    {
+      "pick": 70,
+      "player": "David Montgomery"
+    },
+    {
+      "pick": 71,
+      "player": "Harold Fannin Jr."
+    },
+    {
+      "pick": 72,
+      "player": "Mike Evans"
+    },
+    {
+      "pick": 73,
+      "player": "Bhayshul Tuten"
+    },
+    {
+      "pick": 74,
+      "player": "Matthew Stafford"
+    },
+    {
+      "pick": 75,
+      "player": "Jadarian Price"
+    },
+    {
+      "pick": 76,
+      "player": "Courtland Sutton"
+    },
+    {
+      "pick": 77,
+      "player": "DK Metcalf"
+    },
+    {
+      "pick": 78,
+      "player": "Dak Prescott"
+    },
+    {
+      "pick": 79,
+      "player": "Texans D/ST"
+    },
+    {
+      "pick": 80,
+      "player": "Tony Pollard"
+    },
+    {
+      "pick": 81,
+      "player": "Bo Nix"
+    },
+    {
+      "pick": 82,
+      "player": "Michael Pittman Jr."
+    },
+    {
+      "pick": 83,
+      "player": "Broncos D/ST"
+    },
+    {
+      "pick": 84,
+      "player": "Marvin Harrison Jr."
+    },
+    {
+      "pick": 85,
+      "player": "Caleb Williams"
+    },
+    {
+      "pick": 86,
+      "player": "Trevor Lawrence"
+    },
+    {
+      "pick": 87,
+      "player": "Alec Pierce"
+    },
+    {
+      "pick": 88,
+      "player": "George Kittle"
+    },
+    {
+      "pick": 7,
+      "player": "Christian Watson"
     }
   ],
   "keepers": [
@@ -231,10 +379,6 @@
     {
       "pick": 46,
       "player": "Javonte Williams"
-    },
-    {
-      "pick": 7,
-      "player": "Jahmyr Gibbs"
     },
     {
       "pick": 28,

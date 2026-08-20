@@ -459,3 +459,106 @@ def test_recommend_positions_player_points_defaults_to_none_unaffected():
         LIVE_POOL, state, SETTINGS, points_model, num_sims=5, rng=random.Random(1), player_points=None,
     )
     assert with_default == explicit_none
+
+
+# --- need-aware future picks ------------------------------------------------
+
+def test_need_aware_index_prefers_a_needed_position():
+    """My future picks used to come straight off the OPPONENT sampler, so the
+    simulation modelled me as a random ADP-follower with no need logic -- it
+    would hand me four quarterbacks when only one starts."""
+    from fantasyprep.draft_sim.simulate import _need_aware_index
+    from fantasyprep.historical.sources.ffc import FfcPlayer
+    from fantasyprep.league.settings import LeagueSettings, ScoringSettings
+
+    settings = LeagueSettings(
+        teams=10, scoring=ScoringSettings(),
+        roster_slots={"QB": 1, "RB": 1, "WR": 1}, bench=0,
+    )
+
+    def p(name, position, adp):
+        return FfcPlayer(name=name, position=position, team="KC", adp=adp,
+                         stdev=1.0, high=1, low=99)
+
+    pool = [p("QB Elite", "QB", 1.0), p("RB Good", "RB", 20.0), p("WR Ok", "WR", 30.0)]
+    available = [True, True, True]
+    my_team = [pool[0]]  # QB slot already filled
+
+    # The sampler wants the elite QB again (index 0); need-awareness must not.
+    chosen = _need_aware_index(pool, available, my_team, settings, fallback_index=0)
+
+    assert pool[chosen].position in {"RB", "WR"}
+
+
+def test_need_aware_index_takes_best_adp_among_needed():
+    from fantasyprep.draft_sim.simulate import _need_aware_index
+    from fantasyprep.historical.sources.ffc import FfcPlayer
+    from fantasyprep.league.settings import LeagueSettings, ScoringSettings
+
+    settings = LeagueSettings(
+        teams=10, scoring=ScoringSettings(),
+        roster_slots={"QB": 1, "RB": 2}, bench=0,
+    )
+
+    def p(name, position, adp):
+        return FfcPlayer(name=name, position=position, team="KC", adp=adp,
+                         stdev=1.0, high=1, low=99)
+
+    pool = [p("QB One", "QB", 1.0), p("RB Late", "RB", 50.0), p("RB Early", "RB", 10.0)]
+    available = [True, True, True]
+    my_team = [pool[0]]
+
+    chosen = _need_aware_index(pool, available, my_team, settings, fallback_index=0)
+
+    assert pool[chosen].name == "RB Early"
+
+
+def test_need_aware_index_falls_back_when_roster_is_full():
+    """Degrades to the sampled pick rather than failing."""
+    from fantasyprep.draft_sim.simulate import _need_aware_index
+    from fantasyprep.historical.sources.ffc import FfcPlayer
+    from fantasyprep.league.settings import LeagueSettings, ScoringSettings
+
+    settings = LeagueSettings(
+        teams=10, scoring=ScoringSettings(), roster_slots={"QB": 1}, bench=0,
+    )
+
+    def p(name, position, adp):
+        return FfcPlayer(name=name, position=position, team="KC", adp=adp,
+                         stdev=1.0, high=1, low=99)
+
+    pool = [p("QB One", "QB", 1.0), p("RB One", "RB", 5.0)]
+    my_team = [pool[0]]  # nothing left to need
+
+    assert _need_aware_index(pool, [True, True], my_team, settings, fallback_index=1) == 1
+
+
+def test_need_aware_index_falls_back_when_needed_position_is_exhausted():
+    from fantasyprep.draft_sim.simulate import _need_aware_index
+    from fantasyprep.historical.sources.ffc import FfcPlayer
+    from fantasyprep.league.settings import LeagueSettings, ScoringSettings
+
+    settings = LeagueSettings(
+        teams=10, scoring=ScoringSettings(),
+        roster_slots={"QB": 1, "TE": 1}, bench=0,
+    )
+
+    def p(name, position, adp):
+        return FfcPlayer(name=name, position=position, team="KC", adp=adp,
+                         stdev=1.0, high=1, low=99)
+
+    pool = [p("QB One", "QB", 1.0), p("WR One", "WR", 5.0)]
+    my_team = [pool[0]]  # needs a TE, but none exist in the pool
+
+    assert _need_aware_index(pool, [True, True], my_team, settings, fallback_index=1) == 1
+
+
+def test_default_lookahead_is_unchanged():
+    """The flag is opt-in, so every existing call site and recorded result
+    keeps the behaviour it was measured under."""
+    import inspect
+
+    from fantasyprep.draft_sim.simulate import simulate_position_choice
+
+    signature = inspect.signature(simulate_position_choice)
+    assert signature.parameters["need_aware_future"].default is False

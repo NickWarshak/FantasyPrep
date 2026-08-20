@@ -58,7 +58,11 @@ from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_fl
 
 OPPONENT_WEIGHT_FN = {"gaussian": pick_weight, "gaussian-tail-floor": pick_weight_with_tail_floor}
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
-from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
+from fantasyprep.draft_sim.roster import (
+    DraftedPlayer,
+    positions_of_need,
+    starting_lineup_value,
+)
 from fantasyprep.draft_sim.simulate import (
     CANDIDATE_POSITIONS,
     pick_owner,
@@ -88,37 +92,6 @@ DEFAULT_BACKTEST_YEARS = list(range(2015, 2025))
 MyPickStrategy = Callable[[list[FfcPlayer], list[str], list[dict]], FfcPlayer]
 
 
-def positions_of_need(drafted_positions: list[str], settings: LeagueSettings) -> set[str]:
-    """Which positions a roster still needs, given what's drafted so far.
-
-    Fixed slots first, then FLEX-eligible overflow (RB/WR/TE beyond their
-    own fixed count still count against FLEX), then -- once every starting
-    slot including FLEX is filled -- "any skill position" for open bench
-    spots. Empty once the whole roster (starting + bench) is full.
-    """
-    counts = Counter(drafted_positions)
-    needed: set[str] = set()
-
-    for position, required in settings.roster_slots.items():
-        if position == "FLEX":
-            continue
-        if counts[position] < required:
-            needed.add(position)
-
-    flex_required = settings.roster_slots.get("FLEX", 0)
-    if flex_required:
-        flex_surplus = sum(
-            max(0, counts[pos] - settings.roster_slots.get(pos, 0)) for pos in LeagueSettings.FLEX_ELIGIBLE
-        )
-        if flex_surplus < flex_required:
-            needed.update(LeagueSettings.FLEX_ELIGIBLE)
-
-    if not needed:
-        total_roster = sum(settings.roster_slots.values()) + settings.bench
-        if len(drafted_positions) < total_roster:
-            needed.update(CANDIDATE_POSITIONS)
-
-    return needed
 
 
 def baseline_pick(pool: list[FfcPlayer], drafted_positions: list[str], settings: LeagueSettings) -> FfcPlayer:
