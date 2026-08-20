@@ -1310,3 +1310,55 @@ single machine's ignored directory.
   reflects today, so a 2017 row carried an 8-year figure.
 
 Suite went 303 → 460 across this work, no regressions.
+
+## Tail-pooling A/B: a principled fix that did not survive measurement (2026-08-20)
+
+The deep outcome buckets are genuinely degenerate. In the production cache the
+deepest TE bucket held **one** sample (151.7), QB's held two, RB's five, WR's
+four, against a typical 40-45 — and because `outcome_for_rank` falls back to the
+deepest bucket for every rank past the end of the grid, that one sample served
+every deeper rank, returned deterministically by `rng.choice` on a one-element
+list. Worse, 151.7 sits *above* the median of TE4-6, so the model believed the
+23rd tight end outscores the 5th, with certainty. With 24 TEs in the 2026 pool
+this is live, not hypothetical.
+
+`pool_thin_tail` merged each position's starved tail until it held ≥20 samples.
+It was shipped **behind a flag with the default flipped to `pooled`**, on the
+explicit undertaking that the default would flip back if the A/B lost.
+
+**It lost.** 200 paired replays, 10 seasons × 10 slots × 2 seeds, common seed,
+tail-floor opponent model, all 200 cells matched:
+
+```
+pooled won 96, lost 104
+mean -15.8   median -8.7
+season-clustered 95% CI [-40.2, +9.7]  -- not distinguishable from zero
+```
+
+Against the baselines, legacy is marginally better too — vs VOR 61% / +63.3
+against pooled's 55.5% / +21.8; vs ADP+need 41% / −44.8 against 38% / −60.7.
+
+**Checked whether the test was underpowered rather than negative**, since the
+headline TE defect is reachable in only one backtest season (2021 is the only
+2015-2024 pool with 22+ TEs). It was not underpowered: pooling alters the
+sampled distribution for **19.8% of TEs, 12.2% of QBs, 6.1% of RBs and 2.9% of
+WRs** across those pools. There was plenty for it to move.
+
+**Likeliest explanation**: pooling trades one bias for another. Merging the
+starved tail lifts the deepest distribution a long way — the deepest WR bucket's
+median goes from **41.6 to 93.5** — so it overvalues genuinely deep players even
+while fixing the degeneracy above them.
+
+**Default reverted to `legacy`.** `pooled` stays behind `--tail-pooling` for
+reproducibility and as something a better fix can be measured against.
+
+**The defect is NOT resolved**, and that is stated deliberately rather than
+quietly dropped. The recommended next attempt is narrower: pool only genuinely
+degenerate buckets (n below ~5) while preserving rank monotonicity, instead of
+this blanket tail merge.
+
+Worth recording as a process point too. The fix was correct on first principles
+— a one-sample zero-variance "distribution" that inverts rank order is
+indefensible — and it still failed to help. That is exactly the case the A/B
+discipline exists for, and the reason the default was put behind a flag before
+being trusted.
