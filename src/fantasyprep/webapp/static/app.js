@@ -204,7 +204,13 @@ function renderSuggestions() {
     const li = document.createElement("li");
     li.innerHTML =
       `<span class="sugg-name">${p.name}</span>` +
-      `<span class="sugg-meta">${posChip(p.position)} ${p.team} &middot; ADP ${p.adp.toFixed(1)}</span>`;
+      `<span class="sugg-meta">${posChip(p.position)} ${p.team} &middot; ADP ${p.adp.toFixed(1)}` +
+      (p.upside_rank
+        ? ` <span class="upside" title="Market-implied ceiling from OPOY futures: ` +
+          `${(p.upside_probability * 100).toFixed(1)}% of the de-vigged field, ` +
+          `rank among players still available.">\u2191 ceiling #${p.upside_rank}</span>`
+        : "") +
+      `</span>`;
     if (i === highlightedIndex) li.classList.add("highlighted");
     li.addEventListener("click", () => assignPick(pendingPickNumber, p.name));
     list.appendChild(li);

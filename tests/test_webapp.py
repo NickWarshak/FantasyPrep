@@ -585,3 +585,65 @@ def test_recommendations_still_work_with_no_odds_at_all(tmp_path):
 
     assert response.status_code == 200
     assert all(r["upside_rank"] is None for r in response.get_json()["rows"])
+
+
+def test_player_search_carries_market_implied_ceiling(tmp_path):
+    """The picker is where a human weighs two names against each other, so it is
+    where a signal the model deliberately does NOT consume is most useful."""
+    client = _make_app(
+        tmp_path,
+        upside_scores={"rb one": 0.02, "rb two": 0.09, "wr one": 0.05},
+    ).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    results = {p["name"]: p for p in client.get("/api/players").get_json()}
+
+    assert results["RB Two"]["upside_rank"] == 1
+    assert results["WR One"]["upside_rank"] == 2
+    assert results["RB One"]["upside_rank"] == 3
+    assert results["RB One"]["upside_probability"] == 0.02
+
+
+def test_search_and_recommendations_agree_on_ceiling_rank(tmp_path):
+    """Both surfaces rank over the whole undrafted pool, so a player cannot be
+    '2nd highest ceiling' in the picker and '3rd' on his recommendation card."""
+    client = _make_app(
+        tmp_path,
+        upside_scores={"rb one": 0.02, "rb two": 0.09, "wr one": 0.05},
+    ).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    search = {p["name"]: p["upside_rank"] for p in client.get("/api/players").get_json()}
+    recs = {r["player"]: r["upside_rank"]
+            for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    for name, rank in recs.items():
+        if name in search:
+            assert search[name] == rank
+
+
+def test_ceiling_rank_shrinks_the_pool_as_players_are_drafted(tmp_path):
+    client = _make_app(
+        tmp_path,
+        upside_scores={"rb one": 0.02, "rb two": 0.09, "wr one": 0.05},
+    ).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    # Take the highest-ceiling player off the board.
+    client.put("/api/picks/1", json={"player_name": "RB Two"})
+
+    results = {p["name"]: p for p in client.get("/api/players").get_json()}
+    assert "RB Two" not in results
+    # Everyone below him moves up one.
+    assert results["WR One"]["upside_rank"] == 1
+    assert results["RB One"]["upside_rank"] == 2
+
+
+def test_unpriced_players_are_null_in_search_too(tmp_path):
+    client = _make_app(tmp_path, upside_scores={"wr one": 0.05}).test_client()
+    client.post("/api/setup", json={"my_draft_slot": 1})
+
+    results = {p["name"]: p for p in client.get("/api/players").get_json()}
+
+    assert results["RB One"]["upside_rank"] is None
+    assert results["RB One"]["upside_probability"] is None

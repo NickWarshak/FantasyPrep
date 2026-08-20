@@ -278,6 +278,22 @@ def create_app(
                 upside_cache["scores"] = {}
         return upside_cache["scores"]
 
+    def _rank_by_upside(pool, upside: dict[str, float]) -> dict[str, int]:
+        """Rank among still-available players by market-implied ceiling.
+
+        Rank rather than raw probability, everywhere it is shown: a 3.9% OPOY
+        chance means nothing to a drafter in isolation, while "2nd highest
+        ceiling left on the board" is immediately actionable. Computed over the
+        whole undrafted pool so the picker and the recommendation cards cannot
+        disagree about what "3rd" means.
+        """
+        priced = sorted(
+            ((normalize_name(p.name), upside[normalize_name(p.name)])
+             for p in pool if normalize_name(p.name) in upside),
+            key=lambda kv: -kv[1],
+        )
+        return {name: i for i, (name, _) in enumerate(priced, start=1)}
+
     session = DraftSession(draft_state_path, settings, live_pool)
 
     def undrafted_pool() -> list[ffc.FfcPlayer]:
@@ -310,9 +326,22 @@ def create_app(
         # opening the picker shows useful options immediately, before typing.
         matches = [p for p in pool if query in p.name.lower()] if query else list(pool)
         matches.sort(key=lambda p: p.adp)
-        return jsonify(
-            [{"name": p.name, "position": p.position, "team": p.team, "adp": p.adp} for p in matches[:15]]
-        )
+
+        # Market-implied ceiling on every searched player, not just on the ones
+        # the model happens to recommend. The picker is where a human actually
+        # weighs two names against each other, so it is where a signal the model
+        # deliberately does NOT consume is most useful -- ADP already tells you
+        # the ordering, and this tells you something ADP does not.
+        upside = get_upside()
+        ranked = _rank_by_upside(pool, upside)
+        return jsonify([
+            {
+                "name": p.name, "position": p.position, "team": p.team, "adp": p.adp,
+                "upside_probability": upside.get(normalize_name(p.name)),
+                "upside_rank": ranked.get(normalize_name(p.name)),
+            }
+            for p in matches[:15]
+        ])
 
     @app.put("/api/picks/<int:pick_number>")
     def assign_pick(pick_number: int):
@@ -401,13 +430,7 @@ def create_app(
             upside = get_upside()
             player_key = normalize_name(player.name)
             upside_score = upside.get(player_key)
-            upside_rank = None
-            if upside_score is not None:
-                better = sum(
-                    1 for c in undrafted
-                    if upside.get(normalize_name(c.name), -1.0) > upside_score
-                )
-                upside_rank = better + 1
+            upside_rank = _rank_by_upside(undrafted, upside).get(player_key)
 
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
