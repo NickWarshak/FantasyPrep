@@ -545,3 +545,17 @@ td.cell.filled { animation: cell-fill-in 0.22s ease-out; }
 #player-suggestions li.highlighted { background: var(--accent-dim); }
 #player-suggestions li .sugg-name { font-weight: 600; font-size: 0.88rem; }
 #player-suggestions li .sugg-meta { font-size: 0.75rem; color: var(--text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Live positional scarcity on a recommendation card: which player at this
+   position you are actually choosing among right now, and how many are left.
+   Deliberately quieter than the ADP chip -- it is context for the pick, not
+   the headline. */
+.pos-left {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}

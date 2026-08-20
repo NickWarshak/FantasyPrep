@@ -496,3 +496,44 @@ def test_simulate_step_rejects_bad_randomness(client):
     client.post("/api/setup", json={"my_draft_slot": 2})
     resp = client.post("/api/simulate/step", json={"randomness": "not-a-number"})
     assert resp.status_code == 400
+
+
+def test_recommendation_reports_rank_among_remaining_players(client):
+    """Live positional scarcity, not preseason rank.
+
+    Mid-draft the two diverge sharply, and the live one is what the decision
+    turns on: "2nd-best remaining RB, 4 left" describes the actual choice in a
+    way "preseason RB14" does not.
+    """
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+
+    assert rows, "expected at least one recommendation"
+    for row in rows:
+        assert row["rank_among_remaining"] >= 1
+        assert row["remaining_at_position"] >= row["rank_among_remaining"]
+
+
+def test_top_recommended_player_is_the_best_remaining_at_his_position(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+
+    # Nothing drafted yet, so each position's suggested player is its own RB1.
+    for row in rows:
+        assert row["rank_among_remaining"] == 1
+
+
+def test_rank_among_remaining_counts_only_undrafted_players(client):
+    """Drafting a player must shrink the pool his position is ranked against."""
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    before = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+
+    after = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+    assert after["RB"]["remaining_at_position"] == before["RB"]["remaining_at_position"] - 1
+    # The next RB up is now the best remaining one, not the second.
+    assert after["RB"]["rank_among_remaining"] == 1
+    assert after["RB"]["player"] == "RB Two"
+    # An untouched position is unaffected.
+    assert after["WR"]["remaining_at_position"] == before["WR"]["remaining_at_position"]

@@ -425,7 +425,12 @@ async function loadRecommendations() {
         `<div class="rec-main">` +
         `<div class="rec-player">${row.player}</div>` +
         `<div class="rec-meta">${posChip(row.position)}<span class="team-label">${row.team || ""}</span>` +
-        `<span class="adp">ADP ${row.adp.toFixed(1)}</span></div>` +
+        `<span class="adp">ADP ${row.adp.toFixed(1)}</span>` +
+        (row.rank_among_remaining
+          ? `<span class="pos-left">${row.position}${row.rank_among_remaining} left ` +
+            `&middot; ${row.remaining_at_position} avail</span>`
+          : "") +
+        `</div>` +
         `</div>` +
         `<div class="rec-stats">` +
         `<div class="rec-expected">${row.expected.toFixed(0)}</div>` +

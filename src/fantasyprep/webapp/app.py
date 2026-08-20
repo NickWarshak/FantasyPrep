@@ -351,9 +351,22 @@ def create_app(
             if not candidates:
                 continue
             player = resolve_pick(candidates, player_points)
+            # Rank among players STILL AVAILABLE at the position, not the
+            # preseason rank. Mid-draft those diverge sharply and the live one
+            # is what the decision turns on: "the 2nd-best remaining RB" tells
+            # you what you are actually choosing between, while "preseason RB14"
+            # does not. `remaining` alongside it gives the scarcity that makes
+            # the rank mean something -- 2nd of 4 is a different situation from
+            # 2nd of 30.
+            by_adp = sorted(candidates, key=lambda c: c.adp)
+            rank_among_remaining = next(
+                (i for i, c in enumerate(by_adp, start=1) if c.name == player.name), None
+            )
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
+                "rank_among_remaining": rank_among_remaining,
+                "remaining_at_position": len(candidates),
             })
 
         # Within-position comparison for the #1 recommended position: is the
