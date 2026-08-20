@@ -725,3 +725,31 @@ def test_modeled_rank_is_the_fixed_preseason_rank_not_rank_among_remaining(clien
     # ...but his modelled rank is still his own preseason standing, which is
     # deeper than the player who was just drafted.
     assert after["RB"]["modeled_rank"] > before["RB"]["modeled_rank"]
+
+
+def test_recommendation_reports_how_far_past_adp_a_player_has_fallen(client):
+    """The projection cannot express this and never will.
+
+    It values a player by his preseason positional-rank tier, so an elite ADP
+    player is worth the same to it whether he goes first overall or is still
+    sitting there in round 9. ADP already carries that signal on its own.
+    """
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    rows = client.get("/api/recommend?seed=1").get_json()["rows"]
+
+    for row in rows:
+        assert row["adp_value"] == pytest.approx(1 - row["adp"], abs=0.05)
+
+
+def test_adp_value_grows_as_an_undrafted_player_falls(client):
+    client.post("/api/setup", json={"my_draft_slot": 1})
+    first = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    # Advance the board without touching the WRs.
+    client.put("/api/picks/1", json={"player_name": "RB One"})
+    client.put("/api/picks/2", json={"player_name": "RB Two"})
+    later = {r["position"]: r for r in client.get("/api/recommend?seed=1").get_json()["rows"]}
+
+    # Same WR, two picks later -- he is now two picks further past his ADP.
+    assert later["WR"]["player"] == first["WR"]["player"]
+    assert later["WR"]["adp_value"] == pytest.approx(first["WR"]["adp_value"] + 2, abs=0.05)

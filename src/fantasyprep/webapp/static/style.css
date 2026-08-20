@@ -772,3 +772,25 @@ td.cell.my-team:not(.filled) {
   color: var(--text-dim);
   white-space: nowrap;
 }
+
+
+/* How far past his ADP a player has fallen. Deliberately louder than the other
+   context chips once the gap is large: this is the one piece of information on
+   the card that the projection genuinely cannot express, since the model values
+   a player by his preseason rank tier regardless of when he is actually
+   available. */
+.adp-value {
+  font-size: 0.68rem;
+  line-height: 1.5;
+  padding: 0.05rem 0.38rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--safe) 40%, transparent);
+  background: color-mix(in srgb, var(--safe) 12%, transparent);
+  color: var(--safe);
+  white-space: nowrap;
+}
+.adp-value.steal {
+  font-weight: 700;
+  border-color: var(--safe);
+  background: color-mix(in srgb, var(--safe) 22%, transparent);
+}

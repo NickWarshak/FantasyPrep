@@ -505,6 +505,13 @@ async function loadRecommendations() {
           ? `<span class="pos-left">${row.position}${row.rank_among_remaining} left ` +
             `&middot; ${row.remaining_at_position} avail</span>`
           : "") +
+        (typeof row.adp_value === "number" && row.adp_value >= 1
+          ? `<span class="adp-value ${row.adp_value >= 24 ? "steal" : ""}" ` +
+            `title="Available ${row.adp_value.toFixed(0)} picks past his ADP of ` +
+            `${row.adp.toFixed(1)}. The projection cannot see this -- it values a ` +
+            `player by his preseason rank tier whether he goes first overall or ` +
+            `falls to round 9.">+${row.adp_value.toFixed(0)} past ADP</span>`
+          : "") +
         (row.modeled_tier && !row.player_specific
           ? `<span class="tier" title="The projection is for this TIER, not this player. ` +
             `Under the historical model every player in ${row.modeled_tier} draws from the ` +

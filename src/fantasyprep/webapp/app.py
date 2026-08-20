@@ -475,9 +475,23 @@ def create_app(
                 low = ((modeled_rank - 1) // BUCKET_WIDTH) * BUCKET_WIDTH + 1
                 modeled_tier = f"{pos}{low}-{low + BUCKET_WIDTH - 1}"
 
+            # ADP VALUE: how far past his own ADP this player has fallen.
+            #
+            # The engine's projection cannot express this. It values a player by
+            # his preseason positional-rank bucket, so Jahmyr Gibbs at ADP 2.0
+            # is worth the same to it whether he goes first overall or is still
+            # sitting there in round 9 -- which is exactly the case that made
+            # the board look wrong. ADP already carries the signal: a player
+            # available far past his ADP is the market mispricing him right now,
+            # and no model is needed to see it.
+            #
+            # Positive = fallen past ADP (value). Negative = would be a reach.
+            adp_value = round(state.current_pick - player.adp, 1)
+
             results.append({
                 "position": pos, "expected": mean, "p25": p25, "p75": p75,
                 "player": player.name, "team": player.team, "adp": player.adp,
+                "adp_value": adp_value,
                 "rank_among_remaining": rank_among_remaining,
                 "remaining_at_position": len(candidates),
                 "upside_probability": upside_score,
