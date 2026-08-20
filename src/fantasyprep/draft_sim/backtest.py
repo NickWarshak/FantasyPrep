@@ -512,7 +512,7 @@ def leakage_safe_distributions(
     test_year: int,
     raw_dir: Path,
     force_refresh: bool = False,
-    tail_pooling: str = "pooled",
+    tail_pooling: str = "legacy",
 ):
     """Outcome buckets for evaluating `test_year`, built only from seasons
     strictly before it -- see module docstring point 1.
@@ -541,7 +541,7 @@ def run_backtest(
     scoring_mode: str = "season-total",
     vor_rank_cutoff_mode: str = "derived",
     opponent_model: str = "gaussian",
-    tail_pooling: str = "pooled",
+    tail_pooling: str = "legacy",
 ) -> list[ReplayResult]:
     """Replay every (year, slot), each with `num_seeds` independent
     opponent-room draws (still paired between baseline/model within a
@@ -812,10 +812,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "replacement level. 'legacy' pins it to the old hardcoded {QB:15,RB:30,WR:30,TE:15} "
                          "guess -- for a controlled A/B against 'derived' (ADP+need/pure-ADP/model results "
                          "are identical either way, since only VOR/waiver-adjusted scoring use this).")
-    parser.add_argument("--tail-pooling", choices=list(TAIL_POOLING_MODES), default="pooled",
-                        help="'pooled' merges each position's starved deepest outcome buckets into "
-                             "one real distribution (default); 'legacy' is the original unpooled "
-                             "behaviour, where e.g. every TE past rank 21 sampled a single value.")
+    parser.add_argument("--tail-pooling", choices=list(TAIL_POOLING_MODES), default="legacy",
+                        help="'legacy' (default) is the original unpooled behaviour, where e.g. "
+                             "every TE past rank 21 samples a single value. 'pooled' merges each "
+                             "position's starved deepest buckets into one distribution -- A/B'd "
+                             "2026-08-20 and NOT an improvement (96-104, CI [-40.2, +9.7]), so it "
+                             "is kept for reproducibility rather than shipped.")
     parser.add_argument("--opponent-model", choices=list(OPPONENT_WEIGHT_FN), default="gaussian",
                          help="'gaussian' (default) is the original opponent pick-weight model, used by every "
                          "existing/currently-running backtest. 'gaussian-tail-floor' fixes the 'stuck player' "

@@ -136,3 +136,28 @@ def test_pooled_mode_matches_the_direct_call():
 def test_unknown_mode_is_rejected():
     with pytest.raises(ValueError, match="tail_pooling"):
         _apply_tail_pooling(_healthy_then_starved(), "sometimes")
+
+
+def test_default_is_legacy_because_pooling_did_not_win_its_ab():
+    """Pooling was the default until it was measured.
+
+    200 paired replays (10 seasons x 10 slots x 2 seeds, common seed, tail-floor
+    opponent model): pooled won 96 and lost 104, mean -15.8, season-clustered
+    95% CI [-40.2, +9.7]. Not distinguishable from zero and leaning negative, so
+    the live model keeps the behaviour that was actually measured.
+
+    The underlying degeneracy is still real and still live-reachable -- this
+    pins the DECISION, not an endorsement of the legacy sampling.
+    """
+    import inspect
+
+    from fantasyprep.historical.outcomes import build_outcome_distributions
+
+    signature = inspect.signature(build_outcome_distributions)
+    assert signature.parameters["tail_pooling"].default == "legacy"
+
+
+def test_pooled_remains_available_for_reproducibility():
+    from fantasyprep.historical.outcomes import TAIL_POOLING_MODES
+
+    assert "pooled" in TAIL_POOLING_MODES

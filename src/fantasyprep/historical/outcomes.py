@@ -51,6 +51,29 @@ BUCKET_WIDTH = 3
 #
 # 20 is deliberately well below the typical 40-45, so only genuinely starved
 # tails are touched and normal buckets are left alone.
+#
+# A/B RESULT (2026-08-20): pooling DID NOT IMPROVE REAL DRAFT OUTCOMES, so the
+# default below is 'legacy', not 'pooled'. 200 paired replays, 10 seasons x 10
+# slots x 2 seeds, common seed, tail-floor opponent model:
+#
+#   pooled won 96, lost 104   mean -15.8   season-clustered 95% CI [-40.2, +9.7]
+#
+# Not distinguishable from zero, and the point estimate leans negative. The test
+# was fair rather than underpowered -- pooling changes the sampled distribution
+# for 19.8% of TEs, 12.2% of QBs, 6.1% of RBs and 2.9% of WRs in the backtest
+# pools, so there was plenty for it to move.
+#
+# The likeliest explanation is that pooling trades one bias for another. Merging
+# the starved tail lifts the deepest distribution a long way -- the deepest WR
+# bucket's median goes from 41.6 to 93.5 -- which overvalues genuinely deep
+# players even as it fixes the degeneracy above.
+#
+# The defect itself is NOT resolved and is live-reachable: with 24 TEs in the
+# 2026 pool, every TE past rank 21 still samples a single value (151.7) with
+# zero variance, and that value sits ABOVE the median of TE4-6. A narrower fix
+# -- pooling only genuinely degenerate buckets (n below ~5) while preserving
+# rank monotonicity -- is the recommended next A/B, rather than this blanket
+# tail merge.
 MIN_BUCKET_SAMPLES = 20
 
 TAIL_POOLING_MODES = ("pooled", "legacy")
@@ -80,7 +103,7 @@ def build_outcome_distributions(
     cache_path: Path | None = None,
     adp_cache_dir: Path | None = None,
     force_refresh: bool = False,
-    tail_pooling: str = "pooled",
+    tail_pooling: str = "legacy",
 ) -> dict[tuple[str, int], OutcomeDistribution]:
     """Build (position, bucket) -> OutcomeDistribution across historical seasons.
 
@@ -88,10 +111,11 @@ def build_outcome_distributions(
     expensive part -- 8 seasons x FFC + nfl_data_py pulls) separately from
     the individual raw ADP fetches (cached per-year via `adp_cache_dir`).
 
-    `tail_pooling`: 'pooled' (default) merges starved deepest buckets into one
-    real distribution -- see MIN_BUCKET_SAMPLES. 'legacy' is the original
-    unpooled behaviour, kept so the two can be A/B'd against real outcomes
-    rather than the change being assumed to be an improvement.
+    `tail_pooling`: 'legacy' (default) is the original unpooled behaviour.
+    'pooled' merges starved deepest buckets into one real distribution -- see
+    MIN_BUCKET_SAMPLES. Pooled was the default until it was A/B'd and did not
+    improve real outcomes; the flag stays so the comparison is reproducible and
+    so a better-targeted fix has something to be measured against.
 
     Pooling is applied *after* loading, never baked into the cache, so both
     modes read the same cache files and no existing cache is invalidated by
