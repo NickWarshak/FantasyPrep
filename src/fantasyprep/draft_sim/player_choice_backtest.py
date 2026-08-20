@@ -87,6 +87,7 @@ def replay_one(
     seed_index: int = 0,
     top_n: int = 3,
     opponent_weight_fn=pick_weight,
+    weekly: dict[str, dict[int, float]] | None = None,
 ) -> PlayerChoiceReplayResult:
     total_rounds = sum(settings.roster_slots.values()) + settings.bench
     teams = settings.teams
@@ -108,8 +109,10 @@ def replay_one(
         opponent_rng=random.Random(seed), opponent_weight_fn=opponent_weight_fn,  # same seed -> CRN
     )
 
-    model_points, model_detail = score_roster(model_result.my_players, actual_points, settings)
-    player_choice_points, player_choice_detail = score_roster(player_choice_result.my_players, actual_points, settings)
+    model_points, model_detail = score_roster(model_result.my_players, actual_points, settings, weekly)
+    player_choice_points, player_choice_detail = score_roster(
+        player_choice_result.my_players, actual_points, settings, weekly
+    )
 
     return PlayerChoiceReplayResult(
         year=year, my_slot=my_slot, seed_index=seed_index,
@@ -162,6 +165,17 @@ def run_backtest(
             points_model = build_profile_points_model(year, fallback=points_model)
             print(f"  {year}: {points_model.coverage} players have their own distribution")
 
+        # Why this matters here specifically: the objective is structurally
+        # variance-seeking under hindsight scoring, and a per-player points model
+        # gives candidates DIFFERENT variances. Under season-total scoring the
+        # profile arm could therefore win for a purely mechanical reason rather
+        # than because it picks better players.
+        weekly_table = (
+            weekly_stats.weekly_points_by_player(year, settings.scoring)
+            if scoring_mode == "weekly-realistic"
+            else None
+        )
+
         if scoring_mode == "waiver-adjusted":
             weekly_rank_cutoff = ffc.derive_rank_cutoff(live_pool, settings)
             actual_points = weekly_stats.waiver_adjusted_actual_points(year, settings.scoring, weekly_rank_cutoff)
@@ -173,6 +187,7 @@ def run_backtest(
             for seed_index in range(num_seeds):
                 result = replay_one(
                     year, slot, settings, live_pool, points_model, actual_points, num_sims,
+                    weekly=weekly_table,
                     seed=seed + year * 10_000 + slot * 100 + seed_index, seed_index=seed_index,
                     top_n=top_n, opponent_weight_fn=opponent_weight_fn,
                 )
@@ -255,7 +270,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-sims", type=int, default=100)
     parser.add_argument("--num-seeds", type=int, default=1)
     parser.add_argument("--top-n", type=int, default=3, help="how many top-ADP players per position to compare")
-    parser.add_argument("--scoring-mode", choices=["season-total", "waiver-adjusted"], default="season-total")
+    parser.add_argument("--scoring-mode",
+                        choices=["season-total", "waiver-adjusted", "weekly-realistic"],
+                        default="season-total")
     parser.add_argument("--points-source", choices=["historical", "profile"], default="historical",
                         help="'historical' (default) is the bucket bootstrap, under which two "
                              "candidates in the same 3-rank bucket are statistically IDENTICAL -- "
