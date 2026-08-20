@@ -1178,3 +1178,135 @@ change the "player-level vNext" framing assumed.
   (career-to-date, reflects today rather than the row's season);
   `seasons_since_rookie_year` replaces it. Undrafted players carry an explicit
   flag rather than an imputed pick number.
+
+## What the engine can actually consume (2026-08-17 → 2026-08-20, Windows)
+
+Part I of the modeling research asked what predicts outcomes. This asked the
+follow-up that actually governs the roadmap: **can the draft engine consume
+anything better, and what is wrong with the distributions it samples from
+today?** The answers reordered the plan twice, and the second reordering is
+where the payoff came from. Full detail in `docs/MODELING_RESEARCH.md`.
+
+### The objective is structurally variance-seeking
+
+`roster.starting_lineup_value` sorts a roster and takes the top N per slot —
+a **convex selection operator**. By Jensen, raising a player's variance while
+holding his mean fixed *raises* expected starting-lineup value. Nobody chose
+this; it falls out of the roster math, and it is invisible today only because
+every player in a bucket shares one distribution so the effect cancels.
+
+Measured with a mean-preserving spread on WR (bucket mean held at 264.49 →
+264.49 **exactly**, stdev 83.3 → 166.5): a **1.25× spread flips the top
+recommendation** from RB to WR and buys +29.7 points; 2× buys +126.1. The
+residual analysis had found a *real* dispersion signal of ~13 stdev points —
+**the artifact is several times larger than the signal.**
+
+### …and under realistic weekly lineups, the sign flips
+
+The cause is the scorer, not the objective. Three scorers, 200 random rosters,
+real 2023 weekly data, mean-preserving spread on WR *weekly* outcomes leaving
+each season total exactly unchanged:
+
+| scorer | ×1.25 | ×1.5 | ×2.0 | mean roster |
+|---|---|---|---|---|
+| season_hindsight *(what the engine does)* | +0.0 | +0.0 | +0.0 | 1478.0 |
+| weekly_hindsight | +15.6 | +34.0 | +76.6 | 1690.1 |
+| weekly_realistic | −3.9 | −9.0 | **−21.8** | 1529.5 |
+
+Hindsight scoring **rewards** volatility; realistic weekly management
+**penalises** it. Boom/bust players are systematically overvalued by any
+hindsight-based scorer, and the engine is hindsight-based. Also: season-total
+scoring understates roster value (−51.4 vs realistic), because it ignores that a
+manager rotates players across a season.
+
+Shipped as `--scoring-mode weekly-realistic`, additive — the season-total path
+is byte-identical so no recorded result moves.
+
+### The upside defect, and a fix that finally conditions without fragmenting
+
+The buckets under-cover the upside, badly and non-uniformly: tier 1-6 P90
+coverage is **0.80** against nominal 0.90 (elite players beat their stated
+ceiling ~20% of the time), while tier 49+ is fine.
+
+Four corrections tried. `per_tier` was the **third consecutive** loss to sample
+fragmentation, after 2D bucketing and rookie specialisation. The winner,
+`smooth`, kernel-weights the recalibration by distance in ADP rank so every
+observation contributes to every estimate and no cell can empty — *conditioning
+without fragmenting*. On tier 1-6: coverage error 0.0583 → **0.0311**, P90
+0.80 → **0.87**, CRPS better in essentially every tier, median held at 0.50.
+
+**Not shipped into the live distributions** — that needs its own A/B.
+
+### Decision gate: 58% of picks change
+
+Before spending more on modeling, the only question that matters for a draft
+engine: does any of this change a pick? 60 real 2024 draft states, incumbent vs
+recalibrated distributions, common random numbers — **35 of 60 (58.3%) changed**,
+evenly across all six rounds.
+
+The channel is wide open. But the median decision margin is **21.52 points on a
+~1700-point roster (1.3%)**, so most recommendations are near-ties. The engine's
+decisions are considerably more fragile than its headline win rates suggest.
+
+### The payoff: weekly volatility is predictable
+
+The scorer work changed what the right variance *target* was. Season-level
+dispersion was barely predictable (+0.09); week-to-week volatility is what
+actually costs a manager, because a lineup must be set every Sunday.
+
+Walk-forward, 1,502 held-out player-seasons:
+
+| target | model | naive: last season's own |
+|---|---|---|
+| weekly **CV** | **0.5126** spearman, R² 0.212 | 0.3791, R² **−0.239** |
+| weekly stdev | 0.4765, R² 0.215 | 0.3475, R² −0.288 |
+
+**Five times the season-level signal**, and it decisively beats the obvious
+naive rival — last season's own volatility posts a *negative* R², worse than
+predicting the average. So volatility is predictable but **not** simply a stable
+player trait, which is what a naive implementation would have assumed. CV is the
+headline because raw stdev is mechanically larger for high scorers and would
+partly rediscover ADP. Concentrated where roster decisions are: RB 0.52, WR
+0.36, TE 0.25, QB ~nothing.
+
+**The most useful conclusion from the whole arc**: FantasyPrep's edge is not
+going to come from predicting *how much* a player scores — the market has that.
+It may come from predicting *how reliably* he scores it, which the market prices
+far less efficiently and which only an honest weekly scorer can value correctly.
+
+### Dashboard: scarcity and market-implied ceiling
+
+Two live-draft additions. Each recommendation now shows its player's rank among
+players **still available** at that position plus the count left ("RB2 left · 14
+avail") — mid-draft that diverges sharply from preseason rank and is what the
+decision turns on.
+
+And a **market-implied ceiling** chip from OPOY award futures. ROADMAP's standing
+no-paid-odds decision caps Vegas work to team totals because player props are
+paywalled — but award futures turned out to be a free exception: ESPN's public
+core API, DraftKings-sourced, no key, and **all 108 athlete IDs match the ESPN
+cache already kept here** (a 100% join, unlike every other cross-source join in
+this codebase). De-vigging is essential at that field size: measured overround
+**1.6846**.
+
+Chosen because the research pointed there. ADP already prices the median, so a
+Vegas *projection* competes where nothing is left to win; the measured defect is
+understated upside. Futures speak to the second.
+
+**Honest limit**: ESPN preserves no historical futures (2020-2024 return zero
+priced runners), so the signal has **no held-out test set** and is deliberately
+kept out of the model — displayed only. Daily archiving now started, and the
+`.gitignore` corrected, since an irreplaceable archive was being written to a
+single machine's ignored directory.
+
+### Engineering fixed
+
+- **FFC name collision**: `position_ranks` was name-keyed, so the two 2011 Mike
+  Williamses both returned rank 62 despite ADPs 114 picks apart. `ranked_players()`
+  is now the correct primitive; the name lookup abstains on collisions.
+- **ADP was classified as an outcome**, caught by the fail-closed leakage split —
+  `preseason_frame()` was silently stripping it.
+- **A leaking metadata column**: `years_of_experience` is career-to-date and
+  reflects today, so a 2017 row carried an 8-year figure.
+
+Suite went 303 → 460 across this work, no regressions.
