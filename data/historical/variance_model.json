@@ -1,0 +1,126 @@
+{
+  "targets": {
+    "weekly_cv": {
+      "actual_mean": 0.614,
+      "actual_stdev": 0.199,
+      "by_position": {
+        "QB": {
+          "mae": 0.1,
+          "n": 215,
+          "pearson": 0.1211,
+          "r2": -0.2851,
+          "rmse": 0.13,
+          "spearman": 0.2024
+        },
+        "RB": {
+          "mae": 0.15,
+          "n": 515,
+          "pearson": 0.4706,
+          "r2": 0.2012,
+          "rmse": 0.2,
+          "spearman": 0.5219
+        },
+        "TE": {
+          "mae": 0.11,
+          "n": 171,
+          "pearson": 0.252,
+          "r2": 0.0245,
+          "rmse": 0.15,
+          "spearman": 0.2477
+        },
+        "WR": {
+          "mae": 0.14,
+          "n": 601,
+          "pearson": 0.3414,
+          "r2": 0.0795,
+          "rmse": 0.17,
+          "spearman": 0.3625
+        }
+      },
+      "model": {
+        "mae": 0.13,
+        "n": 1502,
+        "pearson": 0.4825,
+        "r2": 0.2123,
+        "rmse": 0.18,
+        "spearman": 0.5126
+      },
+      "n": 1502,
+      "naive_last_season": {
+        "mae": 0.16,
+        "n": 1242,
+        "pearson": 0.3901,
+        "r2": -0.2392,
+        "rmse": 0.21,
+        "spearman": 0.3791
+      }
+    },
+    "weekly_stdev": {
+      "actual_mean": 7.284,
+      "actual_stdev": 2.258,
+      "by_position": {
+        "QB": {
+          "mae": 1.62,
+          "n": 215,
+          "pearson": 0.0323,
+          "r2": -0.1122,
+          "rmse": 2.04,
+          "spearman": 0.0346
+        },
+        "RB": {
+          "mae": 1.6,
+          "n": 515,
+          "pearson": 0.3202,
+          "r2": 0.0902,
+          "rmse": 2.08,
+          "spearman": 0.3306
+        },
+        "TE": {
+          "mae": 1.43,
+          "n": 171,
+          "pearson": 0.312,
+          "r2": 0.0514,
+          "rmse": 1.81,
+          "spearman": 0.2218
+        },
+        "WR": {
+          "mae": 1.56,
+          "n": 601,
+          "pearson": 0.4247,
+          "r2": 0.1707,
+          "rmse": 1.97,
+          "spearman": 0.4378
+        }
+      },
+      "model": {
+        "mae": 1.57,
+        "n": 1502,
+        "pearson": 0.4688,
+        "r2": 0.2154,
+        "rmse": 2.0,
+        "spearman": 0.4765
+      },
+      "n": 1502,
+      "naive_last_season": {
+        "mae": 2.0,
+        "n": 1242,
+        "pearson": 0.3459,
+        "r2": -0.2878,
+        "rmse": 2.51,
+        "spearman": 0.3475
+      }
+    }
+  },
+  "test_seasons": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ]
+}
