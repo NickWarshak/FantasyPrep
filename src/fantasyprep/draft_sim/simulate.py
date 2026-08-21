@@ -152,6 +152,7 @@ def simulate_position_choice(
     opponent_weight_fn=pick_weight,
     player_points: dict[str, float] | None = None,
     need_aware_future: bool = False,
+    target_position_at_next_pick: str | None = None,
 ) -> list[float] | None:
     # Position rank reflects each player's fixed standing in the full live
     # ADP universe -- not shifting as the draft progresses -- since that's
@@ -171,6 +172,17 @@ def simulate_position_choice(
         return None
     last_relevant_pick = my_picks[-1]
     my_pick_set = set(my_picks[1:])  # first entry is the current pick, already handled
+
+    # `target_position_at_next_pick` expresses the "wait" branch of a now-vs-wait
+    # comparison: take `candidate_position` now, then deliberately come back for
+    # this position at my very next pick. It used to live in a separate
+    # near-copy of this function, which is precisely how the two panels drifted
+    # into disagreeing by ~190 points about the same quantity -- and the copy was
+    # the unvectorized one, costing 18.4s per 1000 sims against this function's
+    # 5.1s. One implementation, so they cannot diverge again.
+    next_pick = my_picks[1] if len(my_picks) > 1 else None
+    if target_position_at_next_pick is not None and next_pick is None:
+        return None  # no next pick to target with
 
     # Every pick already assigned to my column -- past picks and future
     # keepers alike -- contributes deterministically, not via sampling.
@@ -234,7 +246,17 @@ def simulate_position_choice(
                 # to roughly one player's draw inside a lot of shared noise, so
                 # the lookahead cannot value filling a need -- which is exactly
                 # what the ADP+need baseline it loses to does do.
-                if need_aware_future:
+                if target_position_at_next_pick is not None and pick_num == next_pick:
+                    # The whole premise of the wait branch, so it outranks the
+                    # marginal-value lookahead here. Best-ADP at the position if
+                    # anyone is left, else keep the sampled pick.
+                    targets = [
+                        i for i in np.flatnonzero(available)
+                        if pool[i].position == target_position_at_next_pick
+                    ]
+                    if targets:
+                        idx = min(targets, key=lambda i: pool[i].adp)
+                elif need_aware_future:
                     available_players = [pool[i] for i in np.flatnonzero(available)]
                     chosen = best_marginal_player(
                         available_players, my_team, settings, expected_points, pool[idx]

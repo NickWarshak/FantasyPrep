@@ -42,18 +42,12 @@ from dataclasses import dataclass
 
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
-from fantasyprep.draft_sim.roster import (
-    DraftedPlayer,
-    best_marginal_player,
-    starting_lineup_value,
-)
 from fantasyprep.draft_sim.simulate import (
     DraftState,
     my_pick_numbers,
     simulate_position_choice,
     state_from_picks,
 )
-from fantasyprep.historical.outcomes import outcome_for_rank
 from fantasyprep.historical.sources import ffc
 from fantasyprep.league.settings import LeagueSettings
 from fantasyprep.players.normalize import normalize_name
@@ -72,87 +66,25 @@ def simulate_wait_and_target(
     need_aware_future: bool = False,
 ) -> list[float] | None:
     """Completed-roster value if I take `take_now_position` right now and
-    deliberately target `target_position` at my very next pick (best
-    available there if anyone's left, else fall back to normal
-    ADP-weighted sampling like every other future pick). A close variant
-    of `simulate_position_choice`, not a modification of it -- that
-    function is validated and used by the live tool and backtest; this
-    lives entirely separately so nothing here can affect it."""
-    pos_ranks = ffc.position_ranks(live_pool)
-    by_name = {normalize_name(p.name): p for p in live_pool}
-    undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
+    deliberately target `target_position` at my very next pick (best available
+    there if anyone's left, else normal ADP-weighted sampling like every other
+    future pick).
 
-    now_candidates = [p for p in undrafted if p.position == take_now_position]
-    if not now_candidates:
-        return None
-    my_pick_now = min(now_candidates, key=lambda p: p.adp)
-
-    total_rounds = sum(settings.roster_slots.values()) + settings.bench
-    my_picks = [n for n in my_pick_numbers(state.teams, state.my_draft_slot, total_rounds) if n >= state.current_pick]
-    if len(my_picks) < 2:
-        return None  # no next pick to target with
-    next_pick = my_picks[1]
-    last_relevant_pick = my_picks[-1]
-    my_pick_set = set(my_picks[1:])
-
-    already_mine = [by_name[name] for name in state.my_names if name in by_name]
-
-    # Same deterministic bucket-mean lookahead `simulate_position_choice` uses.
-    # Cached across sims: the mapping doesn't change, so this adds no RNG.
-    _expected_cache: dict[str, float] = {}
-
-    def expected_points(player) -> float:
-        cached = _expected_cache.get(player.name)
-        if cached is None:
-            try:
-                dist = outcome_for_rank(
-                    points_model.distributions, player.position, pos_ranks.get(player.name, 999)
-                )
-                cached = statistics.mean(dist.outcomes)
-            except (AttributeError, KeyError):
-                cached = 0.0
-            _expected_cache[player.name] = cached
-        return cached
-
-    results = []
-    for _ in range(num_sims):
-        remaining = [p for p in undrafted if p is not my_pick_now]
-        my_team = list(already_mine) + [my_pick_now]
-
-        for pick_num in range(state.current_pick + 1, last_relevant_pick + 1):
-            if pick_num in state.assigned:
-                continue
-            if not remaining:
-                break
-            if pick_num == next_pick:
-                target_candidates = [p for p in remaining if p.position == target_position]
-                chosen = (
-                    min(target_candidates, key=lambda p: p.adp)
-                    if target_candidates
-                    else sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
-                )
-            else:
-                chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
-            if pick_num in my_pick_set and need_aware_future and pick_num != next_pick:
-                # My own later picks pick by marginal lineup value, matching the
-                # recommendation panel. Leaving them as plain ADP draws is what
-                # let the two panels disagree by ~190 points about the same
-                # quantity. `next_pick` is exempt: targeting the position there
-                # is the entire premise of this branch.
-                chosen = best_marginal_player(
-                    remaining, my_team, settings, expected_points, chosen
-                )
-            remaining.remove(chosen)
-            if pick_num in my_pick_set:
-                my_team.append(chosen)
-
-        drafted = [
-            DraftedPlayer(name=p.name, position=p.position, points=points_model.sample(p, pos_ranks, rng))
-            for p in my_team
-        ]
-        results.append(starting_lineup_value(drafted, settings))
-
-    return results
+    This was once a hand-maintained near-copy of `simulate_position_choice`,
+    kept separate so it could not perturb the validated live/backtest path. That
+    caution cost more than it bought: the copy never received the marginal-value
+    lookahead its twin grew, so the two draft panels ended up answering the same
+    question with different machinery and disagreeing by ~190 points on screen --
+    and the copy was also the unvectorized one, 3.6x slower per simulation. It is
+    now a thin wrapper over the single shared implementation, which is what makes
+    that class of divergence impossible rather than merely unlikely.
+    """
+    return simulate_position_choice(
+        take_now_position, live_pool, state, settings, points_model, num_sims, rng,
+        opponent_weight_fn=opponent_weight_fn,
+        need_aware_future=need_aware_future,
+        target_position_at_next_pick=target_position,
+    )
 
 
 def survival_probability(

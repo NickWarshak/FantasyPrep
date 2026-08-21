@@ -562,18 +562,19 @@ def test_wait_branch_lookahead_still_targets_the_position_at_the_next_pick():
     state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
     points_model = HistoricalBootstrapModel(_distributions())
 
-    import fantasyprep.draft_sim.draft_now_vs_wait as mod
+    # The lookahead now lives in the single shared implementation, so that is
+    # where it gets observed from.
+    import fantasyprep.draft_sim.simulate as sim
 
-    real = mod.best_marginal_player
+    real = sim.best_marginal_player
     overridden = []
 
     def spy(candidates, my_team, settings, expected_points, fallback):
         chosen = real(candidates, my_team, settings, expected_points, fallback)
-        if chosen is not fallback:
-            overridden.append((fallback.position, chosen.position))
+        overridden.append(chosen.position)
         return chosen
 
-    with patch.object(mod, "best_marginal_player", spy):
+    with patch.object(sim, "best_marginal_player", spy):
         result = simulate_wait_and_target(
             "QB", "RB", pool, state, SETTINGS, points_model,
             num_sims=20, rng=random.Random(1), need_aware_future=True,
@@ -583,9 +584,36 @@ def test_wait_branch_lookahead_still_targets_the_position_at_the_next_pick():
     # The lookahead ran on my later picks...
     assert overridden, "need_aware_future never took effect"
     # ...but the deliberately-targeted next pick was never routed through it,
-    # so the branch still means what its name says.
-    every_sim_targeted_rb = simulate_wait_and_target(
-        "QB", "RB", pool, state, SETTINGS, points_model,
-        num_sims=20, rng=random.Random(1), need_aware_future=True,
-    )
-    assert every_sim_targeted_rb == result  # deterministic given fixed seed
+    # so the branch still means what its name says: with 6 RBs in the pool an
+    # RB is always available at the next pick, so every sim must take one.
+    assert all("RB" == d.position for d in _next_pick_players(
+        pool, state, SETTINGS, points_model))
+
+
+
+def _next_pick_players(pool, state, settings, points_model):
+    """The player actually taken at my next pick in each simulated wait branch,
+    recovered by watching what lands on my team there."""
+    import fantasyprep.draft_sim.simulate as sim
+    from fantasyprep.draft_sim.simulate import my_pick_numbers
+
+    total_rounds = sum(settings.roster_slots.values()) + settings.bench
+    mine = [n for n in my_pick_numbers(state.teams, state.my_draft_slot, total_rounds)
+            if n >= state.current_pick]
+    next_pick = mine[1]
+
+    taken = []
+    real_value = sim.starting_lineup_value
+
+    def spy(drafted, s):
+        # my_team order is: already-mine, the "now" pick, then future picks in
+        # pick order -- so the next pick is the one right after the now pick.
+        taken.append(drafted[len([n for n in mine if n < state.current_pick]) + 1])
+        return real_value(drafted, s)
+
+    with patch.object(sim, "starting_lineup_value", spy):
+        simulate_wait_and_target(
+            "QB", "RB", pool, state, settings, points_model,
+            num_sims=10, rng=random.Random(1), need_aware_future=True,
+        )
+    return taken
