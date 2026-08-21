@@ -29,7 +29,11 @@ from dataclasses import dataclass
 
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
-from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
+from fantasyprep.draft_sim.roster import (
+    DraftedPlayer,
+    best_marginal_player,
+    starting_lineup_value,
+)
 from fantasyprep.draft_sim.simulate import DraftState, my_pick_numbers, state_from_picks
 from fantasyprep.historical.sources import ffc
 from fantasyprep.league.settings import LeagueSettings

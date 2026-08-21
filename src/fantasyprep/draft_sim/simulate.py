@@ -37,10 +37,11 @@ from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBo
 from fantasyprep.draft_sim.roster import (
     CANDIDATE_POSITIONS,
     DraftedPlayer,
+    best_marginal_player,
     positions_of_need,
     starting_lineup_value,
 )
-from fantasyprep.historical.outcomes import build_outcome_distributions
+from fantasyprep.historical.outcomes import build_outcome_distributions, outcome_for_rank
 from fantasyprep.historical.sources import ffc
 from fantasyprep.sources import espn
 from fantasyprep.league.settings import LeagueSettings, default_settings
@@ -189,6 +190,26 @@ def simulate_position_choice(
     pick_range = range(state.current_pick + 1, last_relevant_pick + 1)
     sampler = OpponentSampler(pool, pick_range, weight_fn=opponent_weight_fn)
 
+    # Deterministic expected points per player (the bucket mean), so marginal
+    # value can be evaluated without re-sampling or adding RNG. Computed once
+    # for the whole call rather than per simulation.
+    _expected_cache: dict[str, float] = {}
+
+    def expected_points(player) -> float:
+        cached = _expected_cache.get(player.name)
+        if cached is None:
+            try:
+                dist = outcome_for_rank(
+                    points_model.distributions, player.position, pos_ranks.get(player.name, 999)
+                )
+                cached = statistics.mean(dist.outcomes)
+            except (AttributeError, KeyError):
+                cached = 0.0
+            _expected_cache[player.name] = cached
+        return cached
+
+    index_of = {id(p): i for i, p in enumerate(pool)}
+
     results = []
     for _ in range(num_sims):
         available = np.ones(len(pool), dtype=bool)
@@ -214,7 +235,11 @@ def simulate_position_choice(
                 # the lookahead cannot value filling a need -- which is exactly
                 # what the ADP+need baseline it loses to does do.
                 if need_aware_future:
-                    idx = _need_aware_index(pool, available, my_team, settings, idx)
+                    available_players = [pool[i] for i in np.flatnonzero(available)]
+                    chosen = best_marginal_player(
+                        available_players, my_team, settings, expected_points, pool[idx]
+                    )
+                    idx = index_of[id(chosen)]
                 my_team.append(pool[idx])
             available[idx] = False
 

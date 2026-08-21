@@ -111,3 +111,54 @@ def positions_of_need(drafted_positions: list[str], settings: LeagueSettings) ->
             needed.update(CANDIDATE_POSITIONS)
 
     return needed
+
+
+# How many ADP-ranked candidates to evaluate for marginal value at each of my
+# simulated future picks. A real drafter is not reaching 30 players past ADP,
+# and cost grows linearly with this.
+MARGINAL_CANDIDATE_WINDOW = 14
+
+
+def best_marginal_player(candidates, my_team, settings, expected_points, fallback):
+    """The candidate who most increases my STARTING-LINEUP value.
+
+    This is what makes positional scarcity fall out of the simulation instead of
+    having to be bolted on beside it.
+
+    Selecting my simulated future picks by ADP -- even ADP-among-needs -- cannot
+    express a cliff. On a real board with Jahmyr Gibbs (ADP 2.0) still available
+    at pick 89, Gibbs projects 243.4 while the next RB projects 146.5, a 96.9
+    point drop, whereas Justin Herbert projects 291.5 against the next QB's
+    299.0 -- an actively NEGATIVE drop. Ranking by ADP treats those two
+    situations the same. Ranking by marginal lineup value does not: filling an
+    empty RB slot with a 243 beats upgrading a position that is already covered.
+
+    Because the branch that skips Gibbs is then forced to fill that slot with
+    whoever is genuinely left, the opportunity cost shows up in the branch
+    comparison on its own -- no separate drop-off term to weigh by hand.
+
+    `expected_points` maps a player to his expected points, deterministically
+    (the bucket mean), so this does not add RNG or re-sample per candidate.
+    """
+    if not candidates:
+        return fallback
+    window = sorted(candidates, key=lambda p: p.adp)[:MARGINAL_CANDIDATE_WINDOW]
+    current = [
+        DraftedPlayer(name=p.name, position=p.position, points=expected_points(p))
+        for p in my_team
+    ]
+    base_value = starting_lineup_value(current, settings)
+
+    best, best_gain = fallback, None
+    for candidate in window:
+        trial = current + [
+            DraftedPlayer(
+                name=candidate.name,
+                position=candidate.position,
+                points=expected_points(candidate),
+            )
+        ]
+        gain = starting_lineup_value(trial, settings) - base_value
+        if best_gain is None or gain > best_gain:
+            best, best_gain = candidate, gain
+    return best
