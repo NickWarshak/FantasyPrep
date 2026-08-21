@@ -54,9 +54,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
+from fantasyprep.draft_sim.opponent import (
+    pick_weight,
+    pick_weight_with_tail_floor,
+    pick_weight_with_value_urgency,
+    sample_pick,
+)
 
-OPPONENT_WEIGHT_FN = {"gaussian": pick_weight, "gaussian-tail-floor": pick_weight_with_tail_floor}
+OPPONENT_WEIGHT_FN = {
+    "gaussian": pick_weight,
+    "gaussian-tail-floor": pick_weight_with_tail_floor,
+    "value-urgency": pick_weight_with_value_urgency,
+}
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.roster import (
     DraftedPlayer,
@@ -408,6 +417,8 @@ def replay_one(
     vor_rank_cutoff: dict[str, int] | None = None,
     opponent_weight_fn=pick_weight,
     weekly: dict[str, dict[int, float]] | None = None,
+    model_weight_fn=None,
+    need_aware_future: bool = False,
 ) -> ReplayResult:
     total_rounds = sum(settings.roster_slots.values()) + settings.bench
     teams = settings.teams
@@ -446,7 +457,15 @@ def replay_one(
         state = state_from_picks(teams, my_slot, picks)
         rows = recommend_positions(
             live_pool, state, settings, points_model, num_sims, recommend_rng,
-            opponent_weight_fn=opponent_weight_fn,
+            # `model_weight_fn` is what the MODEL believes about the rest of the
+            # draft; `opponent_weight_fn` is what the opponent room actually
+            # does. They are normally the same, and separating them is what
+            # makes "should the live recommender assume value-urgency?" a clean
+            # paired question: hold the world fixed, vary only the belief. With
+            # both tied together, a change to this knob rebuilds the whole draft
+            # and the model's edge moves for two reasons at once.
+            opponent_weight_fn=model_weight_fn or opponent_weight_fn,
+            need_aware_future=need_aware_future,
         )
         if not rows:
             return baseline_pick(undrafted, my_positions, settings)
@@ -515,6 +534,8 @@ def run_backtest(
     vor_rank_cutoff_mode: str = "derived",
     opponent_model: str = "gaussian",
     tail_pooling: str = "legacy",
+    model_opponent_model: str | None = None,
+    need_aware_future: bool = False,
 ) -> list[ReplayResult]:
     """Replay every (year, slot), each with `num_seeds` independent
     opponent-room draws (still paired between baseline/model within a
@@ -568,6 +589,9 @@ def run_backtest(
     raw_dir = data_dir / "raw"
     results = []
     opponent_weight_fn = OPPONENT_WEIGHT_FN[opponent_model]
+    # Defaults to the same model the room uses, so every existing call and every
+    # recorded result is bit-for-bit unaffected by this parameter existing.
+    model_weight_fn = OPPONENT_WEIGHT_FN[model_opponent_model or opponent_model]
 
     for year in years:
         live_cache = raw_dir / f".ffc_{settings.teams}_{year}.json"
@@ -598,6 +622,7 @@ def run_backtest(
                     num_sims, seed=seed + year * 10_000 + slot * 100 + seed_index,
                     seed_index=seed_index, vor_rank_cutoff=vor_rank_cutoff,
                     opponent_weight_fn=opponent_weight_fn, weekly=weekly_table,
+                    model_weight_fn=model_weight_fn, need_aware_future=need_aware_future,
                 )
                 results.append(result)
 
@@ -791,6 +816,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                              "position's starved deepest buckets into one distribution -- A/B'd "
                              "2026-08-20 and NOT an improvement (96-104, CI [-40.2, +9.7]), so it "
                              "is kept for reproducibility rather than shipped.")
+    parser.add_argument("--model-opponent-model", choices=list(OPPONENT_WEIGHT_FN), default=None,
+                        help="What the MODEL assumes the rest of the draft does, if different from "
+                             "--opponent-model (which is what the opponent room actually does). "
+                             "Defaults to matching it. Separating the two is what makes 'should the "
+                             "recommender assume this?' a clean paired question: the world is held "
+                             "fixed and only the belief varies.")
+    parser.add_argument("--need-aware-future", action="store_true",
+                        help="Model's simulated future picks for ITSELF choose by marginal "
+                             "starting-lineup value instead of the opponent sampler. Live tool "
+                             "has used this since 2026-08-21; off here until this A/B says "
+                             "otherwise.")
     parser.add_argument("--opponent-model", choices=list(OPPONENT_WEIGHT_FN), default="gaussian",
                          help="'gaussian' (default) is the original opponent pick-weight model, used by every "
                          "existing/currently-running backtest. 'gaussian-tail-floor' fixes the 'stuck player' "
@@ -814,6 +850,8 @@ def run(args: argparse.Namespace) -> list[ReplayResult]:
         args.years, args.slots, settings, args.data_dir, args.num_sims, args.seed, args.num_seeds,
         scoring_mode=args.scoring_mode, vor_rank_cutoff_mode=args.vor_rank_cutoff_mode,
         opponent_model=args.opponent_model, tail_pooling=args.tail_pooling,
+        model_opponent_model=args.model_opponent_model,
+        need_aware_future=args.need_aware_future,
     )
     _summarize(results)
 
@@ -829,6 +867,8 @@ def run(args: argparse.Namespace) -> list[ReplayResult]:
             "num_seeds": args.num_seeds, "seed": args.seed, "scoring_mode": args.scoring_mode,
             "vor_rank_cutoff_mode": args.vor_rank_cutoff_mode, "opponent_model": args.opponent_model,
             "tail_pooling": args.tail_pooling,
+            "model_opponent_model": args.model_opponent_model or args.opponent_model,
+            "need_aware_future": args.need_aware_future,
         }
         path = log_experiment(
             args.data_dir, args.experiment_name, args.experiment_notes, params, _compact_summary(results),
