@@ -1362,3 +1362,95 @@ Worth recording as a process point too. The fix was correct on first principles
 indefensible — and it still failed to help. That is exactly the case the A/B
 discipline exists for, and the reason the default was put behind a flag before
 being trusted.
+
+
+## 2026-08-21 (Windows) — The two draft panels contradicted each other on screen
+
+A live screenshot showed the tool disagreeing with itself. The recommendation
+panel had **RB Jahmyr Gibbs 2029 / QB Justin Herbert 1969**. The now-vs-wait
+panel directly beneath it put the same two branches at **1853 / 1852** and
+concluded *"safe to wait"* — while also reporting **"100% chance a top RB is
+still there next round"**, directly above a recommendation to draft the one RB
+who was about to be taken.
+
+Neither was a display bug. Both were the machinery underneath being wrong.
+
+### The ~190-point disagreement
+
+`compare_now_vs_wait` never received the marginal-value lookahead that
+`recommend_positions` had grown (`need_aware_future`), so its simulated future
+picks for ME were still plain ADP draws while the panel above used marginal
+lineup value. Two panels, same question, different machinery.
+
+The immediate cause was one missing keyword argument. The real cause was
+structural: `simulate_wait_and_target` was a hand-maintained **near-copy** of
+`simulate_position_choice`. It was deliberately kept as a copy — the original
+docstring said so explicitly — on the reasoning that the live tool and backtest
+depend on `simulate_position_choice`, so a separate implementation could not
+perturb them.
+
+That caution cost more than it bought. The copy could not perturb its twin, but
+it also silently failed to *receive* anything its twin gained, and there was no
+mechanism that would ever notice. Patching the missing argument by hand would
+have restored agreement while leaving two implementations to be kept in step by
+discipline alone — the same setup that produced the bug.
+
+So the copy was deleted. `simulate_position_choice` now takes
+`target_position_at_next_pick`, which expresses the entire content of what the
+wait branch meant: take this position now, deliberately come back for that one at
+my very next pick. That pick outranks the marginal-value lookahead, since
+targeting it is the branch's whole premise. `simulate_wait_and_target` survives
+as a thin wrapper, so existing callers and tests are untouched.
+
+### The 100%
+
+`survival_probability` answered "does **at least one of the top three** undrafted
+players at this position survive to my next pick". On the live board that tier
+survived **100.0% of 4,000 sims** — with 41 RBs left, of course it did.
+
+But that is not the question the drafter is asking. He is not waiting for "a top
+RB"; he is waiting for the player named on the card. Asked about Gibbs
+specifically, the answer is **3.0%**. The function now takes `specific_player`,
+and `compare_now_vs_wait` passes the actual target candidate.
+
+The tier form is kept for callers that genuinely want it, so this is a widening
+rather than a replacement.
+
+### Measured, live board (slot 9, pick 89), before → after
+
+| | before | after |
+|---|---|---|
+| survival reported | 100% | **3.0%** |
+| "take RB now", recommend panel | 2029 | 2025 |
+| "take RB now", now-vs-wait panel | 1853 | **2025** |
+| verdict | safe_to_wait | **draft_now** |
+
+The shared quantity is now computed *identically* by both panels rather than 190
+points apart. A 29-point difference remains between "QB now, then RB next" (1944)
+and the QB row (1973) — that one is **real and should stay**: the wait branch
+forces an RB at the next pick, which genuinely costs 29 against free choice. Two
+numbers differing because they measure different things is not the defect that
+was being fixed.
+
+### The copy was also the slow one
+
+`simulate_position_choice` had been vectorized; its copy never was. Deleting the
+copy therefore bought most of what "1000 sims without the wait" required:
+
+| at 1000 sims | before | after |
+|---|---|---|
+| `simulate_wait_and_target` | 18.43s | **4.83s** |
+| `/api/now-vs-wait` | 62.8s | **11.7s** |
+| `/api/recommend` | 26–36s | **17.5s** |
+
+`num_sims` default and the running server are both 1000 now; they had drifted to
+1000 vs 400. Suite **508 passing**, no regressions.
+
+### Open, and stated rather than quietly dropped
+
+Three live-tool changes are now shipped **ahead of their backtests**:
+`need_aware_future`, `pick_weight_with_value_urgency`, and this panel merge. All
+three default **off** in the backtest, so no recorded result in this file moves —
+but the live tool and the measured configuration have genuinely diverged, and
+that gap is the next thing to close. The A/B discipline that caught tail-pooling
+has not yet been applied to any of the three.
