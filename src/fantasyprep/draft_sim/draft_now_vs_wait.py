@@ -40,7 +40,12 @@ import statistics
 import math
 from dataclasses import dataclass
 
-from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
+from fantasyprep.draft_sim.opponent import (
+    pick_weight,
+    pick_weight_with_tail_floor,
+    pick_weight_with_value_urgency,
+    sample_pick,
+)
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.simulate import (
     DraftState,
@@ -516,7 +521,7 @@ DEFAULT_VALIDATION_SAMPLES = generate_validation_samples()
 
 def _cli_validate(
     samples: list[tuple[int, int, int]], num_sims: int, data_dir, opponent_weight_fn=pick_weight,
-    num_replay_seeds: int = 3,
+    num_replay_seeds: int = 3, need_aware_future: bool = False,
 ) -> None:
     """Runs `validate_against_real_outcome_averaged` across several real
     decision points and reports how often the pre-decision predicted
@@ -579,7 +584,7 @@ def _cli_validate(
 
         prediction = compare_now_vs_wait(
             top_position, alt_position, live_pool, state, settings, points_model, num_sims, _random.Random(seed),
-            opponent_weight_fn=opponent_weight_fn,
+            opponent_weight_fn=opponent_weight_fn, need_aware_future=need_aware_future,
         )
         if prediction is None:
             print(f"{year} pick {pick}: skipped, no prediction available")
@@ -631,9 +636,17 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument(
-        "--opponent-model", choices=["gaussian", "gaussian-tail-floor"], default="gaussian",
+        "--opponent-model", choices=["gaussian", "gaussian-tail-floor", "value-urgency"],
+        default="gaussian",
         help="gaussian matches every earlier run of this CLI (default, for reproducibility); "
-        "gaussian-tail-floor matches what the live tool actually uses since 2026-08-16",
+        "gaussian-tail-floor matches what the live tool used from 2026-08-16; value-urgency "
+        "is what it uses since 2026-08-21",
+    )
+    parser.add_argument(
+        "--need-aware-future", action="store_true",
+        help="my simulated future picks choose by marginal starting-lineup value instead of the "
+        "opponent sampler -- what the live panel has done since 2026-08-21. Off by default so "
+        "this CLI still reproduces the recorded 58%% (29/50) run.",
     )
     parser.add_argument(
         "--replay-seeds", type=int, default=3,
@@ -642,13 +655,17 @@ def main(argv: list[str] | None = None) -> None:
         "validate_against_real_outcome_averaged's docstring",
     )
     args = parser.parse_args(argv)
-    opponent_weight_fn = pick_weight_with_tail_floor if args.opponent_model == "gaussian-tail-floor" else pick_weight
+    opponent_weight_fn = {
+        "gaussian": pick_weight,
+        "gaussian-tail-floor": pick_weight_with_tail_floor,
+        "value-urgency": pick_weight_with_value_urgency,
+    }[args.opponent_model]
 
     if args.validate:
         samples = QUICK_VALIDATION_SAMPLES if args.quick else DEFAULT_VALIDATION_SAMPLES
         _cli_validate(
             samples, args.num_sims, args.data_dir, opponent_weight_fn=opponent_weight_fn,
-            num_replay_seeds=args.replay_seeds,
+            num_replay_seeds=args.replay_seeds, need_aware_future=args.need_aware_future,
         )
     elif args.year is not None and args.pick is not None:
         _cli_run(args.year, args.pick, args.num_sims, args.seed, args.data_dir, opponent_weight_fn=opponent_weight_fn)
