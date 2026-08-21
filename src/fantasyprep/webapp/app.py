@@ -549,6 +549,10 @@ def create_app(
         result = compare_now_vs_wait(
             target, alternative, live_pool, state, settings, points_model, sims, random.Random(seed),
             opponent_weight_fn=pick_weight_with_value_urgency,
+            # Same lookahead as the recommendation panel above. Without this the
+            # two panels answered the same question with different machinery and
+            # disagreed by ~190 points on screen.
+            need_aware_future=True,
         )
         if result is None:
             return jsonify(None)

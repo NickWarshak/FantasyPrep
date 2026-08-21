@@ -42,13 +42,18 @@ from dataclasses import dataclass
 
 from fantasyprep.draft_sim.opponent import pick_weight, pick_weight_with_tail_floor, sample_pick
 from fantasyprep.draft_sim.points_model import HistoricalBootstrapModel, PointsModel
-from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value
+from fantasyprep.draft_sim.roster import (
+    DraftedPlayer,
+    best_marginal_player,
+    starting_lineup_value,
+)
 from fantasyprep.draft_sim.simulate import (
     DraftState,
     my_pick_numbers,
     simulate_position_choice,
     state_from_picks,
 )
+from fantasyprep.historical.outcomes import outcome_for_rank
 from fantasyprep.historical.sources import ffc
 from fantasyprep.league.settings import LeagueSettings
 from fantasyprep.players.normalize import normalize_name
@@ -64,6 +69,7 @@ def simulate_wait_and_target(
     num_sims: int,
     rng: random.Random,
     opponent_weight_fn=pick_weight,
+    need_aware_future: bool = False,
 ) -> list[float] | None:
     """Completed-roster value if I take `take_now_position` right now and
     deliberately target `target_position` at my very next pick (best
@@ -91,6 +97,23 @@ def simulate_wait_and_target(
 
     already_mine = [by_name[name] for name in state.my_names if name in by_name]
 
+    # Same deterministic bucket-mean lookahead `simulate_position_choice` uses.
+    # Cached across sims: the mapping doesn't change, so this adds no RNG.
+    _expected_cache: dict[str, float] = {}
+
+    def expected_points(player) -> float:
+        cached = _expected_cache.get(player.name)
+        if cached is None:
+            try:
+                dist = outcome_for_rank(
+                    points_model.distributions, player.position, pos_ranks.get(player.name, 999)
+                )
+                cached = statistics.mean(dist.outcomes)
+            except (AttributeError, KeyError):
+                cached = 0.0
+            _expected_cache[player.name] = cached
+        return cached
+
     results = []
     for _ in range(num_sims):
         remaining = [p for p in undrafted if p is not my_pick_now]
@@ -110,6 +133,15 @@ def simulate_wait_and_target(
                 )
             else:
                 chosen = sample_pick(remaining, pick_num, rng, weight_fn=opponent_weight_fn)
+            if pick_num in my_pick_set and need_aware_future and pick_num != next_pick:
+                # My own later picks pick by marginal lineup value, matching the
+                # recommendation panel. Leaving them as plain ADP draws is what
+                # let the two panels disagree by ~190 points about the same
+                # quantity. `next_pick` is exempt: targeting the position there
+                # is the entire premise of this branch.
+                chosen = best_marginal_player(
+                    remaining, my_team, settings, expected_points, chosen
+                )
             remaining.remove(chosen)
             if pick_num in my_pick_set:
                 my_team.append(chosen)
@@ -132,6 +164,7 @@ def survival_probability(
     rng: random.Random,
     tier_size: int = 3,
     opponent_weight_fn=pick_weight,
+    specific_player: ffc.FfcPlayer | None = None,
 ) -> float:
     """Empirical probability that at least one of the current top
     `tier_size` undrafted players at `target_position` is still
@@ -140,10 +173,22 @@ def survival_probability(
     this project. Deliberately not a full roster simulation: this is a
     narrower question and doesn't need one."""
     undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
-    tier = sorted((p for p in undrafted if p.position == target_position), key=lambda p: p.adp)[:tier_size]
-    if not tier:
-        return 0.0
-    tier_names = {normalize_name(p.name) for p in tier}
+    if specific_player is not None:
+        # Ask about THAT player, not his tier. The difference is not academic:
+        # on a real board with 41 RBs left, the top-3 tier survived 100.0% of
+        # 4,000 sims, so the card read "100% chance a top RB is still there next
+        # round" directly above a recommendation to draft Jahmyr Gibbs -- who,
+        # asked about by name, survives 13.2%. The drafter is not waiting for
+        # "a top RB"; he is waiting for the player named on the card, so that is
+        # what gets measured.
+        tier_names = {normalize_name(specific_player.name)}
+    else:
+        tier = sorted(
+            (p for p in undrafted if p.position == target_position), key=lambda p: p.adp
+        )[:tier_size]
+        if not tier:
+            return 0.0
+        tier_names = {normalize_name(p.name) for p in tier}
 
     total_rounds = sum(settings.roster_slots.values()) + settings.bench
     my_picks = [n for n in my_pick_numbers(state.teams, state.my_draft_slot, total_rounds) if n >= state.current_pick]
@@ -245,6 +290,7 @@ def compare_now_vs_wait(
     num_sims: int,
     rng: random.Random,
     opponent_weight_fn=pick_weight,
+    need_aware_future: bool = False,
 ) -> NowVsWaitResult | None:
     """The full comparison: draft `target_position` now, vs. take
     `wait_alternative_position` now and deliberately target
@@ -254,20 +300,27 @@ def compare_now_vs_wait(
     actually consider skipping to."""
     now_results = simulate_position_choice(
         target_position, live_pool, state, settings, points_model, num_sims, rng,
-        opponent_weight_fn=opponent_weight_fn,
+        opponent_weight_fn=opponent_weight_fn, need_aware_future=need_aware_future,
     )
     if now_results is None:
         return None
 
     wait_results = simulate_wait_and_target(
         wait_alternative_position, target_position, live_pool, state, settings, points_model, num_sims, rng,
-        opponent_weight_fn=opponent_weight_fn,
+        opponent_weight_fn=opponent_weight_fn, need_aware_future=need_aware_future,
     )
     if wait_results is None:
         return None
 
+    # The panel names a specific player, so ask about that specific player.
+    _undrafted = [p for p in live_pool if normalize_name(p.name) not in state.drafted_names]
+    _targets = sorted(
+        (p for p in _undrafted if p.position == target_position), key=lambda p: p.adp
+    )
     survival = survival_probability(
-        target_position, live_pool, state, settings, num_sims, rng, opponent_weight_fn=opponent_weight_fn
+        target_position, live_pool, state, settings, num_sims, rng,
+        opponent_weight_fn=opponent_weight_fn,
+        specific_player=_targets[0] if _targets else None,
     )
 
     def _p25(vals):

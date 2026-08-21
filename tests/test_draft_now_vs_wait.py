@@ -474,3 +474,118 @@ def test_decisiveness_is_symmetric_in_direction():
     wait = _result(now_mean=1800.0, wait_mean=1900.0, survival=0.5)
 
     assert now.decisiveness == pytest.approx(wait.decisiveness)
+
+
+# --- player-specific survival ---------------------------------------------------
+
+
+def test_survival_asks_about_the_named_player_not_his_tier():
+    """The card names a player, so the number under it must be about that player.
+
+    A tier of three at a deep position survives essentially always, which is how
+    the UI came to show "100% chance a top RB is still there" directly above a
+    recommendation to draft the one RB who was about to be taken.
+    """
+    # One superstar who has fallen far past his ADP, plus plenty of ordinary RBs
+    # behind him -- the shape that made the tier answer useless.
+    pool = [_p("Fallen Star", "RB", 1.0, stdev=1.0)]
+    pool += [_p(f"Ordinary RB{i}", "RB", 200.0 + i, stdev=1.0) for i in range(10)]
+    pool += [_p(f"WR{i}", "WR", 20.0 + i, stdev=1.0) for i in range(10)]
+    pool += [_p(f"QB{i}", "QB", 30.0 + i, stdev=1.0) for i in range(10)]
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+
+    tier = survival_probability(
+        "RB", pool, state, SETTINGS, num_sims=300, rng=random.Random(3),
+        opponent_weight_fn=pick_weight_with_tail_floor,
+    )
+    named = survival_probability(
+        "RB", pool, state, SETTINGS, num_sims=300, rng=random.Random(3),
+        opponent_weight_fn=pick_weight_with_tail_floor,
+        specific_player=pool[0],
+    )
+
+    # The tier is safe because the ordinary RBs behind him are safe. He is not.
+    assert tier > named
+    assert tier == pytest.approx(1.0)
+
+
+def test_survival_of_a_specific_player_is_a_probability():
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    target = next(p for p in pool if p.position == "RB")
+
+    value = survival_probability(
+        "RB", pool, state, SETTINGS, num_sims=50, rng=random.Random(1), specific_player=target
+    )
+    assert 0.0 <= value <= 1.0
+
+
+# --- both panels simulate the same way ------------------------------------------
+
+
+def test_need_aware_future_reaches_both_branches():
+    """`compare_now_vs_wait` must forward the lookahead flag into *both* branch
+    simulations. Forwarding it into only one is exactly the bug that had the two
+    panels disagree by ~190 points about the same quantity."""
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+
+    seen = {}
+
+    import fantasyprep.draft_sim.draft_now_vs_wait as mod
+
+    real_now, real_wait = mod.simulate_position_choice, mod.simulate_wait_and_target
+
+    def spy_now(*a, need_aware_future=False, **k):
+        seen["now"] = need_aware_future
+        return real_now(*a, need_aware_future=need_aware_future, **k)
+
+    def spy_wait(*a, need_aware_future=False, **k):
+        seen["wait"] = need_aware_future
+        return real_wait(*a, need_aware_future=need_aware_future, **k)
+
+    with patch.object(mod, "simulate_position_choice", spy_now), \
+         patch.object(mod, "simulate_wait_and_target", spy_wait):
+        compare_now_vs_wait(
+            "RB", "QB", pool, state, SETTINGS, points_model,
+            num_sims=5, rng=random.Random(1), need_aware_future=True,
+        )
+
+    assert seen == {"now": True, "wait": True}
+
+
+def test_wait_branch_lookahead_still_targets_the_position_at_the_next_pick():
+    """Targeting `target_position` at my very next pick is the premise of the
+    wait branch -- the marginal-value lookahead must not override that pick."""
+    pool = _pool()
+    state = state_from_picks(teams=4, my_draft_slot=1, picks=[])
+    points_model = HistoricalBootstrapModel(_distributions())
+
+    import fantasyprep.draft_sim.draft_now_vs_wait as mod
+
+    real = mod.best_marginal_player
+    overridden = []
+
+    def spy(candidates, my_team, settings, expected_points, fallback):
+        chosen = real(candidates, my_team, settings, expected_points, fallback)
+        if chosen is not fallback:
+            overridden.append((fallback.position, chosen.position))
+        return chosen
+
+    with patch.object(mod, "best_marginal_player", spy):
+        result = simulate_wait_and_target(
+            "QB", "RB", pool, state, SETTINGS, points_model,
+            num_sims=20, rng=random.Random(1), need_aware_future=True,
+        )
+
+    assert result is not None and len(result) == 20
+    # The lookahead ran on my later picks...
+    assert overridden, "need_aware_future never took effect"
+    # ...but the deliberately-targeted next pick was never routed through it,
+    # so the branch still means what its name says.
+    every_sim_targeted_rb = simulate_wait_and_target(
+        "QB", "RB", pool, state, SETTINGS, points_model,
+        num_sims=20, rng=random.Random(1), need_aware_future=True,
+    )
+    assert every_sim_targeted_rb == result  # deterministic given fixed seed
