@@ -1,5 +1,12 @@
-from fantasyprep.draft_sim.roster import DraftedPlayer, starting_lineup_value, starting_lineup_value_by_position
-from fantasyprep.league.settings import LeagueSettings, ScoringSettings
+import pytest
+from fantasyprep.draft_sim.roster import (
+    DraftedPlayer,
+    lineup_context,
+    marginal_gain,
+    starting_lineup_value,
+    starting_lineup_value_by_position,
+)
+from fantasyprep.league.settings import LeagueSettings, ScoringSettings, default_settings
 
 SETTINGS = LeagueSettings(
     teams=10,
@@ -140,3 +147,84 @@ def test_by_position_bench_points_excluded_same_as_starting_lineup_value():
     # starting_lineup_value would exclude it from the total.
     assert breakdown["WR"] == 9999 + 220 + 190
     assert breakdown["WR"] == starting_lineup_value(players, SETTINGS) - (300 + 200 + 180 + 150)
+
+
+# --- O(1) marginal gain -----------------------------------------------------
+
+def _pbp(team):
+    out = {}
+    for p in team:
+        out.setdefault(p.position, []).append(p.points)
+    return out
+
+
+def _brute_gain(team, position, points, settings):
+    """The full recomputation the O(1) path replaced."""
+    base = starting_lineup_value(team, settings)
+    return starting_lineup_value(team + [DraftedPlayer("new", position, points)], settings) - base
+
+
+def test_marginal_gain_matches_full_recomputation_on_an_open_slot():
+    s = default_settings()
+    team = [DraftedPlayer("wr1", "WR", 200.0)]
+
+    fast = marginal_gain(lineup_context(_pbp(team), s), "QB", 300.0, s)
+
+    assert fast == pytest.approx(300.0)
+    assert fast == pytest.approx(_brute_gain(team, "QB", 300.0, s))
+
+
+def test_marginal_gain_measures_against_the_displaced_starter():
+    """Beating your position's weakest starter only earns the difference."""
+    s = default_settings()
+    team = [DraftedPlayer("qb1", "QB", 250.0)]
+
+    fast = marginal_gain(lineup_context(_pbp(team), s), "QB", 300.0, s)
+
+    assert fast == pytest.approx(50.0)
+    assert fast == pytest.approx(_brute_gain(team, "QB", 300.0, s))
+
+
+def test_marginal_gain_is_zero_for_a_bench_player():
+    s = default_settings()
+    team = [DraftedPlayer(f"qb{i}", "QB", 300.0) for i in range(2)]
+
+    fast = marginal_gain(lineup_context(_pbp(team), s), "QB", 100.0, s)
+
+    assert fast == pytest.approx(0.0)
+    assert fast == pytest.approx(_brute_gain(team, "QB", 100.0, s))
+
+
+def test_marginal_gain_accounts_for_the_flex_cascade():
+    """Displacing an RB starter does not lose him -- he falls into FLEX and
+    pushes someone else out instead, so the gain is measured against THAT
+    player. Getting this wrong was the main risk in the O(1) rewrite."""
+    s = default_settings()  # QB1 RB2 WR2 TE1 FLEX2 DST1
+    team = (
+        [DraftedPlayer(f"rb{i}", "RB", pts) for i, pts in enumerate([250.0, 200.0])]
+        + [DraftedPlayer(f"wr{i}", "WR", pts) for i, pts in enumerate([240.0, 230.0, 120.0, 110.0])]
+    )
+
+    fast = marginal_gain(lineup_context(_pbp(team), s), "RB", 260.0, s)
+
+    assert fast == pytest.approx(_brute_gain(team, "RB", 260.0, s))
+
+
+def test_marginal_gain_matches_brute_force_over_random_rosters():
+    """The equivalence that licenses using the fast path at all."""
+    import random
+
+    rng = random.Random(11)
+    s = default_settings()
+    positions = ["QB", "RB", "WR", "TE", "DST"]
+    for _ in range(2000):
+        team = [
+            DraftedPlayer(f"p{i}", rng.choice(positions), round(rng.uniform(0, 400), 2))
+            for i in range(rng.randint(0, 14))
+        ]
+        position = rng.choice(positions)
+        points = round(rng.uniform(0, 400), 2)
+
+        fast = marginal_gain(lineup_context(_pbp(team), s), position, points, s)
+
+        assert fast == pytest.approx(_brute_gain(team, position, points, s), abs=1e-9)

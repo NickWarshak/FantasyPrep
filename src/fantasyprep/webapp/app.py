@@ -412,6 +412,16 @@ def create_app(
         rows = recommend_positions(
             live_pool, state, settings, points_model, sims, rng,
             opponent_weight_fn=pick_weight_with_tail_floor, player_points=player_points,
+            # Live tool ON. Without it the lookahead drafts MY future picks by
+            # ADP, which cannot express a positional cliff -- on a real board it
+            # ranked a QB whose own value-pick card said the NEXT quarterback
+            # projects higher above an RB worth +96.9 over his replacement.
+            #
+            # The backtest default stays False so every recorded research result
+            # keeps the behaviour it was measured under, and so the A/B deciding
+            # the engine default stays clean. This is the product, not the
+            # experiment.
+            need_aware_future=True,
         )
         # How lopsided the top position's edge is over the runner-up -- the
         # same logistic blend backtest.py has used since the season-total
@@ -594,7 +604,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--draft-state", type=Path, required=True)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
-    parser.add_argument("--num-sims", type=int, default=300)
+    # Raised 300 -> 1000 after an O(1) marginal-gain rewrite cut the lookahead
+    # cost ~6x (1000 sims went 38.6s -> 6.5s). More sims matters here because
+    # the positions cluster: at 250 the RB/QB gap read 31 points, at 1000 and
+    # 2000 it settles at 16 -- the extra sims are buying a stable estimate, not
+    # a different answer.
+    parser.add_argument("--num-sims", type=int, default=1000)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--debug", action="store_true")

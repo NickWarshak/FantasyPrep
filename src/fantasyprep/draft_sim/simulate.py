@@ -284,6 +284,7 @@ def recommend_positions(
     rng: random.Random,
     opponent_weight_fn=pick_weight,
     player_points: dict[str, float] | None = None,
+    need_aware_future: bool = False,
 ) -> list[tuple[str, float, float, float]]:
     """Position, expected starting-lineup points, P25, P75 -- sorted best first.
 
@@ -307,6 +308,7 @@ def recommend_positions(
         results = simulate_position_choice(
             position, live_pool, state, settings, points_model, num_sims, rng,
             opponent_weight_fn=opponent_weight_fn, player_points=player_points,
+            need_aware_future=need_aware_future,
         )
         if results is None:
             continue
