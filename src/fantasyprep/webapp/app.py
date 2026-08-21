@@ -40,7 +40,10 @@ from flask import Flask, jsonify, render_template, request
 
 from fantasyprep.draft_sim.auto_pick import espn_pool_for_auto_pick
 from fantasyprep.draft_sim.draft_now_vs_wait import compare_now_vs_wait
-from fantasyprep.draft_sim.opponent import pick_weight_with_tail_floor, sample_pick
+from fantasyprep.draft_sim.opponent import (
+    pick_weight_with_value_urgency,
+    sample_pick,
+)
 from fantasyprep.historical.sources.fantasypros_rankings import load_fantasypros_rankings
 from fantasyprep.draft_sim.points_model import EspnProjectionModel, HistoricalBootstrapModel, PointsModel
 from fantasyprep.draft_sim.simulate import (
@@ -411,7 +414,7 @@ def create_app(
         points_model = get_points_model(points_source)
         rows = recommend_positions(
             live_pool, state, settings, points_model, sims, rng,
-            opponent_weight_fn=pick_weight_with_tail_floor, player_points=player_points,
+            opponent_weight_fn=pick_weight_with_value_urgency, player_points=player_points,
             # Live tool ON. Without it the lookahead drafts MY future picks by
             # ADP, which cannot express a positional cliff -- on a real board it
             # ranked a QB whose own value-pick card said the NEXT quarterback
@@ -545,7 +548,7 @@ def create_app(
         points_model = get_points_model(points_source)
         result = compare_now_vs_wait(
             target, alternative, live_pool, state, settings, points_model, sims, random.Random(seed),
-            opponent_weight_fn=pick_weight_with_tail_floor,
+            opponent_weight_fn=pick_weight_with_value_urgency,
         )
         if result is None:
             return jsonify(None)
@@ -589,7 +592,7 @@ def create_app(
         pool = espn_pool_for_auto_pick(get_espn_players(), randomness)
         undrafted = [p for p in pool if normalize_name(p.name) not in state.drafted_names]
         if undrafted:
-            chosen = sample_pick(undrafted, state.current_pick, random.Random(seed), weight_fn=pick_weight_with_tail_floor)
+            chosen = sample_pick(undrafted, state.current_pick, random.Random(seed), weight_fn=pick_weight_with_value_urgency)
             session.set_pick(state.current_pick, chosen.name)
         return jsonify(session.to_dict())
 

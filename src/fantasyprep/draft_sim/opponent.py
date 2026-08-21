@@ -55,6 +55,52 @@ TAIL_Z = 3.0
 TAIL_RISE_RATE = 0.5
 
 
+# How fast a fallen player's draft probability grows once he is past the tail
+# boundary, and how far it can go. The tail floor stops at 1.0, which turned out
+# to be the real bug behind a live board that made no sense -- see
+# `pick_weight_with_value_urgency`.
+URGENCY_RATE = 0.35
+URGENCY_CEILING = 250.0
+
+
+def pick_weight_with_value_urgency(player: FfcPlayer, pick_number: int) -> float:
+    """Like the tail floor, but a badly fallen player becomes MORE likely to be
+    taken than a merely on-schedule one -- not equally likely.
+
+    THE BUG THIS FIXES, measured on a real board.
+
+    `pick_weight_with_tail_floor` climbs toward 1.0 and stops there. But 1.0 is
+    exactly the weight of a player sitting precisely AT his ADP, and
+    `sample_pick` draws proportional to weight among everyone available. So
+    Jahmyr Gibbs -- ADP 2.0, somehow still on the board at pick 89, 87 picks
+    past his ADP -- was treated as no more likely to be drafted than any of the
+    forty-odd players who were simply due. The simulation therefore believed he
+    would survive my next two picks 84.6% of the time.
+
+    Everything downstream followed from that false premise: the engine said
+    "safe to wait on RB", rated taking Gibbs level with taking a quarterback
+    going ~100 picks later, and reported the whole decision as a toss-up. It was
+    reasoning correctly from a badly wrong belief about the draft room.
+
+    In reality a player that far past ADP is the obvious best-available pick for
+    every team in between, and goes on the very next selection. Growing the
+    weight with the size of the fall, rather than plateauing, encodes that.
+
+    Continuous with the tail floor at the boundary, and identical to it for any
+    player who has not yet reached his ADP window, so "too early" still means
+    "still unlikely".
+    """
+    std = max(player.stdev, MIN_STDEV)
+    z = (pick_number - player.adp) / std
+    if z <= TAIL_Z:
+        return math.exp(-0.5 * z * z)
+
+    floor = pick_weight_with_tail_floor(player, pick_number)
+    overshoot = z - TAIL_Z
+    # Grows without plateauing, capped only to keep the draw numerically sane.
+    return min(floor * (1.0 + URGENCY_RATE * overshoot), URGENCY_CEILING)
+
+
 def pick_weight_with_tail_floor(player: FfcPlayer, pick_number: int) -> float:
     """Same Gaussian as `pick_weight` up to TAIL_Z standard deviations past a
     player's ADP -- beyond that, replaces the Gaussian's continued decay with
@@ -110,9 +156,28 @@ def _vectorized_pick_weight_with_tail_floor(pick_number: int, adp: np.ndarray, s
 # this registry (e.g. a test double) falls back to the original
 # per-player Python loop, so custom weight functions still work correctly,
 # just without the speedup.
+def _vectorized_pick_weight_with_value_urgency(
+    pick_number: int, adp: np.ndarray, stdev: np.ndarray
+) -> np.ndarray:
+    """Array equivalent of `pick_weight_with_value_urgency`.
+
+    Registered below so the whole-pool weight is one numpy call. Without it the
+    sampler falls back to a per-player Python loop, which profiling previously
+    showed was 90-97% of runtime -- and this weight function is used on the live
+    recommendation path, so that fallback would be felt immediately.
+    """
+    std = np.maximum(stdev, MIN_STDEV)
+    z = (pick_number - adp) / std
+    floor = _vectorized_pick_weight_with_tail_floor(pick_number, adp, stdev)
+    overshoot = z - TAIL_Z
+    urgent = np.minimum(floor * (1.0 + URGENCY_RATE * overshoot), URGENCY_CEILING)
+    return np.where(z <= TAIL_Z, floor, urgent)
+
+
 _VECTORIZED_WEIGHT_FNS = {
     pick_weight: _vectorized_pick_weight,
     pick_weight_with_tail_floor: _vectorized_pick_weight_with_tail_floor,
+    pick_weight_with_value_urgency: _vectorized_pick_weight_with_value_urgency,
 }
 
 

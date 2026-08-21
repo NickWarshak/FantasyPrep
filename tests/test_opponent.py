@@ -6,6 +6,9 @@ import pytest
 
 from fantasyprep.draft_sim.opponent import (
     TAIL_Z,
+    URGENCY_CEILING,
+    _vectorized_pick_weight_with_value_urgency,
+    pick_weight_with_value_urgency,
     _vectorized_pick_weight,
     _vectorized_pick_weight_with_tail_floor,
     pick_weight,
@@ -413,3 +416,73 @@ def test_opponent_sampler_with_tail_floor_weight_fn():
     # fall back to plain Gaussian.
     assert counts["Christian McCaffrey"] > counts["Other"]
 
+
+
+# --- value urgency: a badly fallen player goes NEXT --------------------------
+
+def _fallen(name, adp, stdev=0.5):
+    return FfcPlayer(name=name, position="RB", team="KC", adp=adp, stdev=stdev, high=1, low=99)
+
+
+def test_a_far_fallen_player_beats_an_on_schedule_one():
+    """The bug this fixes. The tail floor climbs to 1.0 and stops -- which is
+    exactly the weight of a player sitting AT his ADP. So an elite player 87
+    picks past his ADP was no likelier to be drafted than anyone merely due,
+    and the simulation believed he would survive."""
+    fallen = _fallen("fell far", adp=2.0)
+    on_time = _fallen("due now", adp=89.0)
+
+    assert pick_weight_with_tail_floor(fallen, 89) == pytest.approx(
+        pick_weight_with_tail_floor(on_time, 89), abs=0.05
+    )
+    assert pick_weight_with_value_urgency(fallen, 89) > 10 * pick_weight_with_value_urgency(
+        on_time, 89
+    )
+
+
+def test_urgency_scales_with_how_far_the_player_fell():
+    slightly = _fallen("slight", adp=80.0)
+    badly = _fallen("badly", adp=2.0)
+
+    assert pick_weight_with_value_urgency(badly, 89) > pick_weight_with_value_urgency(slightly, 89)
+
+
+def test_urgency_leaves_players_before_their_adp_untouched():
+    """'Too early' must still mean 'still unlikely' -- the change is only in the
+    late tail."""
+    early = _fallen("not yet", adp=120.0)
+
+    assert pick_weight_with_value_urgency(early, 89) == pytest.approx(
+        pick_weight_with_tail_floor(early, 89)
+    )
+
+
+def test_urgency_is_continuous_with_the_tail_floor_at_the_boundary():
+    player = _fallen("boundary", adp=50.0, stdev=2.0)
+    boundary_pick = 50 + int(TAIL_Z * 2.0)
+
+    assert pick_weight_with_value_urgency(player, boundary_pick) == pytest.approx(
+        pick_weight_with_tail_floor(player, boundary_pick), rel=0.2
+    )
+
+
+def test_urgency_is_bounded():
+    """Kept finite so the weighted draw stays numerically sane."""
+    absurd = _fallen("absurd", adp=1.0, stdev=0.1)
+
+    assert pick_weight_with_value_urgency(absurd, 300) <= URGENCY_CEILING
+
+
+def test_vectorized_urgency_matches_the_scalar_version():
+    """The registry exists purely for speed, so the two must agree exactly --
+    a silent divergence here would change live recommendations."""
+    players = [_fallen(f"p{i}", adp=adp, stdev=sd)
+               for i, (adp, sd) in enumerate([(2.0, 0.5), (40.0, 3.0), (89.0, 4.0),
+                                              (120.0, 6.0), (1.0, 0.1)])]
+    adp = np.array([p.adp for p in players])
+    stdev = np.array([p.stdev for p in players])
+
+    for pick in (5, 40, 89, 150, 300):
+        fast = _vectorized_pick_weight_with_value_urgency(pick, adp, stdev)
+        slow = np.array([pick_weight_with_value_urgency(p, pick) for p in players])
+        assert np.allclose(fast, slow, rtol=1e-9, atol=1e-12)

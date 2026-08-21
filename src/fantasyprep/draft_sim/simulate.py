@@ -303,10 +303,29 @@ def recommend_positions(
     `resolve_pick`. None (the default) preserves the original best-ADP
     behavior exactly, so no existing backtest/research call site is
     affected by this parameter existing."""
+    # COMMON RANDOM NUMBERS across positions.
+    #
+    # Every position was previously simulated off the same advancing rng, so
+    # each faced a DIFFERENT random draft. The four means then carried
+    # independent sampling noise, and since the positions cluster within ~20
+    # points of each other on a ~2000 point roster, that noise was a large
+    # fraction of the very gap being ranked.
+    #
+    # Giving each position an identically-seeded rng makes them face the SAME
+    # simulated opponents, so the comparison is paired and the shared noise
+    # cancels out of the differences. This is the same trick backtest.py
+    # already uses to isolate strategy from opponent luck, applied to the live
+    # recommendation.
+    #
+    # It buys precision far more cheaply than more simulations: on this machine
+    # 1000 sims costs ~25s, which is unusable while a draft clock is running.
+    seed = rng.randrange(2**32)
+
     rows = []
     for position in CANDIDATE_POSITIONS:
         results = simulate_position_choice(
-            position, live_pool, state, settings, points_model, num_sims, rng,
+            position, live_pool, state, settings, points_model, num_sims,
+            random.Random(seed),
             opponent_weight_fn=opponent_weight_fn, player_points=player_points,
             need_aware_future=need_aware_future,
         )
