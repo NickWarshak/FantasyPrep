@@ -1,0 +1,2453 @@
+{
+  "year": 2026,
+  "source": "Fantasy Football Calculator consensus ADP",
+  "teams_in_league_settings": 10,
+  "scoring": "PPR",
+  "rank_cutoff": {
+    "RB": 45,
+    "WR": 64,
+    "QB": 19,
+    "TE": 15,
+    "DST": 9,
+    "K": 4
+  },
+  "replacement_levels": {
+    "QB": 220.9,
+    "RB": 120.2,
+    "WR": 96.1,
+    "TE": 128.5
+  },
+  "total_capital": 8023.7,
+  "spearman_weighted_vs_top100_count": 0.542,
+  "rows": [
+    {
+      "rank": 1,
+      "team": "CIN",
+      "capital": 477.5,
+      "share": 0.05951663514363439,
+      "counts": {
+        "24": 2,
+        "50": 3,
+        "100": 4
+      },
+      "n_players": 5,
+      "best_player": "Ja'Marr Chase",
+      "best_adp": 3.9,
+      "players": [
+        {
+          "name": "Ja'Marr Chase",
+          "position": "WR",
+          "adp": 3.9,
+          "position_rank": 2,
+          "expected": 264.5,
+          "replacement": 96.1,
+          "value": 168.4
+        },
+        {
+          "name": "Chase Brown",
+          "position": "RB",
+          "adp": 13.1,
+          "position_rank": 6,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Tee Higgins",
+          "position": "WR",
+          "adp": 37.2,
+          "position_rank": 19,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Joe Burrow",
+          "position": "QB",
+          "adp": 56.3,
+          "position_rank": 4,
+          "expected": 339.5,
+          "replacement": 220.9,
+          "value": 118.5
+        },
+        {
+          "name": "Samaje Perine",
+          "position": "RB",
+          "adp": 173.7,
+          "position_rank": 67,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "team": "DAL",
+      "capital": 451.4,
+      "share": 0.05625822917042059,
+      "counts": {
+        "24": 2,
+        "50": 3,
+        "100": 4
+      },
+      "n_players": 7,
+      "best_player": "CeeDee Lamb",
+      "best_adp": 11.1,
+      "players": [
+        {
+          "name": "CeeDee Lamb",
+          "position": "WR",
+          "adp": 11.1,
+          "position_rank": 6,
+          "expected": 255.0,
+          "replacement": 96.1,
+          "value": 158.9
+        },
+        {
+          "name": "George Pickens",
+          "position": "WR",
+          "adp": 20.2,
+          "position_rank": 10,
+          "expected": 216.3,
+          "replacement": 96.1,
+          "value": 120.2
+        },
+        {
+          "name": "Javonte Williams",
+          "position": "RB",
+          "adp": 36.8,
+          "position_rank": 18,
+          "expected": 174.0,
+          "replacement": 120.2,
+          "value": 53.7
+        },
+        {
+          "name": "Dak Prescott",
+          "position": "QB",
+          "adp": 65.5,
+          "position_rank": 5,
+          "expected": 339.5,
+          "replacement": 220.9,
+          "value": 118.5
+        },
+        {
+          "name": "Jake Ferguson",
+          "position": "TE",
+          "adp": 137.2,
+          "position_rank": 13,
+          "expected": 128.5,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Jaydon Blue",
+          "position": "RB",
+          "adp": 149.3,
+          "position_rank": 46,
+          "expected": 92.5,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Ryan Flournoy",
+          "position": "WR",
+          "adp": 169.9,
+          "position_rank": 83,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "team": "DET",
+      "capital": 438.8,
+      "share": 0.0546840356249946,
+      "counts": {
+        "24": 2,
+        "50": 3,
+        "100": 4
+      },
+      "n_players": 7,
+      "best_player": "Jahmyr Gibbs",
+      "best_adp": 1.8,
+      "players": [
+        {
+          "name": "Jahmyr Gibbs",
+          "position": "RB",
+          "adp": 1.8,
+          "position_rank": 2,
+          "expected": 243.4,
+          "replacement": 120.2,
+          "value": 123.2
+        },
+        {
+          "name": "Amon-Ra St. Brown",
+          "position": "WR",
+          "adp": 6.7,
+          "position_rank": 4,
+          "expected": 255.0,
+          "replacement": 96.1,
+          "value": 158.9
+        },
+        {
+          "name": "Jameson Williams",
+          "position": "WR",
+          "adp": 44.6,
+          "position_rank": 22,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Sam LaPorta",
+          "position": "TE",
+          "adp": 88.0,
+          "position_rank": 7,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "Jared Goff",
+          "position": "QB",
+          "adp": 107.0,
+          "position_rank": 15,
+          "expected": 273.6,
+          "replacement": 220.9,
+          "value": 52.6
+        },
+        {
+          "name": "Isiah Pacheco",
+          "position": "RB",
+          "adp": 151.1,
+          "position_rank": 49,
+          "expected": 90.8,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Isaac TeSlaa",
+          "position": "WR",
+          "adp": 179.1,
+          "position_rank": 89,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "team": "LAR",
+      "capital": 388.4,
+      "share": 0.04841085759997992,
+      "counts": {
+        "24": 1,
+        "50": 3,
+        "100": 4
+      },
+      "n_players": 5,
+      "best_player": "Puka Nacua",
+      "best_adp": 3.1,
+      "players": [
+        {
+          "name": "Puka Nacua",
+          "position": "WR",
+          "adp": 3.1,
+          "position_rank": 1,
+          "expected": 264.5,
+          "replacement": 96.1,
+          "value": 168.4
+        },
+        {
+          "name": "Kyren Williams",
+          "position": "RB",
+          "adp": 33.2,
+          "position_rank": 17,
+          "expected": 174.0,
+          "replacement": 120.2,
+          "value": 53.7
+        },
+        {
+          "name": "Davante Adams",
+          "position": "WR",
+          "adp": 41.2,
+          "position_rank": 20,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Matthew Stafford",
+          "position": "QB",
+          "adp": 83.2,
+          "position_rank": 8,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Blake Corum",
+          "position": "RB",
+          "adp": 122.5,
+          "position_rank": 40,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "team": "BAL",
+      "capital": 338.4,
+      "share": 0.0421713909779532,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Derrick Henry",
+      "best_adp": 16.6,
+      "players": [
+        {
+          "name": "Derrick Henry",
+          "position": "RB",
+          "adp": 16.6,
+          "position_rank": 9,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Zay Flowers",
+          "position": "WR",
+          "adp": 25.6,
+          "position_rank": 13,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Lamar Jackson",
+          "position": "QB",
+          "adp": 54.5,
+          "position_rank": 3,
+          "expected": 363.8,
+          "replacement": 220.9,
+          "value": 142.8
+        },
+        {
+          "name": "Mark Andrews",
+          "position": "TE",
+          "adp": 140.2,
+          "position_rank": 14,
+          "expected": 128.5,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Rashod Bateman",
+          "position": "WR",
+          "adp": 148.8,
+          "position_rank": 67,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Ja'Kobi Lane",
+          "position": "WR",
+          "adp": 163.0,
+          "position_rank": 80,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Justice Hill",
+          "position": "RB",
+          "adp": 165.1,
+          "position_rank": 62,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "team": "BUF",
+      "capital": 332.9,
+      "share": 0.041488576759365264,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "James Cook III",
+      "best_adp": 13.6,
+      "players": [
+        {
+          "name": "James Cook III",
+          "position": "RB",
+          "adp": 13.6,
+          "position_rank": 7,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Josh Allen",
+          "position": "QB",
+          "adp": 28.8,
+          "position_rank": 1,
+          "expected": 363.8,
+          "replacement": 220.9,
+          "value": 142.8
+        },
+        {
+          "name": "DJ Moore",
+          "position": "WR",
+          "adp": 52.0,
+          "position_rank": 26,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "Khalil Shakir",
+          "position": "WR",
+          "adp": 100.9,
+          "position_rank": 47,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Dalton Kincaid",
+          "position": "TE",
+          "adp": 152.9,
+          "position_rank": 15,
+          "expected": 128.5,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Ray Davis",
+          "position": "RB",
+          "adp": 160.0,
+          "position_rank": 57,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Ty Johnson",
+          "position": "RB",
+          "adp": 165.3,
+          "position_rank": 63,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "team": "KC",
+      "capital": 332.8,
+      "share": 0.04147173279260008,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Rashee Rice",
+      "best_adp": 13.6,
+      "players": [
+        {
+          "name": "Rashee Rice",
+          "position": "WR",
+          "adp": 13.6,
+          "position_rank": 7,
+          "expected": 228.4,
+          "replacement": 96.1,
+          "value": 132.3
+        },
+        {
+          "name": "Kenneth Walker",
+          "position": "RB",
+          "adp": 25.2,
+          "position_rank": 12,
+          "expected": 207.8,
+          "replacement": 120.2,
+          "value": 87.6
+        },
+        {
+          "name": "Patrick Mahomes",
+          "position": "QB",
+          "adp": 99.0,
+          "position_rank": 11,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Xavier Worthy",
+          "position": "WR",
+          "adp": 106.9,
+          "position_rank": 50,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Travis Kelce",
+          "position": "TE",
+          "adp": 107.5,
+          "position_rank": 9,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "Cyrus Allen",
+          "position": "WR",
+          "adp": 157.6,
+          "position_rank": 74,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Emari Demercado",
+          "position": "RB",
+          "adp": 167.4,
+          "position_rank": 64,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "team": "NE",
+      "capital": 326.8,
+      "share": 0.040732066364798834,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 4
+      },
+      "n_players": 7,
+      "best_player": "A.J. Brown",
+      "best_adp": 17.3,
+      "players": [
+        {
+          "name": "A.J. Brown",
+          "position": "WR",
+          "adp": 17.3,
+          "position_rank": 9,
+          "expected": 228.4,
+          "replacement": 96.1,
+          "value": 132.3
+        },
+        {
+          "name": "Drake Maye",
+          "position": "QB",
+          "adp": 50.0,
+          "position_rank": 2,
+          "expected": 363.8,
+          "replacement": 220.9,
+          "value": 142.8
+        },
+        {
+          "name": "TreVeyon Henderson",
+          "position": "RB",
+          "adp": 57.9,
+          "position_rank": 24,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Rhamondre Stevenson",
+          "position": "RB",
+          "adp": 70.9,
+          "position_rank": 29,
+          "expected": 132.6,
+          "replacement": 120.2,
+          "value": 12.3
+        },
+        {
+          "name": "Romeo Doubs",
+          "position": "WR",
+          "adp": 113.3,
+          "position_rank": 53,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "Hunter Henry",
+          "position": "TE",
+          "adp": 156.6,
+          "position_rank": 17,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Kayshon Boutte",
+          "position": "WR",
+          "adp": 172.5,
+          "position_rank": 85,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "team": "SF",
+      "capital": 323.8,
+      "share": 0.04035008800267932,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 3
+      },
+      "n_players": 10,
+      "best_player": "Christian McCaffrey",
+      "best_adp": 6.2,
+      "players": [
+        {
+          "name": "Christian McCaffrey",
+          "position": "RB",
+          "adp": 6.2,
+          "position_rank": 3,
+          "expected": 243.4,
+          "replacement": 120.2,
+          "value": 123.2
+        },
+        {
+          "name": "Mike Evans",
+          "position": "WR",
+          "adp": 56.6,
+          "position_rank": 27,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "Brock Purdy",
+          "position": "QB",
+          "adp": 83.6,
+          "position_rank": 9,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Deebo Samuel Sr.",
+          "position": "WR",
+          "adp": 104.8,
+          "position_rank": 49,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Ricky Pearsall",
+          "position": "WR",
+          "adp": 112.5,
+          "position_rank": 52,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "George Kittle",
+          "position": "TE",
+          "adp": 112.8,
+          "position_rank": 10,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "De'Zhaun Stribling",
+          "position": "WR",
+          "adp": 153.8,
+          "position_rank": 71,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Kaelon Black",
+          "position": "RB",
+          "adp": 154.1,
+          "position_rank": 52,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Jordan James",
+          "position": "RB",
+          "adp": 159.4,
+          "position_rank": 56,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Christian Kirk",
+          "position": "WR",
+          "adp": 186.9,
+          "position_rank": 92,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "team": "ATL",
+      "capital": 304.4,
+      "share": 0.03793224588372617,
+      "counts": {
+        "24": 2,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 5,
+      "best_player": "Bijan Robinson",
+      "best_adp": 1.7,
+      "players": [
+        {
+          "name": "Bijan Robinson",
+          "position": "RB",
+          "adp": 1.7,
+          "position_rank": 1,
+          "expected": 243.4,
+          "replacement": 120.2,
+          "value": 123.2
+        },
+        {
+          "name": "Drake London",
+          "position": "WR",
+          "adp": 10.2,
+          "position_rank": 5,
+          "expected": 255.0,
+          "replacement": 96.1,
+          "value": 158.9
+        },
+        {
+          "name": "Kyle Pitts Sr.",
+          "position": "TE",
+          "adp": 77.6,
+          "position_rank": 5,
+          "expected": 150.8,
+          "replacement": 128.5,
+          "value": 22.2
+        },
+        {
+          "name": "Brian Robinson",
+          "position": "RB",
+          "adp": 164.8,
+          "position_rank": 61,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Zachariah Branch",
+          "position": "WR",
+          "adp": 172.9,
+          "position_rank": 87,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "team": "PHI",
+      "capital": 301.0,
+      "share": 0.037518772590773825,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Saquon Barkley",
+      "best_adp": 20.0,
+      "players": [
+        {
+          "name": "Saquon Barkley",
+          "position": "RB",
+          "adp": 20.0,
+          "position_rank": 11,
+          "expected": 207.8,
+          "replacement": 120.2,
+          "value": 87.6
+        },
+        {
+          "name": "DeVonta Smith",
+          "position": "WR",
+          "adp": 28.8,
+          "position_rank": 15,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Jalen Hurts",
+          "position": "QB",
+          "adp": 77.0,
+          "position_rank": 7,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Makai Lemon",
+          "position": "WR",
+          "adp": 109.2,
+          "position_rank": 51,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Dallas Goedert",
+          "position": "TE",
+          "adp": 113.1,
+          "position_rank": 11,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "Tank Bigsby",
+          "position": "RB",
+          "adp": 161.1,
+          "position_rank": 58,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Dontayvion Wicks",
+          "position": "WR",
+          "adp": 174.8,
+          "position_rank": 88,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "team": "CHI",
+      "capital": 283.8,
+      "share": 0.035372481377222584,
+      "counts": {
+        "24": 0,
+        "50": 2,
+        "100": 4
+      },
+      "n_players": 6,
+      "best_player": "D'Andre Swift",
+      "best_adp": 45.3,
+      "players": [
+        {
+          "name": "D'Andre Swift",
+          "position": "RB",
+          "adp": 45.3,
+          "position_rank": 21,
+          "expected": 148.9,
+          "replacement": 120.2,
+          "value": 28.7
+        },
+        {
+          "name": "Rome Odunze",
+          "position": "WR",
+          "adp": 49.2,
+          "position_rank": 25,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "Luther Burden III",
+          "position": "WR",
+          "adp": 56.8,
+          "position_rank": 28,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "Colston Loveland",
+          "position": "TE",
+          "adp": 58.8,
+          "position_rank": 3,
+          "expected": 190.6,
+          "replacement": 128.5,
+          "value": 62.0
+        },
+        {
+          "name": "Caleb Williams",
+          "position": "QB",
+          "adp": 101.1,
+          "position_rank": 12,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Kyle Monangai",
+          "position": "RB",
+          "adp": 107.8,
+          "position_rank": 37,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "team": "LAC",
+      "capital": 273.4,
+      "share": 0.0340715493702001,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Omarion Hampton",
+      "best_adp": 19.9,
+      "players": [
+        {
+          "name": "Omarion Hampton",
+          "position": "RB",
+          "adp": 19.9,
+          "position_rank": 10,
+          "expected": 207.8,
+          "replacement": 120.2,
+          "value": 87.6
+        },
+        {
+          "name": "Ladd McConkey",
+          "position": "WR",
+          "adp": 42.0,
+          "position_rank": 21,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Quentin Johnston",
+          "position": "WR",
+          "adp": 93.9,
+          "position_rank": 45,
+          "expected": 133.6,
+          "replacement": 96.1,
+          "value": 37.5
+        },
+        {
+          "name": "Justin Herbert",
+          "position": "QB",
+          "adp": 104.3,
+          "position_rank": 13,
+          "expected": 273.6,
+          "replacement": 220.9,
+          "value": 52.6
+        },
+        {
+          "name": "Kimani Vidal",
+          "position": "RB",
+          "adp": 156.9,
+          "position_rank": 54,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Keaton Mitchell",
+          "position": "RB",
+          "adp": 158.0,
+          "position_rank": 55,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Tre' Harris",
+          "position": "WR",
+          "adp": 162.5,
+          "position_rank": 79,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "team": "WAS",
+      "capital": 256.2,
+      "share": 0.031924720033047756,
+      "counts": {
+        "24": 0,
+        "50": 1,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Terry McLaurin",
+      "best_adp": 44.6,
+      "players": [
+        {
+          "name": "Terry McLaurin",
+          "position": "WR",
+          "adp": 44.6,
+          "position_rank": 23,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Jayden Daniels",
+          "position": "QB",
+          "adp": 70.0,
+          "position_rank": 6,
+          "expected": 339.5,
+          "replacement": 220.9,
+          "value": 118.5
+        },
+        {
+          "name": "Stefon Diggs",
+          "position": "WR",
+          "adp": 92.5,
+          "position_rank": 44,
+          "expected": 133.6,
+          "replacement": 96.1,
+          "value": 37.5
+        },
+        {
+          "name": "Rachaad White",
+          "position": "RB",
+          "adp": 103.0,
+          "position_rank": 36,
+          "expected": 124.7,
+          "replacement": 120.2,
+          "value": 4.4
+        },
+        {
+          "name": "Jacory Croskey-Merritt",
+          "position": "RB",
+          "adp": 112.6,
+          "position_rank": 39,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Antonio Williams",
+          "position": "WR",
+          "adp": 161.5,
+          "position_rank": 78,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Chig Okonkwo",
+          "position": "TE",
+          "adp": 163.2,
+          "position_rank": 20,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 15,
+      "team": "JAX",
+      "capital": 254.0,
+      "share": 0.03166050447638668,
+      "counts": {
+        "24": 0,
+        "50": 0,
+        "100": 5
+      },
+      "n_players": 8,
+      "best_player": "Bhayshul Tuten",
+      "best_adp": 53.9,
+      "players": [
+        {
+          "name": "Bhayshul Tuten",
+          "position": "RB",
+          "adp": 53.9,
+          "position_rank": 23,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Parker Washington",
+          "position": "WR",
+          "adp": 68.6,
+          "position_rank": 34,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Brian Thomas Jr.",
+          "position": "WR",
+          "adp": 75.7,
+          "position_rank": 37,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Jakobi Meyers",
+          "position": "WR",
+          "adp": 80.6,
+          "position_rank": 39,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Trevor Lawrence",
+          "position": "QB",
+          "adp": 90.8,
+          "position_rank": 10,
+          "expected": 291.5,
+          "replacement": 220.9,
+          "value": 70.6
+        },
+        {
+          "name": "Travis Hunter",
+          "position": "WR",
+          "adp": 161.3,
+          "position_rank": 77,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Chris Rodriguez Jr.",
+          "position": "RB",
+          "adp": 162.1,
+          "position_rank": 59,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Brenton Strange",
+          "position": "TE",
+          "adp": 164.0,
+          "position_rank": 23,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 16,
+      "team": "ARI",
+      "capital": 235.1,
+      "share": 0.029305649655245736,
+      "counts": {
+        "24": 0,
+        "50": 2,
+        "100": 4
+      },
+      "n_players": 7,
+      "best_player": "Jeremiyah Love",
+      "best_adp": 27.6,
+      "players": [
+        {
+          "name": "Jeremiyah Love",
+          "position": "RB",
+          "adp": 27.6,
+          "position_rank": 13,
+          "expected": 189.0,
+          "replacement": 120.2,
+          "value": 68.8
+        },
+        {
+          "name": "Trey McBride",
+          "position": "TE",
+          "adp": 33.4,
+          "position_rank": 1,
+          "expected": 190.6,
+          "replacement": 128.5,
+          "value": 62.0
+        },
+        {
+          "name": "Marvin Harrison Jr.",
+          "position": "WR",
+          "adp": 64.4,
+          "position_rank": 31,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Michael Wilson",
+          "position": "WR",
+          "adp": 83.8,
+          "position_rank": 40,
+          "expected": 143.5,
+          "replacement": 96.1,
+          "value": 47.5
+        },
+        {
+          "name": "Tyler Allgeier",
+          "position": "RB",
+          "adp": 167.9,
+          "position_rank": 65,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Jacoby Brissett",
+          "position": "QB",
+          "adp": 168.4,
+          "position_rank": 26,
+          "expected": 203.4,
+          "replacement": 220.9,
+          "value": 0.0
+        },
+        {
+          "name": "James Conner",
+          "position": "RB",
+          "adp": 175.0,
+          "position_rank": 68,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 17,
+      "team": "IND",
+      "capital": 225.9,
+      "share": 0.02815014538828517,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 4
+      },
+      "n_players": 5,
+      "best_player": "Jonathan Taylor",
+      "best_adp": 7.4,
+      "players": [
+        {
+          "name": "Jonathan Taylor",
+          "position": "RB",
+          "adp": 7.4,
+          "position_rank": 4,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Alec Pierce",
+          "position": "WR",
+          "adp": 57.6,
+          "position_rank": 29,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "Tyler Warren",
+          "position": "TE",
+          "adp": 65.2,
+          "position_rank": 4,
+          "expected": 150.8,
+          "replacement": 128.5,
+          "value": 22.2
+        },
+        {
+          "name": "Josh Downs",
+          "position": "WR",
+          "adp": 86.9,
+          "position_rank": 41,
+          "expected": 143.5,
+          "replacement": 96.1,
+          "value": 47.5
+        },
+        {
+          "name": "Daniel Jones",
+          "position": "QB",
+          "adp": 150.8,
+          "position_rank": 22,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 18,
+      "team": "NYG",
+      "capital": 215.3,
+      "share": 0.02683497115282769,
+      "counts": {
+        "24": 0,
+        "50": 2,
+        "100": 2
+      },
+      "n_players": 7,
+      "best_player": "Malik Nabers",
+      "best_adp": 29.5,
+      "players": [
+        {
+          "name": "Malik Nabers",
+          "position": "WR",
+          "adp": 29.5,
+          "position_rank": 16,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Cam Skattebo",
+          "position": "RB",
+          "adp": 32.9,
+          "position_rank": 16,
+          "expected": 174.0,
+          "replacement": 120.2,
+          "value": 53.7
+        },
+        {
+          "name": "Jaxson Dart",
+          "position": "QB",
+          "adp": 105.2,
+          "position_rank": 14,
+          "expected": 273.6,
+          "replacement": 220.9,
+          "value": 52.6
+        },
+        {
+          "name": "Isaiah Likely",
+          "position": "TE",
+          "adp": 133.0,
+          "position_rank": 12,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "Tyrone Tracy Jr.",
+          "position": "RB",
+          "adp": 152.7,
+          "position_rank": 50,
+          "expected": 90.8,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Darius Slayton",
+          "position": "WR",
+          "adp": 172.8,
+          "position_rank": 86,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Darnell Mooney",
+          "position": "WR",
+          "adp": 185.4,
+          "position_rank": 91,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 19,
+      "team": "NO",
+      "capital": 213.1,
+      "share": 0.02655615886290166,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 3
+      },
+      "n_players": 6,
+      "best_player": "Chris Olave",
+      "best_adp": 21.4,
+      "players": [
+        {
+          "name": "Chris Olave",
+          "position": "WR",
+          "adp": 21.4,
+          "position_rank": 11,
+          "expected": 216.3,
+          "replacement": 96.1,
+          "value": 120.2
+        },
+        {
+          "name": "Travis Etienne Jr.",
+          "position": "RB",
+          "adp": 40.7,
+          "position_rank": 19,
+          "expected": 148.9,
+          "replacement": 120.2,
+          "value": 28.7
+        },
+        {
+          "name": "Jordyn Tyson",
+          "position": "WR",
+          "adp": 91.6,
+          "position_rank": 43,
+          "expected": 133.6,
+          "replacement": 96.1,
+          "value": 37.5
+        },
+        {
+          "name": "Tyler Shough",
+          "position": "QB",
+          "adp": 136.9,
+          "position_rank": 18,
+          "expected": 247.6,
+          "replacement": 220.9,
+          "value": 26.7
+        },
+        {
+          "name": "Alvin Kamara",
+          "position": "RB",
+          "adp": 140.2,
+          "position_rank": 43,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Juwan Johnson",
+          "position": "TE",
+          "adp": 159.0,
+          "position_rank": 18,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 20,
+      "team": "TB",
+      "capital": 211.0,
+      "share": 0.026297954781572635,
+      "counts": {
+        "24": 0,
+        "50": 2,
+        "100": 4
+      },
+      "n_players": 6,
+      "best_player": "Emeka Egbuka",
+      "best_adp": 36.0,
+      "players": [
+        {
+          "name": "Emeka Egbuka",
+          "position": "WR",
+          "adp": 36.0,
+          "position_rank": 18,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Bucky Irving",
+          "position": "RB",
+          "adp": 44.4,
+          "position_rank": 20,
+          "expected": 148.9,
+          "replacement": 120.2,
+          "value": 28.7
+        },
+        {
+          "name": "Chris Godwin Jr.",
+          "position": "WR",
+          "adp": 87.4,
+          "position_rank": 42,
+          "expected": 143.5,
+          "replacement": 96.1,
+          "value": 47.5
+        },
+        {
+          "name": "Kenny Gainwell",
+          "position": "RB",
+          "adp": 88.5,
+          "position_rank": 33,
+          "expected": 127.8,
+          "replacement": 120.2,
+          "value": 7.5
+        },
+        {
+          "name": "Baker Mayfield",
+          "position": "QB",
+          "adp": 129.4,
+          "position_rank": 17,
+          "expected": 247.6,
+          "replacement": 220.9,
+          "value": 26.7
+        },
+        {
+          "name": "Jalen McMillan",
+          "position": "WR",
+          "adp": 149.2,
+          "position_rank": 68,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "team": "SEA",
+      "capital": 202.5,
+      "share": 0.025232959674497187,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 2
+      },
+      "n_players": 7,
+      "best_player": "Jaxon Smith-Njigba",
+      "best_adp": 5.5,
+      "players": [
+        {
+          "name": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "adp": 5.5,
+          "position_rank": 3,
+          "expected": 264.5,
+          "replacement": 96.1,
+          "value": 168.4
+        },
+        {
+          "name": "Jadarian Price",
+          "position": "RB",
+          "adp": 75.2,
+          "position_rank": 31,
+          "expected": 127.8,
+          "replacement": 120.2,
+          "value": 7.5
+        },
+        {
+          "name": "Rashid Shaheed",
+          "position": "WR",
+          "adp": 126.3,
+          "position_rank": 57,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "Zach Charbonnet",
+          "position": "RB",
+          "adp": 140.3,
+          "position_rank": 44,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Sam Darnold",
+          "position": "QB",
+          "adp": 143.5,
+          "position_rank": 20,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        },
+        {
+          "name": "Cooper Kupp",
+          "position": "WR",
+          "adp": 158.5,
+          "position_rank": 75,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "AJ Barner",
+          "position": "TE",
+          "adp": 163.2,
+          "position_rank": 21,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 22,
+      "team": "DEN",
+      "capital": 195.6,
+      "share": 0.02437868178779603,
+      "counts": {
+        "24": 0,
+        "50": 1,
+        "100": 4
+      },
+      "n_players": 7,
+      "best_player": "Jaylen Waddle",
+      "best_adp": 46.6,
+      "players": [
+        {
+          "name": "Jaylen Waddle",
+          "position": "WR",
+          "adp": 46.6,
+          "position_rank": 24,
+          "expected": 191.7,
+          "replacement": 96.1,
+          "value": 95.7
+        },
+        {
+          "name": "Courtland Sutton",
+          "position": "WR",
+          "adp": 60.1,
+          "position_rank": 30,
+          "expected": 157.3,
+          "replacement": 96.1,
+          "value": 61.2
+        },
+        {
+          "name": "RJ Harvey",
+          "position": "RB",
+          "adp": 83.5,
+          "position_rank": 32,
+          "expected": 127.8,
+          "replacement": 120.2,
+          "value": 7.5
+        },
+        {
+          "name": "J.K. Dobbins",
+          "position": "RB",
+          "adp": 95.5,
+          "position_rank": 34,
+          "expected": 124.7,
+          "replacement": 120.2,
+          "value": 4.4
+        },
+        {
+          "name": "Bo Nix",
+          "position": "QB",
+          "adp": 119.7,
+          "position_rank": 16,
+          "expected": 247.6,
+          "replacement": 220.9,
+          "value": 26.7
+        },
+        {
+          "name": "Pat Bryant",
+          "position": "WR",
+          "adp": 147.1,
+          "position_rank": 66,
+          "expected": 96.1,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Jonah Coleman",
+          "position": "RB",
+          "adp": 149.7,
+          "position_rank": 47,
+          "expected": 92.5,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 23,
+      "team": "GB",
+      "capital": 194.4,
+      "share": 0.02422465366328511,
+      "counts": {
+        "24": 0,
+        "50": 1,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Josh Jacobs",
+      "best_adp": 27.8,
+      "players": [
+        {
+          "name": "Josh Jacobs",
+          "position": "RB",
+          "adp": 27.8,
+          "position_rank": 14,
+          "expected": 189.0,
+          "replacement": 120.2,
+          "value": 68.8
+        },
+        {
+          "name": "Christian Watson",
+          "position": "WR",
+          "adp": 67.0,
+          "position_rank": 33,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Jayden Reed",
+          "position": "WR",
+          "adp": 95.1,
+          "position_rank": 46,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Tucker Kraft",
+          "position": "TE",
+          "adp": 104.2,
+          "position_rank": 8,
+          "expected": 136.9,
+          "replacement": 128.5,
+          "value": 8.4
+        },
+        {
+          "name": "Matthew Golden",
+          "position": "WR",
+          "adp": 120.0,
+          "position_rank": 54,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "Jordan Love",
+          "position": "QB",
+          "adp": 146.7,
+          "position_rank": 21,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        },
+        {
+          "name": "MarShawn Lloyd",
+          "position": "RB",
+          "adp": 156.1,
+          "position_rank": 53,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 24,
+      "team": "MIN",
+      "capital": 170.7,
+      "share": 0.02126878008500339,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 2
+      },
+      "n_players": 7,
+      "best_player": "Justin Jefferson",
+      "best_adp": 13.9,
+      "players": [
+        {
+          "name": "Justin Jefferson",
+          "position": "WR",
+          "adp": 13.9,
+          "position_rank": 8,
+          "expected": 228.4,
+          "replacement": 96.1,
+          "value": 132.3
+        },
+        {
+          "name": "Aaron Jones Sr.",
+          "position": "RB",
+          "adp": 96.0,
+          "position_rank": 35,
+          "expected": 124.7,
+          "replacement": 120.2,
+          "value": 4.4
+        },
+        {
+          "name": "Jordan Addison",
+          "position": "WR",
+          "adp": 101.8,
+          "position_rank": 48,
+          "expected": 130.0,
+          "replacement": 96.1,
+          "value": 33.9
+        },
+        {
+          "name": "Jordan Mason",
+          "position": "RB",
+          "adp": 123.4,
+          "position_rank": 41,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Kyler Murray",
+          "position": "QB",
+          "adp": 142.9,
+          "position_rank": 19,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        },
+        {
+          "name": "Jauan Jennings",
+          "position": "WR",
+          "adp": 145.6,
+          "position_rank": 64,
+          "expected": 96.1,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "T.J. Hockenson",
+          "position": "TE",
+          "adp": 163.2,
+          "position_rank": 22,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 25,
+      "team": "NYJ",
+      "capital": 169.4,
+      "share": 0.021109742162312036,
+      "counts": {
+        "24": 0,
+        "50": 2,
+        "100": 2
+      },
+      "n_players": 6,
+      "best_player": "Breece Hall",
+      "best_adp": 28.0,
+      "players": [
+        {
+          "name": "Breece Hall",
+          "position": "RB",
+          "adp": 28.0,
+          "position_rank": 15,
+          "expected": 189.0,
+          "replacement": 120.2,
+          "value": 68.8
+        },
+        {
+          "name": "Garrett Wilson",
+          "position": "WR",
+          "adp": 28.2,
+          "position_rank": 14,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Braelon Allen",
+          "position": "RB",
+          "adp": 154.0,
+          "position_rank": 51,
+          "expected": 90.8,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Adonai Mitchell",
+          "position": "WR",
+          "adp": 159.9,
+          "position_rank": 76,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Kenyon Sadiq",
+          "position": "TE",
+          "adp": 163.0,
+          "position_rank": 19,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Omar Cooper Jr.",
+          "position": "WR",
+          "adp": 163.1,
+          "position_rank": 81,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 26,
+      "team": "LV",
+      "capital": 166.3,
+      "share": 0.020723268625960835,
+      "counts": {
+        "24": 1,
+        "50": 2,
+        "100": 2
+      },
+      "n_players": 6,
+      "best_player": "Ashton Jeanty",
+      "best_adp": 14.4,
+      "players": [
+        {
+          "name": "Ashton Jeanty",
+          "position": "RB",
+          "adp": 14.4,
+          "position_rank": 8,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Brock Bowers",
+          "position": "TE",
+          "adp": 39.7,
+          "position_rank": 2,
+          "expected": 190.6,
+          "replacement": 128.5,
+          "value": 62.0
+        },
+        {
+          "name": "Tre Tucker",
+          "position": "WR",
+          "adp": 133.6,
+          "position_rank": 60,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Mike Washington Jr.",
+          "position": "RB",
+          "adp": 148.8,
+          "position_rank": 45,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Jalen Nailor",
+          "position": "WR",
+          "adp": 156.0,
+          "position_rank": 73,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Fernando Mendoza",
+          "position": "QB",
+          "adp": 166.9,
+          "position_rank": 25,
+          "expected": 203.4,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 27,
+      "team": "CAR",
+      "capital": 165.9,
+      "share": 0.020680647049212027,
+      "counts": {
+        "24": 0,
+        "50": 1,
+        "100": 2
+      },
+      "n_players": 7,
+      "best_player": "Tetairoa McMillan",
+      "best_adp": 33.9,
+      "players": [
+        {
+          "name": "Tetairoa McMillan",
+          "position": "WR",
+          "adp": 33.9,
+          "position_rank": 17,
+          "expected": 196.7,
+          "replacement": 96.1,
+          "value": 100.6
+        },
+        {
+          "name": "Chuba Hubbard",
+          "position": "RB",
+          "adp": 75.0,
+          "position_rank": 30,
+          "expected": 132.6,
+          "replacement": 120.2,
+          "value": 12.3
+        },
+        {
+          "name": "Jonathon Brooks",
+          "position": "RB",
+          "adp": 108.8,
+          "position_rank": 38,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "John Metchie III",
+          "position": "WR",
+          "adp": 121.9,
+          "position_rank": 55,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "Jalen Coker",
+          "position": "WR",
+          "adp": 125.1,
+          "position_rank": 56,
+          "expected": 122.6,
+          "replacement": 96.1,
+          "value": 26.5
+        },
+        {
+          "name": "AJ Dillon",
+          "position": "RB",
+          "adp": 170.3,
+          "position_rank": 66,
+          "expected": 55.9,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Bryce Young",
+          "position": "QB",
+          "adp": 170.9,
+          "position_rank": 27,
+          "expected": 203.4,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 28,
+      "team": "HOU",
+      "capital": 142.3,
+      "share": 0.017739602687513185,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 2
+      },
+      "n_players": 7,
+      "best_player": "Nico Collins",
+      "best_adp": 23.1,
+      "players": [
+        {
+          "name": "Nico Collins",
+          "position": "WR",
+          "adp": 23.1,
+          "position_rank": 12,
+          "expected": 216.3,
+          "replacement": 96.1,
+          "value": 120.2
+        },
+        {
+          "name": "David Montgomery",
+          "position": "RB",
+          "adp": 63.9,
+          "position_rank": 25,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Jayden Higgins",
+          "position": "WR",
+          "adp": 131.7,
+          "position_rank": 59,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Tank Dell",
+          "position": "WR",
+          "adp": 149.9,
+          "position_rank": 69,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Woody Marks",
+          "position": "RB",
+          "adp": 150.5,
+          "position_rank": 48,
+          "expected": 92.5,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Dalton Schultz",
+          "position": "TE",
+          "adp": 155.7,
+          "position_rank": 16,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "C.J. Stroud",
+          "position": "QB",
+          "adp": 161.2,
+          "position_rank": 23,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 29,
+      "team": "PIT",
+      "capital": 138.9,
+      "share": 0.01731057638394147,
+      "counts": {
+        "24": 0,
+        "50": 0,
+        "100": 4
+      },
+      "n_players": 6,
+      "best_player": "DK Metcalf",
+      "best_adp": 65.2,
+      "players": [
+        {
+          "name": "DK Metcalf",
+          "position": "WR",
+          "adp": 65.2,
+          "position_rank": 32,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Jaylen Warren",
+          "position": "RB",
+          "adp": 66.8,
+          "position_rank": 26,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Rico Dowdle",
+          "position": "RB",
+          "adp": 70.5,
+          "position_rank": 28,
+          "expected": 132.6,
+          "replacement": 120.2,
+          "value": 12.3
+        },
+        {
+          "name": "Michael Pittman Jr.",
+          "position": "WR",
+          "adp": 72.9,
+          "position_rank": 35,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Germie Bernard",
+          "position": "WR",
+          "adp": 170.8,
+          "position_rank": 84,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Aaron Rodgers",
+          "position": "QB",
+          "adp": 174.6,
+          "position_rank": 29,
+          "expected": 184.7,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 30,
+      "team": "TEN",
+      "capital": 135.9,
+      "share": 0.016935803798875403,
+      "counts": {
+        "24": 0,
+        "50": 0,
+        "100": 3
+      },
+      "n_players": 7,
+      "best_player": "Tony Pollard",
+      "best_adp": 66.9,
+      "players": [
+        {
+          "name": "Tony Pollard",
+          "position": "RB",
+          "adp": 66.9,
+          "position_rank": 27,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Carnell Tate",
+          "position": "WR",
+          "adp": 75.6,
+          "position_rank": 36,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Wan'Dale Robinson",
+          "position": "WR",
+          "adp": 77.9,
+          "position_rank": 38,
+          "expected": 152.9,
+          "replacement": 96.1,
+          "value": 56.9
+        },
+        {
+          "name": "Tyjae Spears",
+          "position": "RB",
+          "adp": 131.5,
+          "position_rank": 42,
+          "expected": 120.2,
+          "replacement": 120.2,
+          "value": 0.0
+        },
+        {
+          "name": "Calvin Ridley",
+          "position": "WR",
+          "adp": 135.1,
+          "position_rank": 62,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Chimere Dike",
+          "position": "WR",
+          "adp": 145.7,
+          "position_rank": 65,
+          "expected": 96.1,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Cam Ward",
+          "position": "QB",
+          "adp": 173.1,
+          "position_rank": 28,
+          "expected": 184.7,
+          "replacement": 220.9,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 31,
+      "team": "MIA",
+      "capital": 104.2,
+      "share": 0.012991658401602114,
+      "counts": {
+        "24": 1,
+        "50": 1,
+        "100": 1
+      },
+      "n_players": 7,
+      "best_player": "De'Von Achane",
+      "best_adp": 10.3,
+      "players": [
+        {
+          "name": "De'Von Achane",
+          "position": "RB",
+          "adp": 10.3,
+          "position_rank": 5,
+          "expected": 215.1,
+          "replacement": 120.2,
+          "value": 94.9
+        },
+        {
+          "name": "Theo Wease Jr.",
+          "position": "WR",
+          "adp": 139.6,
+          "position_rank": 63,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Malik Washington",
+          "position": "WR",
+          "adp": 154.9,
+          "position_rank": 72,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Malik Willis",
+          "position": "QB",
+          "adp": 162.0,
+          "position_rank": 24,
+          "expected": 220.9,
+          "replacement": 220.9,
+          "value": 0.0
+        },
+        {
+          "name": "Jalen Tolbert",
+          "position": "WR",
+          "adp": 168.7,
+          "position_rank": 82,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Greg Dulcich",
+          "position": "TE",
+          "adp": 172.1,
+          "position_rank": 24,
+          "expected": 114.6,
+          "replacement": 128.5,
+          "value": 0.0
+        },
+        {
+          "name": "Caleb Douglas",
+          "position": "WR",
+          "adp": 180.0,
+          "position_rank": 90,
+          "expected": 70.7,
+          "replacement": 96.1,
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "rank": 32,
+      "team": "CLE",
+      "capital": 53.7,
+      "share": 0.0066948596713850275,
+      "counts": {
+        "24": 0,
+        "50": 0,
+        "100": 2
+      },
+      "n_players": 6,
+      "best_player": "Quinshon Judkins",
+      "best_adp": 51.0,
+      "players": [
+        {
+          "name": "Quinshon Judkins",
+          "position": "RB",
+          "adp": 51.0,
+          "position_rank": 22,
+          "expected": 133.0,
+          "replacement": 120.2,
+          "value": 12.8
+        },
+        {
+          "name": "Harold Fannin Jr.",
+          "position": "TE",
+          "adp": 80.8,
+          "position_rank": 6,
+          "expected": 150.8,
+          "replacement": 128.5,
+          "value": 22.2
+        },
+        {
+          "name": "KC Concepcion",
+          "position": "WR",
+          "adp": 129.2,
+          "position_rank": 58,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Jerry Jeudy",
+          "position": "WR",
+          "adp": 134.3,
+          "position_rank": 61,
+          "expected": 105.4,
+          "replacement": 96.1,
+          "value": 9.3
+        },
+        {
+          "name": "Denzel Boston",
+          "position": "WR",
+          "adp": 150.5,
+          "position_rank": 70,
+          "expected": 81.8,
+          "replacement": 96.1,
+          "value": 0.0
+        },
+        {
+          "name": "Dylan Sampson",
+          "position": "RB",
+          "adp": 162.5,
+          "position_rank": 60,
+          "expected": 85.2,
+          "replacement": 120.2,
+          "value": 0.0
+        }
+      ]
+    }
+  ]
+}
