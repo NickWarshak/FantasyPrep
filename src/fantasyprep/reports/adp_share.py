@@ -128,11 +128,29 @@ def compute(
     rows = []
     for i, t in enumerate(ordered, start=1):
         best = t.best
+        cap = t.capital()
+        by_position = {
+            pos: round(sum(weight(p.adp) for p in t.players if p.position == pos), 3)
+            for pos in CAPITAL_POSITIONS
+        }
+        # Where a team's draft capital is concentrated. Shares rather than raw
+        # totals, because the question "is this team quarterback-heavy?" is
+        # about the shape of its capital, not the size of it -- otherwise every
+        # good team looks heavy at every position.
+        qb_pct = by_position["QB"] / cap if cap else 0.0
+        pass_catcher_pct = (by_position["WR"] + by_position["TE"]) / cap if cap else 0.0
         rows.append({
             "rank": i,
             "team": t.team,
-            "capital": round(t.capital(), 3),
-            "share": t.capital() / total,
+            "capital": round(cap, 3),
+            "share": cap / total,
+            "by_position": by_position,
+            "qb_pct": qb_pct,
+            "pass_catcher_pct": pass_catcher_pct,
+            # Positive = capital sits at quarterback; negative = at the pass
+            # catchers. Reported next to the raw shares so a team that is simply
+            # thin everywhere can be told apart from a genuinely lopsided one.
+            "tilt": qb_pct - pass_catcher_pct,
             "counts": {str(k): t.count_within(k) for k in COUNT_THRESHOLDS},
             "n_players": len(t.players),
             "best_player": best.name if best else None,
