@@ -1,188 +1,87 @@
 """ADP share: which NFL teams carry the most fantasy draft capital.
 
-The question is "rank every NFL team by how many highly-drafted players it
-has". Counting them is the obvious first answer and it is genuinely useful, so
-it is reported -- but a raw count cannot tell the difference between a team
-with Jahmyr Gibbs at ADP 1.8 and a team with a WR at ADP 95. Both are "a
-top-100 player". Any threshold you pick is arbitrary, and the answer changes
-when you move it.
+Rank every NFL team by how much high draft capital sits on its roster, using
+nothing but ADP.
 
-So the headline metric weights each player by what he is actually worth, using
-the same real historical outcome data the draft engine already runs on:
+Counting a team's top-100 players is the obvious first answer, and it is
+reported -- but a count says Jahmyr Gibbs at ADP 1.8 and a receiver at ADP 95
+are the same thing, and any cutoff you pick is arbitrary. So each player gets a
+weight that falls off as his ADP gets later:
 
-    ADP -> position rank -> historical outcome bucket -> mean real points
-    value = mean real points - replacement level at that position
-    team capital = sum of value over that team's players
-    ADP share    = team capital / league total capital
+    weight(player) = 0.5 ** ((adp - 1) / HALF_LIFE)
 
-The replacement subtraction is what makes positions comparable. A QB who
-projects 260 points is not more valuable than a 200-point RB if any streamed
-QB gives you 221 -- and in a 10-team league the 19th QB really does
-(`derive_rank_cutoff` measures that from real draft depth rather than
-guessing). Without it this table would just rank teams by whether they have a
-starting quarterback.
+One knob, and it is readable in plain English: every HALF_LIFE picks, a player
+is worth half as much. At a 30-pick half life, the 1.01 overall is worth 1.000,
+the 31st pick 0.500, the 61st 0.250, the 121st 0.0625.
 
-Deliberately excluded: K and DST. DST has no real-points source anywhere in
-this codebase (`nfl_stats.POSITION_MAP` omits it, so it scores 0), and kickers
-are draft-capital noise. Including them would add rows that are mostly an
-artifact of where those positions happen to get drafted.
+Exponential rather than linear because linear gets the top of the draft badly
+wrong: `201 - adp` makes the first pick worth 1.005x the second, when the whole
+premise of a draft is that it is worth much more than that. Exponential decay
+is also the rough shape of every real draft-pick value chart.
+
+HALF_LIFE is a choice, so `compute` also reports the ranking under several
+other half lives and under linear weighting. If the ordering held only at one
+setting it would be an artifact of the knob rather than a fact about rosters --
+see `sensitivity` in the output.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from fantasyprep.historical.outcomes import build_outcome_distributions, outcome_for_rank
 from fantasyprep.historical.sources import ffc
 from fantasyprep.league.settings import LeagueSettings, default_settings
 
-# The positions that represent real draft capital.
+# Positions that count as fantasy draft capital. Kickers and defenses are
+# excluded: nobody means them by "highly drafted players", and their ADPs say
+# more about where convention puts them than about roster strength.
 CAPITAL_POSITIONS = ("QB", "RB", "WR", "TE")
 
-# Count thresholds reported alongside the weighted metric. Three of them, not
-# one, precisely because any single threshold is arbitrary -- if a team's
-# standing swings wildly across the three, the count view is not telling you
-# anything stable and the weighted column is the one to trust.
+# Picks over which a player's weight halves.
+HALF_LIFE = 30.0
+
+# Alternates used only for the stability check, never for the headline.
+ALTERNATE_HALF_LIVES = (15.0, 45.0, 60.0)
+
+# Count thresholds reported next to the weighted number. Three rather than one,
+# because any single cutoff is arbitrary -- if a team swings across all three,
+# the count view is not telling you anything stable.
 COUNT_THRESHOLDS = (24, 50, 100)
 
 
-@dataclass
-class PlayerCapital:
-    name: str
-    position: str
-    team: str
-    adp: float
-    position_rank: int
-    expected_points: float
-    replacement_points: float
-    beyond_replacement_rank: bool = False
+def weight(adp: float, half_life: float = HALF_LIFE) -> float:
+    """Draft capital of one player, from his ADP alone. 1.00 at pick 1."""
+    return 0.5 ** ((adp - 1.0) / half_life)
 
-    @property
-    def value(self) -> float:
-        """Points above replacement, floored at zero.
 
-        Floored because a late-round flier is worth 0 draft capital, never
-        negative -- nobody is made worse off by holding a player they can cut.
-        Letting these go negative would let a team of deep bench players score
-        below a team with nobody at all.
-
-        Players drafted deeper than their position's replacement rank are worth
-        exactly 0 by construction. That is what replacement level *means*: if
-        the 19th quarterback is freely available, the 24th cannot be an asset.
-        Stating it as a rule matters here because the outcome buckets do not
-        enforce it on their own -- `outcome_for_rank` falls back to the deepest
-        bucket for every rank past the grid, and those deep buckets are thin
-        enough to be non-monotonic. Measured on this very pool: the deepest TE
-        bucket is a single 151.7-point season, so Greg Dulcich (TE24) scored
-        *above* Sam LaPorta (TE7), and Malik Willis (QB24) scored 35.8 points
-        above a QB19 replacement. Both are artifacts, and both would otherwise
-        show up as real draft capital for their teams.
-        """
-        if self.beyond_replacement_rank:
-            return 0.0
-        return max(0.0, self.expected_points - self.replacement_points)
+def linear_weight(adp: float, last_pick: float = 200.0) -> float:
+    """Straight-line alternative, for the stability check only."""
+    return max(0.0, (last_pick + 1.0 - adp) / last_pick)
 
 
 @dataclass
 class TeamCapital:
     team: str
-    players: list[PlayerCapital] = field(default_factory=list)
+    players: list[ffc.FfcPlayer] = field(default_factory=list)
 
-    @property
-    def capital(self) -> float:
-        return sum(p.value for p in self.players)
+    def capital(self, half_life: float = HALF_LIFE) -> float:
+        return sum(weight(p.adp, half_life) for p in self.players)
+
+    def linear_capital(self) -> float:
+        return sum(linear_weight(p.adp) for p in self.players)
 
     def count_within(self, threshold: int) -> int:
         return sum(1 for p in self.players if p.adp <= threshold)
 
     @property
-    def best(self) -> PlayerCapital | None:
+    def best(self) -> ffc.FfcPlayer | None:
         return min(self.players, key=lambda p: p.adp) if self.players else None
 
 
-def replacement_levels(
-    distributions, rank_cutoff: dict[str, int]
-) -> dict[str, float]:
-    """Mean real points at each position's replacement rank."""
-    out = {}
-    for position in CAPITAL_POSITIONS:
-        cutoff = rank_cutoff.get(position)
-        if cutoff is None:
-            continue
-        out[position] = statistics.mean(
-            outcome_for_rank(distributions, position, cutoff).outcomes
-        )
-    return out
-
-
-def build_player_capital(
-    pool: list[ffc.FfcPlayer], distributions, rank_cutoff: dict[str, int]
-) -> list[PlayerCapital]:
-    pos_ranks = ffc.position_ranks(pool)
-    replacements = replacement_levels(distributions, rank_cutoff)
-
-    raw = []
-    for player in pool:
-        if player.position not in CAPITAL_POSITIONS:
-            continue
-        rank = pos_ranks.get(player.name, 999)
-        try:
-            expected = statistics.mean(
-                outcome_for_rank(distributions, player.position, rank).outcomes
-            )
-        except (KeyError, AttributeError):
-            continue
-        raw.append((player, rank, expected))
-
-    # Second guard, for inversions *inside* the rank grid rather than past its
-    # end: force expected points to be non-increasing in position rank. A WR12
-    # can never be credited with more than a WR9, whatever the sampling noise
-    # in a particular bucket says. Applied as a running minimum down the rank
-    # order, so it only ever revises a value downward and never invents one.
-    ceiling: dict[str, float] = {}
-    monotone: dict[tuple[str, int], float] = {}
-    for player, rank, expected in sorted(raw, key=lambda r: (r[0].position, r[1])):
-        key = (player.position, rank)
-        if key in monotone:
-            continue
-        cap = ceiling.get(player.position)
-        value = expected if cap is None else min(expected, cap)
-        ceiling[player.position] = value
-        monotone[key] = value
-
-    rows = []
-    for player, rank, _expected in raw:
-        cutoff = rank_cutoff.get(player.position)
-        rows.append(
-            PlayerCapital(
-                name=player.name,
-                position=player.position,
-                team=player.team,
-                adp=player.adp,
-                position_rank=rank,
-                expected_points=monotone[(player.position, rank)],
-                replacement_points=replacements.get(player.position, 0.0),
-                beyond_replacement_rank=cutoff is not None and rank > cutoff,
-            )
-        )
-    return rows
-
-
-def by_team(rows: list[PlayerCapital]) -> list[TeamCapital]:
-    teams: dict[str, TeamCapital] = {}
-    for row in rows:
-        teams.setdefault(row.team, TeamCapital(row.team)).players.append(row)
-    for team in teams.values():
-        team.players.sort(key=lambda p: p.adp)
-    return sorted(teams.values(), key=lambda t: t.capital, reverse=True)
-
-
 def spearman(a: list[float], b: list[float]) -> float:
-    """Rank correlation, used to check the weighted ranking against the naive
-    count ranking. No scipy -- this module is not worth an optional dep."""
+    """Rank correlation. No scipy -- not worth an optional dependency here."""
 
     def ranks(xs):
         order = sorted(range(len(xs)), key=lambda i: xs[i])
@@ -200,34 +99,40 @@ def spearman(a: list[float], b: list[float]) -> float:
 
     ra, rb = ranks(a), ranks(b)
     n = len(a)
-    mean_a, mean_b = sum(ra) / n, sum(rb) / n
-    num = sum((x - mean_a) * (y - mean_b) for x, y in zip(ra, rb))
-    den = (sum((x - mean_a) ** 2 for x in ra) * sum((y - mean_b) ** 2 for y in rb)) ** 0.5
+    ma, mb = sum(ra) / n, sum(rb) / n
+    num = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+    den = (sum((x - ma) ** 2 for x in ra) * sum((y - mb) ** 2 for y in rb)) ** 0.5
     return num / den if den else 0.0
 
 
-def compute(year: int = 2026, data_dir: Path = Path("data"), settings: LeagueSettings | None = None) -> dict:
+def compute(
+    year: int = 2026, data_dir: Path = Path("data"), settings: LeagueSettings | None = None
+) -> dict:
     settings = settings or default_settings()
     raw_dir = data_dir / "raw"
     pool = ffc.fetch_adp(
         year, teams=settings.teams, cache_path=raw_dir / f".ffc_{settings.teams}_{year}.json"
     )
-    distributions = build_outcome_distributions(
-        settings, cache_path=raw_dir / f".outcomes_{settings.teams}.json", adp_cache_dir=raw_dir
-    )
-    rank_cutoff = ffc.derive_rank_cutoff(pool, settings)
-    rows = build_player_capital(pool, distributions, rank_cutoff)
-    teams = by_team(rows)
-    total = sum(t.capital for t in teams) or 1.0
 
-    ranked = []
-    for i, t in enumerate(teams, start=1):
+    teams: dict[str, TeamCapital] = {}
+    for p in pool:
+        if p.position not in CAPITAL_POSITIONS:
+            continue
+        teams.setdefault(p.team, TeamCapital(p.team)).players.append(p)
+    for t in teams.values():
+        t.players.sort(key=lambda p: p.adp)
+
+    ordered = sorted(teams.values(), key=lambda t: t.capital(), reverse=True)
+    total = sum(t.capital() for t in ordered) or 1.0
+
+    rows = []
+    for i, t in enumerate(ordered, start=1):
         best = t.best
-        ranked.append({
+        rows.append({
             "rank": i,
             "team": t.team,
-            "capital": round(t.capital, 1),
-            "share": t.capital / total,
+            "capital": round(t.capital(), 3),
+            "share": t.capital() / total,
             "counts": {str(k): t.count_within(k) for k in COUNT_THRESHOLDS},
             "n_players": len(t.players),
             "best_player": best.name if best else None,
@@ -235,49 +140,67 @@ def compute(year: int = 2026, data_dir: Path = Path("data"), settings: LeagueSet
             "players": [
                 {
                     "name": p.name, "position": p.position, "adp": p.adp,
-                    "position_rank": p.position_rank,
-                    "expected": round(p.expected_points, 1),
-                    "replacement": round(p.replacement_points, 1),
-                    "value": round(p.value, 1),
+                    "weight": round(weight(p.adp), 3),
                 }
                 for p in t.players
             ],
         })
 
-    caps = [t.capital for t in teams]
-    counts100 = [float(t.count_within(100)) for t in teams]
+    # Stability: does the ordering survive a different knob?
+    headline = [t.capital() for t in ordered]
+    sensitivity = {
+        f"half_life_{int(h)}": round(spearman(headline, [t.capital(h) for t in ordered]), 3)
+        for h in ALTERNATE_HALF_LIVES
+    }
+    sensitivity["linear"] = round(spearman(headline, [t.linear_capital() for t in ordered]), 3)
+    sensitivity["top100_count"] = round(
+        spearman(headline, [float(t.count_within(100)) for t in ordered]), 3
+    )
+
+    # Same question, phrased as movement: how far does any team travel when the
+    # half life changes? A correlation near 1.0 can still hide one team moving
+    # a long way, and that is worth surfacing rather than averaging away.
+    alt_rank_moves = {}
+    for h in ALTERNATE_HALF_LIVES:
+        alt_order = sorted(ordered, key=lambda t: t.capital(h), reverse=True)
+        pos = {t.team: i for i, t in enumerate(alt_order, start=1)}
+        alt_rank_moves[f"half_life_{int(h)}"] = max(
+            abs(pos[t.team] - i) for i, t in enumerate(ordered, start=1)
+        )
+
     return {
         "year": year,
         "source": "Fantasy Football Calculator consensus ADP",
         "teams_in_league_settings": settings.teams,
         "scoring": "PPR" if settings.scoring.reception == 1.0 else "non-PPR",
-        "rank_cutoff": rank_cutoff,
-        "replacement_levels": {
-            k: round(v, 1) for k, v in replacement_levels(distributions, rank_cutoff).items()
-        },
-        "total_capital": round(total, 1),
-        "spearman_weighted_vs_top100_count": round(spearman(caps, counts100), 3),
-        "rows": ranked,
+        "half_life": HALF_LIFE,
+        "total_capital": round(total, 2),
+        "sensitivity": sensitivity,
+        "max_rank_move": alt_rank_moves,
+        "rows": rows,
     }
 
 
 def main(argv=None) -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Rank NFL teams by fantasy draft capital (ADP only).")
     parser.add_argument("--year", type=int, default=2026)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
 
     report = compute(args.year, args.data_dir)
-    print(f"{args.year} ADP share -- {report['source']}\n")
-    print(f"{'#':>3}  {'TM':<4} {'share':>7} {'capital':>8} "
-          f"{'t24':>4}{'t50':>4}{'t100':>5}   best player")
+    print(f"{args.year} ADP share -- weight = 0.5 ^ ((ADP - 1) / {report['half_life']:.0f})\n")
+    print(f"{'#':>3}  {'TM':<4} {'share':>7} {'capital':>8} {'t24':>4}{'t50':>4}{'t100':>5}   best player")
     for r in report["rows"]:
         c = r["counts"]
-        print(f"{r['rank']:>3}  {r['team']:<4} {r['share']:>6.1%} {r['capital']:>8.1f} "
+        print(f"{r['rank']:>3}  {r['team']:<4} {r['share']:>6.1%} {r['capital']:>8.2f} "
               f"{c['24']:>4}{c['50']:>4}{c['100']:>5}   {r['best_player']} ({r['best_adp']})")
-    print(f"\nSpearman(weighted, top-100 count) = "
-          f"{report['spearman_weighted_vs_top100_count']}")
+    print("\nStability of this ordering (Spearman vs the headline):")
+    for k, v in report["sensitivity"].items():
+        print(f"  {k:<16} {v:+.3f}")
+    print("Worst single-team rank move when the half life changes:")
+    for k, v in report["max_rank_move"].items():
+        print(f"  {k:<16} {v} places")
 
     if args.out:
         args.out.write_text(json.dumps(report, indent=2), encoding="utf-8")

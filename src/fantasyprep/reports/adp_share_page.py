@@ -1,8 +1,8 @@
 """Render the ADP-share report as a standalone HTML page.
 
 Generated from `adp_share.compute()` rather than hand-written, so every figure
-on the page is the figure the code actually produced. Transcribing numbers by
-hand into a report is how a report ends up disagreeing with its own source.
+on the page is the figure the code actually produced. Transcribing numbers into
+a report by hand is how a report ends up disagreeing with its own source.
 """
 from __future__ import annotations
 
@@ -12,116 +12,93 @@ import json
 from pathlib import Path
 
 POSITION_ORDER = ("QB", "RB", "WR", "TE")
-POSITION_HUE = {"QB": "qb", "RB": "rb", "WR": "wr", "TE": "te"}
+HUE = {"QB": "qb", "RB": "rb", "WR": "wr", "TE": "te"}
 
 
-def _position_split(row: dict) -> dict[str, float]:
+def _split(row: dict) -> dict[str, float]:
     out = {p: 0.0 for p in POSITION_ORDER}
     for p in row["players"]:
         if p["position"] in out:
-            out[p["position"]] += p["value"]
+            out[p["position"]] += p["weight"]
     return out
 
 
 def _bar(row: dict, max_capital: float) -> str:
-    split = _position_split(row)
-    total = row["capital"] or 1.0
+    split = _split(row)
     width = (row["capital"] / max_capital) * 100 if max_capital else 0
-    segs = []
-    for pos in POSITION_ORDER:
-        v = split[pos]
-        if v <= 0:
-            continue
-        segs.append(
-            f'<span class="seg seg-{POSITION_HUE[pos]}" style="flex:{v:.4f}" '
-            f'title="{pos}: {v:.1f} pts"></span>'
-        )
-    return f'<span class="bar" style="width:{width:.2f}%">{"".join(segs)}</span>'
+    segs = "".join(
+        f'<span class="seg seg-{HUE[pos]}" style="flex:{v:.4f}" title="{pos}: {v:.2f}"></span>'
+        for pos in POSITION_ORDER if (v := split[pos]) > 0
+    )
+    return f'<span class="bar" style="width:{width:.2f}%">{segs}</span>'
+
+
+def _player_rows(players: list[dict]) -> str:
+    return "".join(
+        f'<tr class="pl{"" if p["weight"] >= 0.05 else " dead"}">'
+        f'<td class="pos"><span class="tag tag-{HUE.get(p["position"], "qb")}">'
+        f'{html.escape(p["position"])}</span></td>'
+        f'<td class="nm">{html.escape(p["name"])}</td>'
+        f'<td class="n">{p["adp"]:.1f}</td>'
+        f'<td class="n val">{p["weight"]:.3f}</td></tr>'
+        for p in players
+    )
 
 
 def _team_detail(row: dict) -> str:
-    lines = []
-    for p in row["players"]:
-        dead = "" if p["value"] > 0 else " dead"
-        lines.append(
-            f'<tr class="pl{dead}">'
-            f'<td class="pos"><span class="tag tag-{POSITION_HUE.get(p["position"], "qb")}">'
-            f'{html.escape(p["position"])}{p["position_rank"]}</span></td>'
-            f'<td class="nm">{html.escape(p["name"])}</td>'
-            f'<td class="n">{p["adp"]:.1f}</td>'
-            f'<td class="n">{p["expected"]:.1f}</td>'
-            f'<td class="n dim">&minus;{p["replacement"]:.1f}</td>'
-            f'<td class="n val">{p["value"]:.1f}</td>'
-            f"</tr>"
-        )
     return (
         f'<details class="team-detail"><summary>'
         f'<span class="sm-rank">{row["rank"]}</span>'
         f'<span class="sm-team">{html.escape(row["team"])}</span>'
         f'<span class="sm-share">{row["share"] * 100:.1f}%</span>'
-        f'<span class="sm-hint">{row["n_players"]} drafted</span>'
-        f"</summary>"
+        f'<span class="sm-hint">{row["n_players"]} drafted</span></summary>'
         f'<div class="scroll"><table class="players">'
-        f"<thead><tr><th>Pos</th><th>Player</th><th>ADP</th>"
-        f"<th>Proj</th><th>Repl.</th><th>Capital</th></tr></thead>"
-        f'<tbody>{"".join(lines)}</tbody></table></div></details>'
+        f"<thead><tr><th>Pos</th><th>Player</th><th class=\"n\">ADP</th>"
+        f"<th class=\"n\">Weight</th></tr></thead>"
+        f'<tbody>{_player_rows(row["players"])}</tbody></table></div></details>'
     )
 
 
-def render(report: dict, moves: list[dict], artifact_total_delta: dict) -> str:
+def render(report: dict) -> str:
     rows = report["rows"]
     max_capital = max(r["capital"] for r in rows)
-    top = rows[0]
-    bottom = rows[-1]
+    top, bottom = rows[0], rows[-1]
     ratio = top["capital"] / bottom["capital"] if bottom["capital"] else 0
+    hl = report["half_life"]
+    sens = report["sensitivity"]
+    moves = report["max_rank_move"]
 
-    table_rows = []
-    for r in rows:
-        c = r["counts"]
-        table_rows.append(
-            f"<tr>"
-            f'<td class="rk">{r["rank"]}</td>'
-            f'<td class="tm">{html.escape(r["team"])}</td>'
-            f'<td class="barcell">{_bar(r, max_capital)}</td>'
-            f'<td class="n share">{r["share"] * 100:.1f}%</td>'
-            f'<td class="n">{r["capital"]:.0f}</td>'
-            f'<td class="n dim">{c["24"]}</td>'
-            f'<td class="n dim">{c["50"]}</td>'
-            f'<td class="n dim">{c["100"]}</td>'
-            f'<td class="best">{html.escape(r["best_player"] or "")}'
-            f'<span class="badp">{r["best_adp"]:.1f}</span></td>'
-            f"</tr>"
-        )
-
-    move_rows = "".join(
-        f'<tr><td class="tm">{html.escape(m["team"])}</td>'
-        f'<td class="n">#{m["before"]}</td>'
-        f'<td class="n">#{m["after"]}</td>'
-        f'<td class="n {"up" if m["delta"] < 0 else "down"}">{m["delta"]:+d}</td>'
-        f'<td class="n dim">{m["cap_before"]:.0f} &rarr; {m["cap_after"]:.0f}</td></tr>'
-        for m in moves
-    )
-
-    repl = report["replacement_levels"]
-    cut = report["rank_cutoff"]
-    repl_rows = "".join(
-        f'<tr><td class="tm"><span class="tag tag-{POSITION_HUE[p]}">{p}</span></td>'
-        f'<td class="n">{p}{cut[p]}</td><td class="n">{repl[p]:.1f}</td></tr>'
-        for p in POSITION_ORDER if p in repl and p in cut
+    table_rows = "".join(
+        f"<tr>"
+        f'<td class="rk">{r["rank"]}</td>'
+        f'<td class="tm">{html.escape(r["team"])}</td>'
+        f'<td class="barcell">{_bar(r, max_capital)}</td>'
+        f'<td class="n share">{r["share"] * 100:.1f}%</td>'
+        f'<td class="n">{r["capital"]:.2f}</td>'
+        f'<td class="n dim">{r["counts"]["24"]}</td>'
+        f'<td class="n dim">{r["counts"]["50"]}</td>'
+        f'<td class="n dim">{r["counts"]["100"]}</td>'
+        f'<td class="best">{html.escape(r["best_player"] or "")}'
+        f'<span class="badp">{r["best_adp"]:.1f}</span></td></tr>'
+        for r in rows
     )
 
     det = next((r for r in rows if r["team"] == "DET"), rows[0])
-    det_lines = "".join(
-        f'<tr class="pl{"" if p["value"] > 0 else " dead"}">'
-        f'<td class="pos"><span class="tag tag-{POSITION_HUE.get(p["position"], "qb")}">'
-        f'{p["position"]}{p["position_rank"]}</span></td>'
-        f'<td class="nm">{html.escape(p["name"])}</td>'
-        f'<td class="n">{p["adp"]:.1f}</td>'
-        f'<td class="n">{p["expected"]:.1f}</td>'
-        f'<td class="n dim">&minus;{p["replacement"]:.1f}</td>'
-        f'<td class="n val">{p["value"]:.1f}</td></tr>'
-        for p in det["players"]
+    det_rows = _player_rows(det["players"])
+
+    sens_rows = "".join(
+        f'<tr><td class="nm">{label}</td><td class="n">{sens[key]:+.3f}</td>'
+        f'<td class="n dim">{moves.get(key, "") and str(moves[key]) + " places" or "&mdash;"}</td></tr>'
+        for key, label in (
+            ("half_life_15", "Half life 15 picks"),
+            ("half_life_45", "Half life 45 picks"),
+            ("half_life_60", "Half life 60 picks"),
+            ("linear", "Linear weighting instead"),
+            ("top100_count", "Just counting top-100 players"),
+        )
     )
+
+    curve_pts = json.dumps([[a, 0.5 ** ((a - 1) / hl)] for a in range(1, 201, 2)])
 
     return f"""<title>NFL Draft Capital Share</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -129,341 +106,228 @@ def render(report: dict, moves: list[dict], artifact_total_delta: dict) -> str:
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 :root {{
-  --ground: #F1F3F0;
-  --surface: #FFFFFF;
-  --surface-2: #E9ECE8;
-  --ink: #171C23;
-  --muted: #5C6672;
-  --faint: #8A939E;
-  --rule: rgba(23,28,35,.13);
-  --rule-strong: rgba(23,28,35,.28);
-  --qb: #7C6AA8;
-  --rb: #C0703C;
-  --wr: #35709B;
-  --te: #6E8B3D;
-  --up: #2F7D5B;
-  --down: #A6543C;
-  --shadow: 0 1px 2px rgba(23,28,35,.06), 0 8px 24px rgba(23,28,35,.05);
+  --ground:#F1F3F0; --surface:#FFFFFF; --surface-2:#E9ECE8;
+  --ink:#171C23; --muted:#5C6672; --faint:#8A939E;
+  --rule:rgba(23,28,35,.13); --rule-strong:rgba(23,28,35,.28);
+  --qb:#7C6AA8; --rb:#C0703C; --wr:#35709B; --te:#6E8B3D;
+  --shadow:0 1px 2px rgba(23,28,35,.06),0 8px 24px rgba(23,28,35,.05);
 }}
 @media (prefers-color-scheme: dark) {{
   :root:not([data-theme="light"]) {{
-    --ground: #0E1218;
-    --surface: #161B22;
-    --surface-2: #1D242D;
-    --ink: #E7ECF2;
-    --muted: #9AA6B4;
-    --faint: #6C7885;
-    --rule: rgba(231,236,242,.14);
-    --rule-strong: rgba(231,236,242,.3);
-    --qb: #9C8AC8;
-    --rb: #D98F5C;
-    --wr: #5A93BE;
-    --te: #8FAC5C;
-    --up: #56A57E;
-    --down: #C97A5E;
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    --ground:#0E1218; --surface:#161B22; --surface-2:#1D242D;
+    --ink:#E7ECF2; --muted:#9AA6B4; --faint:#6C7885;
+    --rule:rgba(231,236,242,.14); --rule-strong:rgba(231,236,242,.3);
+    --qb:#9C8AC8; --rb:#D98F5C; --wr:#5A93BE; --te:#8FAC5C;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
   }}
 }}
 :root[data-theme="dark"] {{
-  --ground: #0E1218;
-  --surface: #161B22;
-  --surface-2: #1D242D;
-  --ink: #E7ECF2;
-  --muted: #9AA6B4;
-  --faint: #6C7885;
-  --rule: rgba(231,236,242,.14);
-  --rule-strong: rgba(231,236,242,.3);
-  --qb: #9C8AC8;
-  --rb: #D98F5C;
-  --wr: #5A93BE;
-  --te: #8FAC5C;
-  --up: #56A57E;
-  --down: #C97A5E;
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  --ground:#0E1218; --surface:#161B22; --surface-2:#1D242D;
+  --ink:#E7ECF2; --muted:#9AA6B4; --faint:#6C7885;
+  --rule:rgba(231,236,242,.14); --rule-strong:rgba(231,236,242,.3);
+  --qb:#9C8AC8; --rb:#D98F5C; --wr:#5A93BE; --te:#8FAC5C;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
 }}
 
-* {{ box-sizing: border-box; }}
+* {{ box-sizing:border-box; }}
 body {{
-  background: var(--ground);
-  color: var(--ink);
-  font: 400 16px/1.6 "Source Serif 4", Georgia, serif;
-  margin: 0;
-  padding: 40px 24px 96px;
-  display: flex; flex-direction: column; align-items: center; gap: 40px;
+  background:var(--ground); color:var(--ink);
+  font:400 16px/1.6 "Source Serif 4",Georgia,serif;
+  margin:0; padding:40px 24px 96px;
+  display:flex; flex-direction:column; align-items:center;
 }}
-.wrap {{ width: 100%; max-width: 1080px; display: flex; flex-direction: column; gap: 40px; }}
-.prose {{ max-width: 68ch; display: flex; flex-direction: column; gap: 14px; }}
-h1, h2, h3, .ui {{ font-family: Archivo, "Helvetica Neue", Arial, sans-serif; }}
-h1 {{
-  font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -.022em;
-  line-height: 1.04; margin: 0; text-wrap: balance;
-}}
-h2 {{
-  font-size: 1.32rem; font-weight: 600; letter-spacing: -.01em; margin: 0;
-  text-wrap: balance; padding-bottom: 10px; border-bottom: 1px solid var(--rule-strong);
-}}
-h3 {{ font-size: 1rem; font-weight: 600; margin: 0; letter-spacing: -.005em; }}
-p {{ margin: 0; }}
-.eyebrow {{
-  font-family: Archivo, sans-serif; font-size: .69rem; font-weight: 600;
-  letter-spacing: .17em; text-transform: uppercase; color: var(--muted);
-}}
-.lede {{ font-size: 1.13rem; color: var(--muted); max-width: 62ch; }}
-strong {{ font-weight: 600; }}
-code {{
-  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .87em;
-  background: var(--surface-2); padding: .1em .34em; border-radius: 3px;
-}}
-section {{ display: flex; flex-direction: column; gap: 18px; }}
+.wrap {{ width:100%; max-width:1060px; display:flex; flex-direction:column; gap:42px; }}
+.prose {{ max-width:68ch; display:flex; flex-direction:column; gap:14px; }}
+h1,h2,h3,.ui {{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; }}
+h1 {{ font-size:clamp(2rem,5vw,3.1rem); font-weight:700; letter-spacing:-.022em;
+      line-height:1.04; margin:0; text-wrap:balance; }}
+h2 {{ font-size:1.32rem; font-weight:600; letter-spacing:-.01em; margin:0;
+      text-wrap:balance; padding-bottom:10px; border-bottom:1px solid var(--rule-strong); }}
+h3 {{ font-size:1rem; font-weight:600; margin:0; }}
+p {{ margin:0; }}
+section {{ display:flex; flex-direction:column; gap:18px; }}
+.eyebrow {{ font-family:Archivo,sans-serif; font-size:.69rem; font-weight:600;
+            letter-spacing:.17em; text-transform:uppercase; color:var(--muted); }}
+.lede {{ font-size:1.13rem; color:var(--muted); max-width:62ch; }}
+strong {{ font-weight:600; }}
+code {{ font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.87em;
+        background:var(--surface-2); padding:.1em .34em; border-radius:3px; }}
 
-.keys {{ display: flex; flex-wrap: wrap; gap: 10px; }}
-.key {{
-  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
-  padding: 13px 17px; box-shadow: var(--shadow); flex: 1 1 190px;
-  display: flex; flex-direction: column; gap: 3px;
-}}
-.key .v {{
-  font-family: Archivo, sans-serif; font-size: 1.6rem; font-weight: 700;
-  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
-}}
-.key .l {{ font-size: .82rem; color: var(--muted); font-family: Archivo, sans-serif; }}
+.keys {{ display:flex; flex-wrap:wrap; gap:10px; }}
+.key {{ background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+        padding:13px 17px; box-shadow:var(--shadow); flex:1 1 190px;
+        display:flex; flex-direction:column; gap:3px; }}
+.key .v {{ font-family:Archivo,sans-serif; font-size:1.6rem; font-weight:700;
+           letter-spacing:-.02em; font-variant-numeric:tabular-nums; }}
+.key .l {{ font-size:.82rem; color:var(--muted); font-family:Archivo,sans-serif; }}
 
-.scroll {{ overflow-x: auto; }}
-table {{ border-collapse: collapse; width: 100%; font-family: Archivo, sans-serif; }}
-th {{
-  font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--muted); text-align: left; padding: 0 10px 9px; white-space: nowrap;
-  border-bottom: 1px solid var(--rule-strong);
-}}
-td {{ padding: 7px 10px; border-bottom: 1px solid var(--rule); font-size: .9rem; }}
-.n {{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }}
-.dim {{ color: var(--faint); }}
-.rk {{ color: var(--faint); font-variant-numeric: tabular-nums; width: 34px; font-size: .82rem; }}
-.tm {{ font-weight: 700; letter-spacing: .02em; white-space: nowrap; }}
-.share {{ font-weight: 600; }}
-.best {{ color: var(--muted); font-size: .85rem; white-space: nowrap; }}
-.badp {{ color: var(--faint); margin-left: 7px; font-variant-numeric: tabular-nums; }}
-.barcell {{ width: 34%; min-width: 150px; }}
-.bar {{ display: flex; height: 13px; border-radius: 2px; overflow: hidden; }}
-.seg {{ display: block; }}
-.seg-qb {{ background: var(--qb); }}
-.seg-rb {{ background: var(--rb); }}
-.seg-wr {{ background: var(--wr); }}
-.seg-te {{ background: var(--te); }}
-.up {{ color: var(--up); }}
-.down {{ color: var(--down); }}
+.scroll {{ overflow-x:auto; }}
+table {{ border-collapse:collapse; width:100%; font-family:Archivo,sans-serif; }}
+th {{ font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+      color:var(--muted); text-align:left; padding:0 10px 9px; white-space:nowrap;
+      border-bottom:1px solid var(--rule-strong); }}
+td {{ padding:7px 10px; border-bottom:1px solid var(--rule); font-size:.9rem; }}
+.n {{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }}
+.dim {{ color:var(--faint); }}
+.rk {{ color:var(--faint); font-variant-numeric:tabular-nums; width:34px; font-size:.82rem; }}
+.tm {{ font-weight:700; letter-spacing:.02em; white-space:nowrap; }}
+.share {{ font-weight:600; }}
+.best {{ color:var(--muted); font-size:.85rem; white-space:nowrap; }}
+.badp {{ color:var(--faint); margin-left:7px; font-variant-numeric:tabular-nums; }}
+.barcell {{ width:34%; min-width:150px; }}
+.bar {{ display:flex; height:13px; border-radius:2px; overflow:hidden; }}
+.seg {{ display:block; }}
+.seg-qb {{ background:var(--qb); }} .seg-rb {{ background:var(--rb); }}
+.seg-wr {{ background:var(--wr); }} .seg-te {{ background:var(--te); }}
+.legend {{ display:flex; flex-wrap:wrap; gap:16px; font-family:Archivo,sans-serif;
+           font-size:.8rem; color:var(--muted); }}
+.legend span {{ display:flex; align-items:center; gap:6px; }}
+.dot {{ width:10px; height:10px; border-radius:2px; display:block; }}
+.tag {{ font-family:Archivo,sans-serif; font-size:.68rem; font-weight:600;
+        padding:2px 6px; border-radius:3px; color:#fff; }}
+.tag-qb {{ background:var(--qb); }} .tag-rb {{ background:var(--rb); }}
+.tag-wr {{ background:var(--wr); }} .tag-te {{ background:var(--te); }}
 
-.legend {{ display: flex; flex-wrap: wrap; gap: 16px; font-family: Archivo, sans-serif; font-size: .8rem; color: var(--muted); }}
-.legend span {{ display: flex; align-items: center; gap: 6px; }}
-.dot {{ width: 10px; height: 10px; border-radius: 2px; display: block; }}
+.formula {{ font-family:"IBM Plex Mono",monospace; font-size:.95rem; line-height:1.9;
+            background:var(--surface); border:1px solid var(--rule);
+            border-left:3px solid var(--wr); border-radius:6px; padding:16px 18px;
+            overflow-x:auto; white-space:pre; color:var(--ink); }}
+.card {{ background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+         padding:18px 20px; box-shadow:var(--shadow);
+         display:flex; flex-direction:column; gap:12px; }}
+.chartwrap {{ display:flex; flex-direction:column; gap:8px; }}
+canvas {{ width:100%; height:190px; display:block; }}
+.caption {{ font-family:Archivo,sans-serif; font-size:.82rem; color:var(--muted); }}
 
-.tag {{
-  font-family: Archivo, sans-serif; font-size: .68rem; font-weight: 600;
-  padding: 2px 6px; border-radius: 3px; color: #fff; letter-spacing: .02em;
-}}
-.tag-qb {{ background: var(--qb); }}
-.tag-rb {{ background: var(--rb); }}
-.tag-wr {{ background: var(--wr); }}
-.tag-te {{ background: var(--te); }}
-
-.formula {{
-  font-family: "IBM Plex Mono", monospace; font-size: .84rem; line-height: 1.85;
-  background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--wr);
-  border-radius: 6px; padding: 16px 18px; overflow-x: auto; white-space: pre;
-  color: var(--ink);
-}}
-.card {{
-  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
-  padding: 18px 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px;
-}}
-.grid2 {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }}
-
-.details-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 10px; }}
-.team-detail {{
-  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
-  padding: 0; overflow: hidden;
-}}
-.team-detail summary {{
-  cursor: pointer; list-style: none; padding: 11px 15px; display: flex;
-  align-items: baseline; gap: 11px; font-family: Archivo, sans-serif;
-}}
-.team-detail summary::-webkit-details-marker {{ display: none; }}
-.team-detail summary:hover {{ background: var(--surface-2); }}
-.team-detail summary:focus-visible {{ outline: 2px solid var(--wr); outline-offset: -2px; }}
-.sm-rank {{ color: var(--faint); font-size: .8rem; font-variant-numeric: tabular-nums; min-width: 20px; }}
-.sm-team {{ font-weight: 700; font-size: .98rem; }}
-.sm-share {{ font-weight: 600; font-variant-numeric: tabular-nums; }}
-.sm-hint {{ color: var(--faint); font-size: .78rem; margin-left: auto; }}
-.team-detail .scroll {{ padding: 0 15px 13px; }}
-.players th {{ padding-top: 6px; }}
-.players td {{ font-size: .84rem; }}
-.pl.dead .nm, .pl.dead .n {{ color: var(--faint); }}
-.val {{ font-weight: 600; }}
-.nm {{ font-family: Archivo, sans-serif; }}
-.pos {{ width: 52px; }}
-
-footer {{ color: var(--faint); font-size: .84rem; max-width: 68ch; }}
-a {{ color: var(--wr); }}
-@media (prefers-reduced-motion: reduce) {{ * {{ animation: none !important; transition: none !important; }} }}
+.details-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:10px; }}
+.team-detail {{ background:var(--surface); border:1px solid var(--rule);
+                border-radius:8px; overflow:hidden; }}
+.team-detail summary {{ cursor:pointer; list-style:none; padding:11px 15px; display:flex;
+                        align-items:baseline; gap:11px; font-family:Archivo,sans-serif; }}
+.team-detail summary::-webkit-details-marker {{ display:none; }}
+.team-detail summary:hover {{ background:var(--surface-2); }}
+.team-detail summary:focus-visible {{ outline:2px solid var(--wr); outline-offset:-2px; }}
+.sm-rank {{ color:var(--faint); font-size:.8rem; font-variant-numeric:tabular-nums; min-width:20px; }}
+.sm-team {{ font-weight:700; font-size:.98rem; }}
+.sm-share {{ font-weight:600; font-variant-numeric:tabular-nums; }}
+.sm-hint {{ color:var(--faint); font-size:.78rem; margin-left:auto; }}
+.team-detail .scroll {{ padding:0 15px 13px; }}
+.players td {{ font-size:.84rem; }}
+.pl.dead .nm, .pl.dead .n {{ color:var(--faint); }}
+.val {{ font-weight:600; }}
+.nm {{ font-family:Archivo,sans-serif; }}
+.pos {{ width:42px; }}
+footer {{ color:var(--faint); font-size:.84rem; max-width:68ch; }}
+@media (prefers-reduced-motion:reduce) {{ * {{ animation:none!important; transition:none!important; }} }}
 </style>
 
 <div class="wrap">
 
 <header class="prose">
-  <span class="eyebrow">{report["year"]} season &middot; {report["scoring"]} &middot; {report["teams_in_league_settings"]}-team</span>
+  <span class="eyebrow">{report["year"]} season &middot; {report["scoring"]} &middot; consensus ADP</span>
   <h1>Which NFL teams carry the most fantasy draft capital</h1>
-  <p class="lede">Every team ranked by the draft value of its fantasy-relevant players &mdash;
-  weighted by what each player is actually worth above a replacement at his position,
-  not just counted.</p>
+  <p class="lede">All 32 teams ranked by the draft value on their roster. One input &mdash; ADP &mdash;
+  and one rule: a player is worth half as much for every {hl:.0f} picks he slides.</p>
 </header>
 
 <section>
   <div class="keys">
     <div class="key"><span class="v">{top["team"]}</span><span class="l">Most capital &mdash; {top["share"] * 100:.1f}% of the league</span></div>
     <div class="key"><span class="v">{ratio:.1f}&times;</span><span class="l">{top["team"]} over {bottom["team"]}, last place</span></div>
-    <div class="key"><span class="v">{report["spearman_weighted_vs_top100_count"]:.2f}</span><span class="l">Rank correlation with simple top-100 counting</span></div>
-    <div class="key"><span class="v">{artifact_total_delta["pct"]:+.1f}%</span><span class="l">League total after removing bad-data artifacts</span></div>
+    <div class="key"><span class="v">{sens["top100_count"]:.2f}</span><span class="l">Agreement with simple top-100 counting</span></div>
+    <div class="key"><span class="v">{top["capital"]:.2f}</span><span class="l">{top["team"]} capital, where pick 1.01 = 1.00</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>The math</h2>
+  <div class="formula">weight(player) = 0.5 ^ ((ADP &minus; 1) / {hl:.0f})
+
+team capital  = sum of weights
+ADP share     = team capital / all 32 teams</div>
+  <div class="prose">
+    <p>That's the whole method. Every {hl:.0f} picks, a player counts for half as much:
+    the 1.01 overall is worth <strong>1.00</strong>, pick 31 is <strong>0.50</strong>,
+    pick 61 is <strong>0.25</strong>, pick 121 is <strong>0.06</strong>.</p>
+    <p>Decay rather than a straight line because a straight line gets the top of the draft
+    wrong. Something like <code>201 &minus; ADP</code> makes the first pick worth 1.005&times;
+    the second &mdash; when the entire premise of a draft is that it's worth a great deal more.</p>
+  </div>
+  <div class="card chartwrap">
+    <canvas id="curve" width="960" height="380" role="img"
+      aria-label="Player weight falling from 1.0 at pick 1 to near zero by pick 200"></canvas>
+    <p class="caption">Weight against ADP. The first three rounds carry most of the capital;
+    past pick ~120 a player is rounding error.</p>
   </div>
 </section>
 
 <section>
   <h2>The ranking</h2>
   <div class="legend">
-    <span><i class="dot seg-qb"></i>QB</span>
-    <span><i class="dot seg-rb"></i>RB</span>
-    <span><i class="dot seg-wr"></i>WR</span>
-    <span><i class="dot seg-te"></i>TE</span>
-    <span style="margin-left:auto">Bar length = capital. Segments = where it comes from.</span>
+    <span><i class="dot seg-qb"></i>QB</span><span><i class="dot seg-rb"></i>RB</span>
+    <span><i class="dot seg-wr"></i>WR</span><span><i class="dot seg-te"></i>TE</span>
+    <span style="margin-left:auto">Bar length = capital. Segments show where it sits.</span>
   </div>
   <div class="scroll">
     <table>
-      <thead><tr>
-        <th></th><th>Team</th><th>Capital by position</th><th class="n">Share</th>
-        <th class="n">Pts</th><th class="n">T24</th><th class="n">T50</th><th class="n">T100</th>
-        <th>Best player</th>
-      </tr></thead>
-      <tbody>{"".join(table_rows)}</tbody>
+      <thead><tr><th></th><th>Team</th><th>Capital by position</th><th class="n">Share</th>
+      <th class="n">Total</th><th class="n">T24</th><th class="n">T50</th><th class="n">T100</th>
+      <th>Best player</th></tr></thead>
+      <tbody>{table_rows}</tbody>
     </table>
   </div>
-  <p class="prose" style="font-size:.9rem;color:var(--muted)">
-    <strong>T24 / T50 / T100</strong> count that team's players inside the top 24, 50 and 100 of overall ADP.
-    Three thresholds rather than one, because any single cutoff is arbitrary &mdash; if a team swings
-    across the three, the count view isn't telling you anything stable.
-  </p>
-</section>
-
-<section>
-  <h2>The math</h2>
-  <div class="prose">
-    <p>Counting highly-drafted players is the obvious answer, and it is genuinely useful &mdash;
-    so it's in the table. But a count can't tell the difference between Jahmyr Gibbs at ADP 1.8
-    and a receiver at ADP 95. Both are &ldquo;a top-100 player.&rdquo; So the headline number
-    weights each player by what he's worth.</p>
-  </div>
-  <div class="formula">ADP  &rarr;  position rank  &rarr;  historical outcome bucket  &rarr;  mean real points
-
-capital(player) = max(0, projected points &minus; replacement at his position)
-capital(team)   = &Sigma; capital(player) over that team's drafted players
-ADP share       = capital(team) / capital(all 32 teams)</div>
-  <div class="prose">
-    <p>Every projection is a real historical average, not a formula: a player's ADP fixes his
-    rank at his position, that rank maps to a bucket of real past seasons by players drafted
-    there, and the projection is that bucket's mean. It is the same outcome data the draft
-    engine itself runs on.</p>
-    <h3>Why subtract a replacement level</h3>
-    <p>Without it, this table would rank teams by whether they have a starting quarterback.
-    A QB projecting 260 points looks huge next to a 200-point running back &mdash; until you
-    notice that the 19th-best quarterback, free off the waiver wire, gives you
-    {repl["QB"]:.0f}. So a quarterback is only worth the points he adds
-    <em>above what you could have had for nothing.</em> The replacement ranks come from real
-    draft depth in a {report["teams_in_league_settings"]}-team league, measured rather than assumed:</p>
-  </div>
-  <div class="card" style="max-width:420px">
-    <div class="scroll"><table>
-      <thead><tr><th>Pos</th><th class="n">Replacement rank</th><th class="n">Points</th></tr></thead>
-      <tbody>{repl_rows}</tbody>
-    </table></div>
-  </div>
-  <div class="prose">
-    <p>A player drafted deeper than his position's replacement rank is worth exactly
-    <strong>0</strong> capital. That is what replacement level means: if the 19th quarterback
-    is free, the 24th cannot be an asset.</p>
-  </div>
+  <p class="prose caption"><strong>T24 / T50 / T100</strong> count that team's players inside the
+  top 24, 50 and 100 of ADP. Position colors are descriptive only &mdash; position plays no part
+  in the formula.</p>
 </section>
 
 <section>
   <h2>Worked example: {det["team"]}</h2>
-  <div class="prose"><p>The roster you'd name off the top of your head &mdash; and what each
-  piece is actually worth once the replacement bar is applied.</p></div>
   <div class="card">
     <div class="scroll"><table class="players">
-      <thead><tr><th>Pos</th><th>Player</th><th class="n">ADP</th><th class="n">Projected</th>
-      <th class="n">Replacement</th><th class="n">Capital</th></tr></thead>
-      <tbody>{det_lines}</tbody>
+      <thead><tr><th>Pos</th><th>Player</th><th class="n">ADP</th><th class="n">Weight</th></tr></thead>
+      <tbody>{det_rows}</tbody>
     </table></div>
-    <p style="font-family:Archivo,sans-serif;font-size:.88rem;color:var(--muted)">
-      Total <strong style="color:var(--ink)">{det["capital"]:.1f}</strong> points
-      = <strong style="color:var(--ink)">{det["share"] * 100:.1f}%</strong> of the league,
-      ranked <strong style="color:var(--ink)">#{det["rank"]}</strong>.
-      Note Sam LaPorta: a genuinely good tight end contributes little here, because tight end
-      replacement is unusually high &mdash; see the caveat below.
-    </p>
+    <p class="caption">Total <strong style="color:var(--ink)">{det["capital"]:.2f}</strong>
+    = <strong style="color:var(--ink)">{det["share"] * 100:.1f}%</strong> of the league,
+    ranked <strong style="color:var(--ink)">#{det["rank"]}</strong>.</p>
   </div>
 </section>
 
 <section>
-  <h2>Two corrections I had to make first</h2>
+  <h2>Does the {hl:.0f} matter?</h2>
   <div class="prose">
-    <p>The first version of this table was wrong, in a way worth showing rather than quietly
-    fixing. The outcome buckets thin out badly at the deep end, and
-    <code>outcome_for_rank</code> reuses the deepest bucket for every rank past its grid. Those
-    deep buckets aren't monotonic, so two artifacts appeared:</p>
-  </div>
-  <div class="grid2">
-    <div class="card">
-      <h3>Greg Dulcich outranked Sam LaPorta</h3>
-      <p style="font-size:.93rem;color:var(--muted)">The deepest tight-end bucket is a
-      <strong>single</strong> 151.7-point season. So TE24 was credited with more projected
-      points than TE7 &mdash; and Miami banked the difference.</p>
-    </div>
-    <div class="card">
-      <h3>A backup QB counted as an asset</h3>
-      <p style="font-size:.93rem;color:var(--muted)">Malik Willis (QB24) scored 256.7 against a
-      QB19 replacement of {repl["QB"]:.1f} &mdash; <strong>+35.8 points of capital</strong> for a
-      quarterback drafted past the point where quarterbacks are free.</p>
-    </div>
-  </div>
-  <div class="prose">
-    <p>Both are fixed by two rules: projected points are forced to be
-    <strong>non-increasing in position rank</strong> (a WR12 can never beat a WR9, whatever one
-    noisy bucket says), and anyone past his replacement rank is worth
-    <strong>0</strong>. Together they removed
-    <strong>{artifact_total_delta["abs"]:.0f} points ({abs(artifact_total_delta["pct"]):.1f}%)</strong>
-    of league-wide capital that was pure artifact, and moved real teams:</p>
+    <p>It's a knob I chose, so it's worth checking the ordering isn't an artifact of it.
+    Re-ranking every team under different settings and correlating against the headline:</p>
   </div>
   <div class="card" style="max-width:520px">
     <div class="scroll"><table>
-      <thead><tr><th>Team</th><th class="n">Before</th><th class="n">After</th>
-      <th class="n">Move</th><th class="n">Capital</th></tr></thead>
-      <tbody>{move_rows}</tbody>
+      <thead><tr><th>Alternative</th><th class="n">Agreement</th><th class="n">Worst move</th></tr></thead>
+      <tbody>{sens_rows}</tbody>
     </table></div>
+  </div>
+  <div class="prose">
+    <p>The order is <strong>stable across half lives</strong> ({sens["half_life_15"]:.2f} to
+    {sens["half_life_45"]:.2f}) &mdash; so it reflects the rosters, not the knob. But
+    &ldquo;stable&rdquo; is not &ldquo;identical&rdquo;: one team still moves as much as
+    {max(moves.values())} places between settings, so treat neighbours in the table as ties
+    rather than a strict order.</p>
+    <p>Linear weighting agrees far less ({sens["linear"]:.2f}), and plain top-100 counting
+    least of all ({sens["top100_count"]:.2f}) &mdash; which is the point. How you weight
+    early picks genuinely changes the answer.</p>
   </div>
 </section>
 
 <section>
   <h2>What this doesn't tell you</h2>
   <div class="prose">
-    <p><strong>Tight end capital is understated.</strong> Replacement TE ({repl["TE"]:.1f}) comes out
-    <em>above</em> replacement RB ({repl["RB"]:.1f}), which is a known defect in the deep buckets
-    rather than a fact about football. Teams whose value is concentrated at tight end are
-    treated harshly here.</p>
-    <p><strong>Players in the same 3-rank bucket are identical.</strong> The projection belongs to
-    a tier, not a person &mdash; three receivers ranked WR34, WR37 and WR39 all project the same
-    number. This measures draft-market standing, not individual talent.</p>
-    <p><strong>It's one snapshot of a moving market.</strong> ADP shifts through August; this is
-    where it sat when the page was generated.</p>
-    <p><strong>Kickers and defenses are excluded</strong> &mdash; defenses have no real-points source
-    in this project, and kickers are noise.</p>
+    <p><strong>It's draft-market standing, not talent.</strong> ADP is where the market drafts a
+    player. A team whose stars are underrated by the market will look poorer here than it is.</p>
+    <p><strong>It rewards depth as well as stars</strong> &mdash; five mid-round players can
+    outweigh one elite one. That's a real choice in the formula, not an accident; if you only
+    care about top-end talent, read the T24 column instead.</p>
+    <p><strong>One snapshot of a moving market.</strong> ADP shifts all through August.</p>
+    <p><strong>Kickers and defenses are excluded</strong>, and so is anyone undrafted.</p>
   </div>
 </section>
 
@@ -474,42 +338,80 @@ ADP share       = capital(team) / capital(all 32 teams)</div>
 
 <footer>
   Source: {html.escape(report["source"])}, {report["year"]} &middot;
-  projections from real {report["scoring"]} outcomes, 2010&ndash;2024 &middot;
-  generated by <code>fantasyprep.reports.adp_share</code>.
-  League total {report["total_capital"]:.0f} capital points across {len(rows)} teams.
+  generated by <code>fantasyprep.reports.adp_share</code> &middot;
+  {len(rows)} teams, {sum(r["n_players"] for r in rows)} drafted players.
 </footer>
 
 </div>
+
+<script>
+(function () {{
+  var pts = {curve_pts};
+  var cv = document.getElementById('curve');
+  function draw() {{
+    var cs = getComputedStyle(document.documentElement);
+    var accent = cs.getPropertyValue('--wr').trim() || '#35709B';
+    var rule = cs.getPropertyValue('--rule').trim() || 'rgba(0,0,0,.13)';
+    var muted = cs.getPropertyValue('--muted').trim() || '#5C6672';
+    var dpr = window.devicePixelRatio || 1;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    var padL = 34, padR = 10, padT = 12, padB = 24;
+    var iw = w - padL - padR, ih = h - padT - padB;
+    var X = function (a) {{ return padL + (a / 200) * iw; }};
+    var Y = function (v) {{ return padT + (1 - v) * ih; }};
+
+    g.strokeStyle = rule; g.lineWidth = 1;
+    g.font = '11px Archivo, sans-serif'; g.fillStyle = muted;
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {{
+      g.beginPath(); g.moveTo(padL, Y(v)); g.lineTo(w - padR, Y(v)); g.stroke();
+      g.textAlign = 'right'; g.fillText(v.toFixed(2), padL - 6, Y(v) + 3);
+    }});
+    g.textAlign = 'center';
+    [1, 50, 100, 150, 200].forEach(function (a) {{
+      g.fillText(a, X(a), h - 7);
+    }});
+
+    var grad = g.createLinearGradient(0, padT, 0, padT + ih);
+    grad.addColorStop(0, accent + '55'); grad.addColorStop(1, accent + '00');
+    g.beginPath(); g.moveTo(X(pts[0][0]), Y(pts[0][1]));
+    pts.forEach(function (p) {{ g.lineTo(X(p[0]), Y(p[1])); }});
+    g.lineTo(X(pts[pts.length - 1][0]), Y(0)); g.lineTo(X(pts[0][0]), Y(0));
+    g.closePath(); g.fillStyle = grad; g.fill();
+
+    g.beginPath(); g.moveTo(X(pts[0][0]), Y(pts[0][1]));
+    pts.forEach(function (p) {{ g.lineTo(X(p[0]), Y(p[1])); }});
+    g.strokeStyle = accent; g.lineWidth = 2; g.stroke();
+
+    [[1, 1], [31, 0.5], [61, 0.25], [121, 0.0625]].forEach(function (p) {{
+      g.beginPath(); g.arc(X(p[0]), Y(p[1]), 3.5, 0, Math.PI * 2);
+      g.fillStyle = accent; g.fill();
+    }});
+  }}
+  draw();
+  window.addEventListener('resize', draw);
+  if (window.matchMedia) {{
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(draw);
+  }}
+  new MutationObserver(draw).observe(document.documentElement, {{
+    attributes: true, attributeFilter: ['data-theme']
+  }});
+}})();
+</script>
 """
 
 
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in", dest="src", type=Path, default=Path("data/adp_share_2026.json"))
-    parser.add_argument("--uncorrected", type=Path, default=None)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-
     report = json.loads(args.src.read_text(encoding="utf-8"))
-    moves, delta = [], {"abs": 0.0, "pct": 0.0}
-    if args.uncorrected and args.uncorrected.exists():
-        before = json.loads(args.uncorrected.read_text(encoding="utf-8"))
-        rb_ = {r["team"]: r for r in before["rows"]}
-        ra_ = {r["team"]: r for r in report["rows"]}
-        allm = [
-            {
-                "team": t, "before": rb_[t]["rank"], "after": ra_[t]["rank"],
-                "delta": ra_[t]["rank"] - rb_[t]["rank"],
-                "cap_before": rb_[t]["capital"], "cap_after": ra_[t]["capital"],
-            }
-            for t in ra_ if t in rb_
-        ]
-        moves = sorted(allm, key=lambda m: -abs(m["delta"]))[:5]
-        tb = sum(r["capital"] for r in before["rows"])
-        ta = sum(r["capital"] for r in report["rows"])
-        delta = {"abs": tb - ta, "pct": (ta / tb - 1) * 100 if tb else 0.0}
-
-    args.out.write_text(render(report, moves, delta), encoding="utf-8")
+    args.out.write_text(render(report), encoding="utf-8")
     print(f"Wrote {args.out} ({args.out.stat().st_size:,} bytes)")
 
 
