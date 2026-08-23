@@ -144,6 +144,63 @@ def _condensed_rows(rows: list[dict], max_points: float) -> str:
     return "".join(out)
 
 
+def _calib_rows(slots: list[dict]) -> str:
+    """Paired bars: what draft capital claims vs what production delivered."""
+    mx = max(max(s["capital_share"], s["actual_share"]) for s in slots) or 1.0
+    out = []
+    for s in slots:
+        out.append(
+            f'<div class="calib-row">'
+            f'<span class="calib-lab">#{s["slot"]}</span>'
+            f'<span class="calib-pair">'
+            f'<span class="calib-bar cap" style="width:{s["capital_share"] / mx * 100:.1f}%">'
+            f'{s["capital_share"] * 100:.0f}%</span>'
+            f'<span class="calib-bar act" style="width:{s["actual_share"] / mx * 100:.1f}%">'
+            f'{s["actual_share"] * 100:.0f}%</span>'
+            f'</span></div>'
+        )
+    return "".join(out)
+
+
+def _proj_table(rows: list[dict], position: str, n: int = 10) -> str:
+    picked = [r for r in rows if r["position"] == position][:n]
+    body = "".join(
+        f'<tr><td class="rk">{position}{r["position_rank"]}</td>'
+        f'<td class="nm">{html.escape(r["name"])}</td>'
+        f'<td class="tm dim">{html.escape(r["team"])}</td>'
+        f'<td class="n dim">{r["adp"]:.0f}</td>'
+        f'<td class="n val">{r["projection"]:.0f}</td></tr>'
+        for r in picked
+    )
+    return (
+        f'<div class="card"><h3><span class="tag tag-{HUE[position]}">{position}</span></h3>'
+        f'<div class="scroll"><table><thead><tr><th></th><th>Player</th><th>Tm</th>'
+        f'<th class="n">Rank</th><th class="n">Proj</th></tr></thead>'
+        f"<tbody>{body}</tbody></table></div></div>"
+    )
+
+
+def _value_rows(rows: list[dict], n: int = 8) -> tuple[str, str]:
+    """Where the projection disagrees with where the player is being drafted."""
+    ranked = sorted(rows, key=lambda r: -r["projection"])
+    by_adp = sorted(rows, key=lambda r: r["adp"])
+    adp_rank = {id(r): i + 1 for i, r in enumerate(by_adp)}
+    gaps = [(r, adp_rank[id(r)] - i - 1) for i, r in enumerate(ranked)]
+
+    def block(items):
+        return "".join(
+            f'<tr><td class="nm">{html.escape(r["name"])}</td>'
+            f'<td class="pos"><span class="tag tag-{HUE[r["position"]]}">{r["position"]}</span></td>'
+            f'<td class="tm dim">{html.escape(r["team"])}</td>'
+            f'<td class="n dim">{r["adp"]:.0f}</td>'
+            f'<td class="n">{r["projection"]:.0f}</td>'
+            f'<td class="n val {"up" if g > 0 else "down"}">{g:+d}</td></tr>'
+            for r, g in items
+        )
+
+    return block(sorted(gaps, key=lambda x: -x[1])[:n]), block(sorted(gaps, key=lambda x: x[1])[:n])
+
+
 def _gap_row(team: str, capital_rank: int, other_rank: int) -> str:
     d = other_rank - capital_rank
     cls = "down" if d > 0 else ("up" if d < 0 else "dim")
@@ -189,7 +246,8 @@ def _comparison(
 # --------------------------------------------------------------------------- #
 # page
 # --------------------------------------------------------------------------- #
-def render(report: dict, offense: dict | None = None, condensed: dict | None = None) -> str:
+def render(report: dict, offense: dict | None = None, condensed: dict | None = None,
+           projection: dict | None = None) -> str:
     rows = report["rows"]
     unit = report.get("unit", "ADP")
     max_capital = max(r["capital"] for r in rows)
@@ -399,6 +457,115 @@ points per effective player = implied points per game / effective players</div>
 </section>
 """
 
+    projection_section = ""
+    if projection:
+        ev = projection["evaluation"]["points"]
+        slots = projection["slot_calibration"]
+        over, under = _value_rows(projection["rows"])
+        mults = projection["position_multipliers"]
+        top1 = slots[0]
+        projection_section = f"""
+<section>
+  <h2>A projection built only from markets</h2>
+  <div class="prose">
+    <p>Vegas prices <em>how big an offense is</em>. Draft position prices <em>how it
+    divides</em>. Multiply them and you get a player projection from markets alone &mdash; no
+    stat model, no projection service:</p>
+  </div>
+  <div class="formula">projection = team fantasy pool &times; player's share of it</div>
+  <div class="prose">
+    <p>Both halves have to be calibrated, because the naive version is wrong in two specific,
+    measurable ways.</p>
+    <h3>The pool: Vegas points are not fantasy points</h3>
+    <p>A team scoring 24 real points does not produce 24 fantasy points &mdash; it produces
+    well over a thousand across its skill players. Measured on <strong>319 team-seasons</strong>
+    of real schedule scores against real production, team scoring predicts the fantasy pool at
+    <strong>r = 0.842</strong>, with each extra point per game worth about
+    <strong>+{projection["points_to_pool"]:.0f} fantasy points</strong> of pool. That
+    regression is what converts a betting line into a pool.</p>
+    <h3>The share: draft capital is far more top-heavy than production</h3>
+    <p>This is the part that would have sunk a naive multiply. The most-drafted player on a
+    team holds <strong>{top1["capital_share"] * 100:.0f}%</strong> of its draft capital and
+    historically captures only <strong>{top1["actual_share"] * 100:.0f}%</strong> of its
+    production:</p>
+  </div>
+  <div class="card" style="max-width:560px">
+    <div class="calib-legend">
+      <span><i class="dot calib-dot-cap"></i>share of draft capital</span>
+      <span><i class="dot calib-dot-act"></i>share of production delivered</span>
+    </div>
+    <div class="calib">{_calib_rows(slots)}</div>
+    <p class="caption">By how early a player is drafted among his own teammates, across
+    {slots[0]["n"]} team-seasons.</p>
+  </div>
+  <div class="prose">
+    <p>Draft capital also buries quarterbacks &mdash; they slide in a one-quarterback league,
+    which says nothing about how many points they score. So the share is fitted, not raw:</p>
+  </div>
+  <div class="formula">share &prop; position multiplier &times; capital weight ^ alpha
+
+alpha = {projection["alpha"]}    QB {mults["QB"]}   RB {mults["RB"]}   WR {mults["WR"]}   TE {mults["TE"]}</div>
+  <div class="prose">
+    <p>Fitted on {projection["train_rows"]} player-seasons and tested
+    <strong>walk-forward</strong> &mdash; each season predicted using only seasons strictly
+    before it. Against real points, with the team pool held at its true value so this measures
+    the share model alone:</p>
+  </div>
+  <div class="card" style="max-width:520px">
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th class="n">Mean error</th><th class="n">Corr. w/ actual</th></tr></thead>
+      <tbody>
+        <tr><td class="nm"><strong>fitted share</strong></td>
+          <td class="n val">{ev["fitted"]["mae"]:.0f} pts</td>
+          <td class="n val">{ev["fitted"]["corr"]:.3f}</td></tr>
+        <tr><td class="nm">raw capital share</td>
+          <td class="n dim">{ev["raw"]["mae"]:.0f} pts</td>
+          <td class="n dim">{ev["raw"]["corr"]:.3f}</td></tr>
+        <tr><td class="nm">even split</td>
+          <td class="n dim">{ev["even"]["mae"]:.0f} pts</td>
+          <td class="n dim">{ev["even"]["corr"]:.3f}</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="prose">
+    <p>The calibrated version is <strong>more than twice as accurate</strong> as multiplying by
+    raw capital share, and beats splitting a team pool evenly. Independently, it correlates
+    <strong>0.94</strong> with ESPN's own projections &mdash; which it never sees.</p>
+  </div>
+
+  <h3>The projections</h3>
+  <div class="grid2">
+    {_proj_table(projection["rows"], "QB")}
+    {_proj_table(projection["rows"], "RB")}
+    {_proj_table(projection["rows"], "WR")}
+    {_proj_table(projection["rows"], "TE")}
+  </div>
+
+  <h3>Where it disagrees with the draft board</h3>
+  <div class="prose">
+    <p>The payoff. Every player ranked by this projection against where he is actually being
+    drafted &mdash; positive means the projection likes him more than the board does.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Projection likes them more</h3>
+      <div class="scroll"><table><thead><tr><th>Player</th><th></th><th>Tm</th>
+      <th class="n">Rank</th><th class="n">Proj</th><th class="n">Gap</th></tr></thead>
+      <tbody>{over}</tbody></table></div></div>
+    <div class="card"><h3>Board likes them more</h3>
+      <div class="scroll"><table><thead><tr><th>Player</th><th></th><th>Tm</th>
+      <th class="n">Rank</th><th class="n">Proj</th><th class="n">Gap</th></tr></thead>
+      <tbody>{under}</tbody></table></div></div>
+  </div>
+  <div class="prose">
+    <p><strong>Read this as a market baseline, not a forecast of a healthy season.</strong> It
+    regresses every star toward what that draft slot has historically delivered &mdash;
+    injuries, lost jobs and committees included. That is why it sits below a projection service
+    on elite running backs: those quote what a player does if things go right, this quotes what
+    the slot has actually returned.</p>
+  </div>
+</section>
+"""
+
     scatter_js = f"var SCATTERS = {json.dumps(scatters)};\n{quadrant_js}"
 
     return f"""<title>NFL Draft Capital Share</title>
@@ -506,6 +673,21 @@ canvas {{ width:100%; height:190px; display:block; }}
 #sc-vegas, #sc-fpi {{ height:230px; }}
 .caption {{ font-family:Archivo,sans-serif; font-size:.82rem; color:var(--muted); }}
 #quadrant {{ height:340px; }}
+.calib {{ display:flex; flex-direction:column; gap:7px; }}
+.calib-row {{ display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:center; }}
+.calib-lab {{ font-family:Archivo,sans-serif; font-size:.78rem; color:var(--muted);
+              font-variant-numeric:tabular-nums; }}
+.calib-pair {{ display:flex; flex-direction:column; gap:3px; }}
+.calib-bar {{ display:flex; align-items:center; justify-content:flex-end; height:15px;
+              border-radius:2px; padding-right:5px; font-family:Archivo,sans-serif;
+              font-size:.62rem; font-weight:600; color:#fff; min-width:26px; }}
+.calib-bar.cap {{ background:var(--rb); }}
+.calib-bar.act {{ background:var(--wr); }}
+.calib-legend {{ display:flex; flex-wrap:wrap; gap:14px; font-family:Archivo,sans-serif;
+                 font-size:.78rem; color:var(--muted); }}
+.calib-legend span {{ display:flex; align-items:center; gap:6px; }}
+.calib-dot-cap {{ background:var(--rb); }}
+.calib-dot-act {{ background:var(--wr); }}
 .cond-head, .cond-row {{
   display:grid; grid-template-columns:44px 1fr 52px 48px 48px; gap:10px;
   align-items:center; font-family:Archivo,sans-serif;
@@ -657,6 +839,8 @@ share         = team capital / all 32 teams</div>
 {offense_sections}
 
 {condensed_section}
+
+{projection_section}
 
 <section>
   <h2>Does the {hl:.0f} matter?</h2>
@@ -905,6 +1089,7 @@ def main(argv=None) -> None:
     parser.add_argument("--in", dest="src", type=Path, default=Path("data/adp_share_2026.json"))
     parser.add_argument("--offense", type=Path, default=Path("data/offense_rankings_2026.json"))
     parser.add_argument("--condensed", type=Path, default=Path("data/condensed_offense_2026.json"))
+    parser.add_argument("--projection", type=Path, default=Path("data/vegas_projection_2026.json"))
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     report = json.loads(args.src.read_text(encoding="utf-8"))
@@ -918,7 +1103,12 @@ def main(argv=None) -> None:
         if args.condensed and args.condensed.exists()
         else None
     )
-    args.out.write_text(render(report, offense, condensed), encoding="utf-8")
+    projection = (
+        json.loads(args.projection.read_text(encoding="utf-8"))
+        if args.projection and args.projection.exists()
+        else None
+    )
+    args.out.write_text(render(report, offense, condensed, projection), encoding="utf-8")
     print(f"Wrote {args.out} ({args.out.stat().st_size:,} bytes)")
 
 
