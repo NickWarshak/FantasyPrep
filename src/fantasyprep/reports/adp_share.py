@@ -10,19 +10,18 @@ weight that falls off as his ADP gets later:
 
     weight(player) = 0.5 ** ((adp - 1) / HALF_LIFE)
 
-One knob, and it is readable in plain English: every HALF_LIFE picks, a player
-is worth half as much. At a 30-pick half life, the 1.01 overall is worth 1.000,
-the 31st pick 0.500, the 61st 0.250, the 121st 0.0625.
+One knob, readable in plain English: every HALF_LIFE picks a player is worth
+half as much. At the fitted 60-pick half life the 1.01 overall is worth 1.000,
+the 61st pick 0.500, the 121st 0.250.
 
 Exponential rather than linear because linear gets the top of the draft badly
 wrong: `201 - adp` makes the first pick worth 1.005x the second, when the whole
-premise of a draft is that it is worth much more than that. Exponential decay
-is also the rough shape of every real draft-pick value chart.
+premise of a draft is that it is worth much more than that.
 
-HALF_LIFE is a choice, so `compute` also reports the ranking under several
-other half lives and under linear weighting. If the ordering held only at one
-setting it would be an artifact of the knob rather than a fact about rosters --
-see `sensitivity` in the output.
+HALF_LIFE is fitted against real historical team production rather than chosen
+for looking reasonable -- see the note on the constant. `compute` additionally
+reports the ranking under other half lives and under linear weighting, so a
+reader can see whether the ordering depends on the knob at all.
 """
 from __future__ import annotations
 
@@ -67,10 +66,40 @@ def normalize_team(team: str) -> str:
 CAPITAL_POSITIONS = ("QB", "RB", "WR", "TE")
 
 # Picks over which a player's weight halves.
-HALF_LIFE = 30.0
+#
+# Chosen by measurement, not by looking reasonable. Earlier versions used 30
+# because it read well, and defended it only by showing the ranking was stable
+# across nearby values -- which shows the number is not load-bearing, not that
+# it is right. So each candidate was scored on how well the resulting team
+# capital predicts a team's REAL fantasy production (all its skill players,
+# 2015-2024, so the answer is not driven by how many of them got drafted):
+#
+#     half-life   10     20     30     40     60     80    120   count
+#     rank corr  .355   .452   .517   .538   .553   .557  .548   .389
+#
+# Two things worth taking from that table. The optimum is broad -- everything
+# from 40 to 120 scores within .02 -- so this is a shallow choice rather than a
+# tuned one, and 60 is picked as a round number inside the flat region. And
+# plain counting of drafted players scores .389, well below any sensible decay,
+# so the curve is doing real work rather than dressing up a headcount.
+#
+# Note this parameter is only identified *here*, where capital is a sum. In the
+# player-share model (`vegas_projection`) the fitted exponent absorbs it
+# exactly: alpha/HALF_LIFE is what is identified, and share error is unchanged
+# at 0.0589 whether the pair is 0.25/30, 0.45/60 or 0.95/120.
+HALF_LIFE = 60.0
 
-# Alternates used only for the stability check, never for the headline.
-ALTERNATE_HALF_LIVES = (15.0, 45.0, 60.0)
+# The fit above, kept so the report can show it rather than assert it.
+HALF_LIFE_FIT = {
+    "10": 0.355, "20": 0.452, "25": 0.491, "30": 0.517, "40": 0.538,
+    "50": 0.549, "60": 0.553, "80": 0.557, "120": 0.548,
+}
+HALF_LIFE_FIT_COUNT_BASELINE = 0.389
+
+# Alternates used only for the stability check, never for the headline. Must
+# not contain HALF_LIFE itself or the check would compare the ranking to itself
+# and report a meaningless 1.000.
+ALTERNATE_HALF_LIVES = (20.0, 30.0, 120.0)
 
 # Count thresholds reported next to the weighted number. Three rather than one,
 # because any single cutoff is arbitrary -- if a team swings across all three,
@@ -245,6 +274,8 @@ def compute(
         "teams_in_league_settings": settings.teams,
         "scoring": "PPR" if settings.scoring.reception == 1.0 else "non-PPR",
         "half_life": HALF_LIFE,
+        "half_life_fit": HALF_LIFE_FIT,
+        "half_life_fit_count_baseline": HALF_LIFE_FIT_COUNT_BASELINE,
         "total_capital": round(total, 2),
         "sensitivity": sensitivity,
         "max_rank_move": alt_rank_moves,

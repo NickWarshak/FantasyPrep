@@ -1,272 +1,273 @@
 {
   "metric": "Implied points per effective drafted player",
   "median_points": 23.42,
-  "median_effective": 3.26,
+  "median_effective": 5.32,
   "sweet_spot": [
-    "SEA",
-    "SF",
-    "LAR",
-    "DET",
-    "KC",
+    "CIN",
     "BAL",
-    "BUF"
+    "DET",
+    "LAR",
+    "SEA",
+    "BUF",
+    "DAL",
+    "KC"
   ],
   "rows": [
     {
       "team": "MIA",
       "implied_points_per_game": 18.95,
       "vegas_rank": 29,
-      "capital_rank": 29,
-      "capital": 0.709,
+      "capital_rank": 32,
+      "capital": 1.476,
       "drafted": 15,
-      "effective_players": 1.25,
-      "top1_share": 0.8911,
-      "top2_share": 0.9576,
-      "points_per_effective_player": 15.16,
+      "effective_players": 3.07,
+      "top1_share": 0.5383,
+      "top2_share": 0.6861,
+      "points_per_effective_player": 6.17,
       "core": [
         {
           "name": "De'Von Achane",
           "position": "RB",
           "adp": 21.0,
-          "share": 0.8886
+          "share": 0.5379
         },
         {
           "name": "Malik Willis",
           "position": "QB",
           "adp": 133.0,
-          "share": 0.0663
+          "share": 0.1477
         },
         {
           "name": "Malik Washington",
           "position": "WR",
           "adp": 185.0,
-          "share": 0.0197
+          "share": 0.0806
         },
         {
           "name": "Jaylen Wright",
           "position": "RB",
           "adp": 235.0,
-          "share": 0.0056
+          "share": 0.0454
         },
         {
           "name": "Ollie Gordon II",
           "position": "RB",
           "adp": 239.0,
-          "share": 0.0056
+          "share": 0.0434
         },
         {
           "name": "Greg Dulcich",
           "position": "TE",
           "adp": 250.0,
-          "share": 0.0042
+          "share": 0.0379
         }
       ],
       "rank": 1,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "SEA",
-      "implied_points_per_game": 24.92,
-      "vegas_rank": 10,
-      "capital_rank": 18,
-      "capital": 1.265,
-      "drafted": 12,
-      "effective_players": 1.83,
-      "top1_share": 0.7209,
-      "top2_share": 0.8775,
-      "points_per_effective_player": 13.62,
+      "team": "CIN",
+      "implied_points_per_game": 25.65,
+      "vegas_rank": 6,
+      "capital_rank": 3,
+      "capital": 3.324,
+      "drafted": 13,
+      "effective_players": 4.29,
+      "top1_share": 0.3008,
+      "top2_share": 0.5567,
+      "points_per_effective_player": 5.98,
       "core": [
         {
-          "name": "Jaxon Smith-Njigba",
+          "name": "Ja'Marr Chase",
           "position": "WR",
-          "adp": 5.0,
-          "share": 0.7209
+          "adp": 1.0,
+          "share": 0.3008
         },
         {
-          "name": "Jadarian Price",
+          "name": "Chase Brown",
           "position": "RB",
-          "adp": 71.0,
-          "share": 0.1565
+          "adp": 15.0,
+          "share": 0.256
         },
         {
-          "name": "Sam Darnold",
+          "name": "Tee Higgins",
+          "position": "WR",
+          "adp": 33.0,
+          "share": 0.2079
+        },
+        {
+          "name": "Joe Burrow",
           "position": "QB",
-          "adp": 136.0,
-          "share": 0.0348
+          "adp": 44.0,
+          "share": 0.1832
         },
         {
-          "name": "Zach Charbonnet",
+          "name": "Samaje Perine",
           "position": "RB",
-          "adp": 141.0,
-          "share": 0.0308
+          "adp": 269.0,
+          "share": 0.0135
         },
         {
-          "name": "Rashid Shaheed",
-          "position": "WR",
-          "adp": 143.0,
-          "share": 0.03
-        },
-        {
-          "name": "AJ Barner",
+          "name": "Mike Gesicki",
           "position": "TE",
-          "adp": 192.0,
-          "share": 0.0095
+          "adp": 301.0,
+          "share": 0.0093
         }
       ],
       "rank": 2,
       "quadrant": "condensed scoring"
     },
     {
-      "team": "MIN",
-      "implied_points_per_game": 23.25,
-      "vegas_rank": 17,
-      "capital_rank": 19,
-      "capital": 1.201,
+      "team": "BAL",
+      "implied_points_per_game": 26.67,
+      "vegas_rank": 3,
+      "capital_rank": 15,
+      "capital": 2.627,
       "drafted": 13,
-      "effective_players": 1.93,
-      "top1_share": 0.7086,
-      "top2_share": 0.7769,
-      "points_per_effective_player": 12.05,
+      "effective_players": 4.51,
+      "top1_share": 0.2756,
+      "top2_share": 0.5447,
+      "points_per_effective_player": 5.91,
       "core": [
         {
-          "name": "Justin Jefferson",
+          "name": "Zay Flowers",
           "position": "WR",
-          "adp": 8.0,
-          "share": 0.7086
+          "adp": 29.0,
+          "share": 0.2756
         },
         {
-          "name": "Jordan Addison",
-          "position": "WR",
-          "adp": 109.0,
-          "share": 0.0683
-        },
-        {
-          "name": "Kyler Murray",
+          "name": "Lamar Jackson",
           "position": "QB",
-          "adp": 111.0,
-          "share": 0.0658
+          "adp": 31.0,
+          "share": 0.2691
         },
         {
-          "name": "Aaron Jones Sr.",
+          "name": "Derrick Henry",
           "position": "RB",
-          "adp": 113.0,
-          "share": 0.0624
+          "adp": 37.0,
+          "share": 0.2512
         },
         {
-          "name": "Jordan Mason",
-          "position": "RB",
-          "adp": 120.0,
-          "share": 0.0533
+          "name": "Mark Andrews",
+          "position": "TE",
+          "adp": 128.0,
+          "share": 0.0879
         },
         {
-          "name": "Jauan Jennings",
+          "name": "Rashod Bateman",
           "position": "WR",
-          "adp": 156.0,
-          "share": 0.0233
+          "adp": 215.0,
+          "share": 0.032
+        },
+        {
+          "name": "Justice Hill",
+          "position": "RB",
+          "adp": 238.0,
+          "share": 0.0247
         }
       ],
       "rank": 3,
-      "quadrant": "condensed but low scoring"
+      "quadrant": "condensed scoring"
     },
     {
-      "team": "HOU",
-      "implied_points_per_game": 23.08,
-      "vegas_rank": 19,
-      "capital_rank": 20,
-      "capital": 1.184,
-      "drafted": 12,
-      "effective_players": 2.18,
-      "top1_share": 0.6402,
-      "top2_share": 0.8463,
-      "points_per_effective_player": 10.59,
+      "team": "ATL",
+      "implied_points_per_game": 21.25,
+      "vegas_rank": 24,
+      "capital_rank": 14,
+      "capital": 2.651,
+      "drafted": 13,
+      "effective_players": 3.63,
+      "top1_share": 0.3645,
+      "top2_share": 0.7045,
+      "points_per_effective_player": 5.85,
       "core": [
         {
-          "name": "Nico Collins",
-          "position": "WR",
-          "adp": 13.0,
-          "share": 0.6402
-        },
-        {
-          "name": "David Montgomery",
+          "name": "Bijan Robinson",
           "position": "RB",
-          "adp": 62.0,
-          "share": 0.2061
+          "adp": 4.0,
+          "share": 0.3644
         },
         {
-          "name": "Jayden Higgins",
+          "name": "Drake London",
           "position": "WR",
-          "adp": 125.0,
-          "share": 0.0481
+          "adp": 10.0,
+          "share": 0.3399
         },
         {
-          "name": "C.J. Stroud",
-          "position": "QB",
-          "adp": 137.0,
-          "share": 0.0363
-        },
-        {
-          "name": "Woody Marks",
-          "position": "RB",
-          "adp": 138.0,
-          "share": 0.0355
-        },
-        {
-          "name": "Dalton Schultz",
+          "name": "Kyle Pitts Sr.",
           "position": "TE",
-          "adp": 165.0,
-          "share": 0.0194
+          "adp": 82.0,
+          "share": 0.1479
+        },
+        {
+          "name": "Brian Robinson Jr.",
+          "position": "RB",
+          "adp": 160.0,
+          "share": 0.06
+        },
+        {
+          "name": "Zachariah Branch",
+          "position": "WR",
+          "adp": 224.0,
+          "share": 0.0287
+        },
+        {
+          "name": "Tua Tagovailoa",
+          "position": "QB",
+          "adp": 254.0,
+          "share": 0.0204
         }
       ],
       "rank": 4,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "SF",
-      "implied_points_per_game": 25.83,
-      "vegas_rank": 4,
-      "capital_rank": 15,
-      "capital": 1.421,
-      "drafted": 19,
-      "effective_players": 2.51,
-      "top1_share": 0.5844,
-      "top2_share": 0.7961,
-      "points_per_effective_player": 10.29,
+      "team": "DET",
+      "implied_points_per_game": 26.75,
+      "vegas_rank": 2,
+      "capital_rank": 1,
+      "capital": 3.448,
+      "drafted": 9,
+      "effective_players": 4.86,
+      "top1_share": 0.2868,
+      "top2_share": 0.5606,
+      "points_per_effective_player": 5.5,
       "core": [
         {
-          "name": "Christian McCaffrey",
+          "name": "Jahmyr Gibbs",
           "position": "RB",
-          "adp": 9.0,
-          "share": 0.5848
+          "adp": 2.0,
+          "share": 0.2868
         },
         {
-          "name": "Mike Evans",
+          "name": "Amon-Ra St. Brown",
           "position": "WR",
-          "adp": 53.0,
-          "share": 0.2118
+          "adp": 6.0,
+          "share": 0.2738
         },
         {
-          "name": "Brock Purdy",
-          "position": "QB",
-          "adp": 93.0,
-          "share": 0.0837
+          "name": "Jameson Williams",
+          "position": "WR",
+          "adp": 55.0,
+          "share": 0.1555
         },
         {
-          "name": "George Kittle",
+          "name": "Sam LaPorta",
           "position": "TE",
-          "adp": 104.0,
-          "share": 0.0654
+          "adp": 81.0,
+          "share": 0.1151
         },
         {
-          "name": "Deebo Samuel Sr.",
-          "position": "WR",
-          "adp": 144.0,
-          "share": 0.026
+          "name": "Jared Goff",
+          "position": "QB",
+          "adp": 106.0,
+          "share": 0.0861
         },
         {
-          "name": "De'Zhaun Stribling",
-          "position": "WR",
-          "adp": 153.0,
-          "share": 0.0211
+          "name": "Isiah Pacheco",
+          "position": "RB",
+          "adp": 146.0,
+          "share": 0.0542
         }
       ],
       "rank": 5,
@@ -276,49 +277,49 @@
       "team": "LAR",
       "implied_points_per_game": 27.0,
       "vegas_rank": 1,
-      "capital_rank": 5,
-      "capital": 1.851,
+      "capital_rank": 7,
+      "capital": 3.015,
       "drafted": 17,
-      "effective_players": 2.88,
-      "top1_share": 0.5165,
-      "top2_share": 0.7263,
-      "points_per_effective_player": 9.38,
+      "effective_players": 4.91,
+      "top1_share": 0.3243,
+      "top2_share": 0.531,
+      "points_per_effective_player": 5.5,
       "core": [
         {
           "name": "Puka Nacua",
           "position": "WR",
           "adp": 3.0,
-          "share": 0.5159
+          "share": 0.324
         },
         {
           "name": "Kyren Williams",
           "position": "RB",
           "adp": 42.0,
-          "share": 0.2096
+          "share": 0.2066
         },
         {
           "name": "Davante Adams",
           "position": "WR",
           "adp": 49.0,
-          "share": 0.1783
+          "share": 0.1904
         },
         {
           "name": "Matthew Stafford",
           "position": "QB",
           "adp": 105.0,
-          "share": 0.0486
+          "share": 0.0998
         },
         {
           "name": "Blake Corum",
           "position": "RB",
           "adp": 112.0,
-          "share": 0.0416
+          "share": 0.0919
         },
         {
           "name": "Terrance Ferguson",
           "position": "TE",
           "adp": 227.0,
-          "share": 0.0027
+          "share": 0.0242
         }
       ],
       "rank": 6,
@@ -328,257 +329,257 @@
       "team": "LV",
       "implied_points_per_game": 19.33,
       "vegas_rank": 28,
-      "capital_rank": 12,
-      "capital": 1.49,
+      "capital_rank": 26,
+      "capital": 2.289,
       "drafted": 14,
-      "effective_players": 2.16,
-      "top1_share": 0.497,
-      "top2_share": 0.9604,
-      "points_per_effective_player": 8.95,
+      "effective_players": 3.52,
+      "top1_share": 0.3761,
+      "top2_share": 0.7392,
+      "points_per_effective_player": 5.49,
       "core": [
         {
           "name": "Ashton Jeanty",
           "position": "RB",
           "adp": 14.0,
-          "share": 0.4973
+          "share": 0.3761
         },
         {
           "name": "Brock Bowers",
           "position": "TE",
           "adp": 17.0,
-          "share": 0.4638
+          "share": 0.363
         },
         {
           "name": "Tre Tucker",
           "position": "WR",
           "adp": 167.0,
-          "share": 0.0148
+          "share": 0.0642
         },
         {
           "name": "Jalen Nailor",
           "position": "WR",
           "adp": 176.0,
-          "share": 0.0121
+          "share": 0.0577
         },
         {
           "name": "Mike Washington Jr.",
           "position": "RB",
           "adp": 201.0,
-          "share": 0.0067
+          "share": 0.0433
         },
         {
           "name": "Jack Bech",
           "position": "WR",
           "adp": 245.0,
-          "share": 0.0027
+          "share": 0.0262
         }
       ],
       "rank": 7,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "ATL",
-      "implied_points_per_game": 21.25,
-      "vegas_rank": 24,
-      "capital_rank": 4,
-      "capital": 1.936,
-      "drafted": 13,
-      "effective_players": 2.41,
-      "top1_share": 0.4819,
-      "top2_share": 0.9013,
-      "points_per_effective_player": 8.82,
+      "team": "SEA",
+      "implied_points_per_game": 24.92,
+      "vegas_rank": 10,
+      "capital_rank": 22,
+      "capital": 2.426,
+      "drafted": 12,
+      "effective_players": 4.65,
+      "top1_share": 0.3937,
+      "top2_share": 0.5771,
+      "points_per_effective_player": 5.36,
       "core": [
         {
-          "name": "Bijan Robinson",
-          "position": "RB",
-          "adp": 4.0,
-          "share": 0.4819
-        },
-        {
-          "name": "Drake London",
+          "name": "Jaxon Smith-Njigba",
           "position": "WR",
-          "adp": 10.0,
-          "share": 0.4194
+          "adp": 5.0,
+          "share": 0.3937
         },
         {
-          "name": "Kyle Pitts Sr.",
-          "position": "TE",
-          "adp": 82.0,
-          "share": 0.0795
-        },
-        {
-          "name": "Brian Robinson Jr.",
+          "name": "Jadarian Price",
           "position": "RB",
-          "adp": 160.0,
-          "share": 0.0129
+          "adp": 71.0,
+          "share": 0.1834
         },
         {
-          "name": "Zachariah Branch",
-          "position": "WR",
-          "adp": 224.0,
-          "share": 0.0031
-        },
-        {
-          "name": "Tua Tagovailoa",
+          "name": "Sam Darnold",
           "position": "QB",
-          "adp": 254.0,
-          "share": 0.0015
+          "adp": 136.0,
+          "share": 0.0866
+        },
+        {
+          "name": "Zach Charbonnet",
+          "position": "RB",
+          "adp": 141.0,
+          "share": 0.0816
+        },
+        {
+          "name": "Rashid Shaheed",
+          "position": "WR",
+          "adp": 143.0,
+          "share": 0.08
+        },
+        {
+          "name": "AJ Barner",
+          "position": "TE",
+          "adp": 192.0,
+          "share": 0.0453
         }
       ],
       "rank": 8,
-      "quadrant": "condensed but low scoring"
+      "quadrant": "condensed scoring"
     },
     {
       "team": "IND",
       "implied_points_per_game": 22.92,
       "vegas_rank": 20,
-      "capital_rank": 16,
-      "capital": 1.414,
+      "capital_rank": 20,
+      "capital": 2.498,
       "drafted": 13,
-      "effective_players": 2.61,
-      "top1_share": 0.5615,
-      "top2_share": 0.7843,
-      "points_per_effective_player": 8.78,
+      "effective_players": 4.41,
+      "top1_share": 0.357,
+      "top2_share": 0.5817,
+      "points_per_effective_player": 5.2,
       "core": [
         {
           "name": "Jonathan Taylor",
           "position": "RB",
           "adp": 11.0,
-          "share": 0.5615
+          "share": 0.3567
         },
         {
           "name": "Tyler Warren",
           "position": "TE",
           "adp": 51.0,
-          "share": 0.2228
+          "share": 0.2246
         },
         {
           "name": "Josh Downs",
           "position": "WR",
           "adp": 84.0,
-          "share": 0.104
+          "share": 0.1533
         },
         {
           "name": "Alec Pierce",
           "position": "WR",
           "adp": 92.0,
-          "share": 0.0863
+          "share": 0.1397
         },
         {
           "name": "Daniel Jones",
           "position": "QB",
           "adp": 149.0,
-          "share": 0.0233
+          "share": 0.0725
         },
         {
           "name": "DJ Giddens",
           "position": "RB",
           "adp": 264.0,
-          "share": 0.0014
+          "share": 0.0192
         }
       ],
       "rank": 9,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "CAR",
-      "implied_points_per_game": 20.95,
-      "vegas_rank": 26,
-      "capital_rank": 28,
-      "capital": 0.807,
-      "drafted": 15,
-      "effective_players": 2.41,
-      "top1_share": 0.6059,
-      "top2_share": 0.7646,
-      "points_per_effective_player": 8.69,
+      "team": "BUF",
+      "implied_points_per_game": 25.83,
+      "vegas_rank": 5,
+      "capital_rank": 9,
+      "capital": 2.965,
+      "drafted": 13,
+      "effective_players": 5.08,
+      "top1_share": 0.2836,
+      "top2_share": 0.5363,
+      "points_per_effective_player": 5.08,
       "core": [
         {
-          "name": "Tetairoa McMillan",
-          "position": "WR",
-          "adp": 32.0,
-          "share": 0.6059
-        },
-        {
-          "name": "Chuba Hubbard",
+          "name": "James Cook III",
           "position": "RB",
-          "adp": 90.0,
-          "share": 0.1586
+          "adp": 16.0,
+          "share": 0.2836
         },
         {
-          "name": "Jonathon Brooks",
-          "position": "RB",
-          "adp": 99.0,
-          "share": 0.1289
-        },
-        {
-          "name": "Jalen Coker",
-          "position": "WR",
-          "adp": 126.0,
-          "share": 0.0694
-        },
-        {
-          "name": "Bryce Young",
+          "name": "Josh Allen",
           "position": "QB",
-          "adp": 158.0,
-          "share": 0.0335
+          "adp": 26.0,
+          "share": 0.2526
         },
         {
-          "name": "Xavier Legette",
+          "name": "DJ Moore",
           "position": "WR",
-          "adp": 274.0,
-          "share": 0.0025
+          "adp": 52.0,
+          "share": 0.1872
+        },
+        {
+          "name": "Dalton Kincaid",
+          "position": "TE",
+          "adp": 115.0,
+          "share": 0.0904
+        },
+        {
+          "name": "Khalil Shakir",
+          "position": "WR",
+          "adp": 123.0,
+          "share": 0.0823
+        },
+        {
+          "name": "Ray Davis",
+          "position": "RB",
+          "adp": 179.0,
+          "share": 0.0432
         }
       ],
       "rank": 10,
-      "quadrant": "condensed but low scoring"
+      "quadrant": "condensed scoring"
     },
     {
-      "team": "DET",
-      "implied_points_per_game": 26.75,
-      "vegas_rank": 2,
+      "team": "DAL",
+      "implied_points_per_game": 25.46,
+      "vegas_rank": 7,
       "capital_rank": 2,
-      "capital": 2.443,
-      "drafted": 9,
-      "effective_players": 3.2,
-      "top1_share": 0.4001,
-      "top2_share": 0.7649,
-      "points_per_effective_player": 8.36,
+      "capital": 3.332,
+      "drafted": 15,
+      "effective_players": 5.12,
+      "top1_share": 0.2798,
+      "top2_share": 0.5264,
+      "points_per_effective_player": 4.97,
       "core": [
         {
-          "name": "Jahmyr Gibbs",
+          "name": "CeeDee Lamb",
+          "position": "WR",
+          "adp": 7.0,
+          "share": 0.28
+        },
+        {
+          "name": "George Pickens",
+          "position": "WR",
+          "adp": 18.0,
+          "share": 0.2467
+        },
+        {
+          "name": "Javonte Williams",
           "position": "RB",
-          "adp": 2.0,
-          "share": 0.3999
+          "adp": 46.0,
+          "share": 0.1786
         },
         {
-          "name": "Amon-Ra St. Brown",
-          "position": "WR",
-          "adp": 6.0,
-          "share": 0.3647
-        },
-        {
-          "name": "Jameson Williams",
-          "position": "WR",
-          "adp": 55.0,
-          "share": 0.1175
-        },
-        {
-          "name": "Sam LaPorta",
-          "position": "TE",
-          "adp": 81.0,
-          "share": 0.0643
-        },
-        {
-          "name": "Jared Goff",
+          "name": "Dak Prescott",
           "position": "QB",
-          "adp": 106.0,
-          "share": 0.036
+          "adp": 77.0,
+          "share": 0.1248
         },
         {
-          "name": "Isiah Pacheco",
-          "position": "RB",
-          "adp": 146.0,
-          "share": 0.0143
+          "name": "Jake Ferguson",
+          "position": "TE",
+          "adp": 114.0,
+          "share": 0.0813
+        },
+        {
+          "name": "Ryan Flournoy",
+          "position": "WR",
+          "adp": 177.0,
+          "share": 0.0393
         }
       ],
       "rank": 11,
@@ -588,1089 +589,1089 @@
       "team": "KC",
       "implied_points_per_game": 24.95,
       "vegas_rank": 9,
-      "capital_rank": 13,
-      "capital": 1.45,
+      "capital_rank": 12,
+      "capital": 2.738,
       "drafted": 14,
-      "effective_players": 3.02,
-      "top1_share": 0.4251,
-      "top2_share": 0.795,
-      "points_per_effective_player": 8.26,
+      "effective_players": 5.17,
+      "top1_share": 0.2866,
+      "top2_share": 0.5539,
+      "points_per_effective_player": 4.83,
       "core": [
         {
           "name": "Rashee Rice",
           "position": "WR",
           "adp": 22.0,
-          "share": 0.4248
+          "share": 0.2867
         },
         {
           "name": "Kenneth Walker III",
           "position": "RB",
           "adp": 28.0,
-          "share": 0.3697
+          "share": 0.2673
         },
         {
           "name": "Travis Kelce",
           "position": "TE",
           "adp": 95.0,
-          "share": 0.0786
+          "share": 0.1234
         },
         {
           "name": "Patrick Mahomes II",
           "position": "QB",
           "adp": 96.0,
-          "share": 0.0766
+          "share": 0.122
         },
         {
           "name": "Xavier Worthy",
           "position": "WR",
           "adp": 127.0,
-          "share": 0.0372
+          "share": 0.0851
         },
         {
           "name": "Emmett Johnson",
           "position": "RB",
           "adp": 190.0,
-          "share": 0.009
+          "share": 0.0413
         }
       ],
       "rank": 12,
       "quadrant": "condensed scoring"
     },
     {
-      "team": "BAL",
-      "implied_points_per_game": 26.67,
-      "vegas_rank": 3,
-      "capital_rank": 10,
-      "capital": 1.529,
-      "drafted": 13,
-      "effective_players": 3.26,
-      "top1_share": 0.3429,
-      "top2_share": 0.6702,
-      "points_per_effective_player": 8.18,
+      "team": "SF",
+      "implied_points_per_game": 25.83,
+      "vegas_rank": 4,
+      "capital_rank": 11,
+      "capital": 2.758,
+      "drafted": 19,
+      "effective_players": 5.36,
+      "top1_share": 0.3304,
+      "top2_share": 0.529,
+      "points_per_effective_player": 4.82,
       "core": [
         {
-          "name": "Zay Flowers",
-          "position": "WR",
-          "adp": 29.0,
-          "share": 0.3427
+          "name": "Christian McCaffrey",
+          "position": "RB",
+          "adp": 9.0,
+          "share": 0.3307
         },
         {
-          "name": "Lamar Jackson",
+          "name": "Mike Evans",
+          "position": "WR",
+          "adp": 53.0,
+          "share": 0.1987
+        },
+        {
+          "name": "Brock Purdy",
           "position": "QB",
-          "adp": 31.0,
-          "share": 0.327
+          "adp": 93.0,
+          "share": 0.1251
         },
         {
-          "name": "Derrick Henry",
-          "position": "RB",
-          "adp": 37.0,
-          "share": 0.2845
-        },
-        {
-          "name": "Mark Andrews",
+          "name": "George Kittle",
           "position": "TE",
-          "adp": 128.0,
-          "share": 0.0347
+          "adp": 104.0,
+          "share": 0.1102
         },
         {
-          "name": "Rashod Bateman",
+          "name": "Deebo Samuel Sr.",
           "position": "WR",
-          "adp": 215.0,
-          "share": 0.0046
+          "adp": 144.0,
+          "share": 0.0696
         },
         {
-          "name": "Justice Hill",
-          "position": "RB",
-          "adp": 238.0,
-          "share": 0.0026
+          "name": "De'Zhaun Stribling",
+          "position": "WR",
+          "adp": 153.0,
+          "share": 0.0627
         }
       ],
       "rank": 13,
-      "quadrant": "condensed scoring"
+      "quadrant": "spread scoring"
     },
     {
-      "team": "NYG",
-      "implied_points_per_game": 23.25,
-      "vegas_rank": 18,
-      "capital_rank": 21,
-      "capital": 1.093,
-      "drafted": 14,
-      "effective_players": 2.93,
-      "top1_share": 0.5014,
-      "top2_share": 0.7704,
-      "points_per_effective_player": 7.94,
+      "team": "HOU",
+      "implied_points_per_game": 23.08,
+      "vegas_rank": 19,
+      "capital_rank": 25,
+      "capital": 2.382,
+      "drafted": 12,
+      "effective_players": 4.79,
+      "top1_share": 0.3657,
+      "top2_share": 0.573,
+      "points_per_effective_player": 4.82,
       "core": [
         {
-          "name": "Malik Nabers",
+          "name": "Nico Collins",
           "position": "WR",
-          "adp": 27.0,
-          "share": 0.5014
+          "adp": 13.0,
+          "share": 0.3657
         },
         {
-          "name": "Cam Skattebo",
+          "name": "David Montgomery",
           "position": "RB",
-          "adp": 54.0,
-          "share": 0.269
+          "adp": 62.0,
+          "share": 0.2074
         },
         {
-          "name": "Jaxson Dart",
+          "name": "Jayden Higgins",
+          "position": "WR",
+          "adp": 125.0,
+          "share": 0.1003
+        },
+        {
+          "name": "C.J. Stroud",
           "position": "QB",
-          "adp": 94.0,
-          "share": 0.107
+          "adp": 137.0,
+          "share": 0.0873
         },
         {
-          "name": "Isaiah Likely",
-          "position": "TE",
-          "adp": 117.0,
-          "share": 0.0631
-        },
-        {
-          "name": "Tyrone Tracy Jr.",
+          "name": "Woody Marks",
           "position": "RB",
-          "adp": 132.0,
-          "share": 0.0439
+          "adp": 138.0,
+          "share": 0.0861
         },
         {
-          "name": "Darnell Mooney",
-          "position": "WR",
-          "adp": 207.0,
-          "share": 0.0082
+          "name": "Dalton Schultz",
+          "position": "TE",
+          "adp": 165.0,
+          "share": 0.063
         }
       ],
       "rank": 14,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "BUF",
-      "implied_points_per_game": 25.83,
-      "vegas_rank": 5,
-      "capital_rank": 6,
-      "capital": 1.731,
+      "team": "MIN",
+      "implied_points_per_game": 23.25,
+      "vegas_rank": 17,
+      "capital_rank": 23,
+      "capital": 2.418,
       "drafted": 13,
-      "effective_players": 3.26,
-      "top1_share": 0.4087,
-      "top2_share": 0.7329,
-      "points_per_effective_player": 7.92,
+      "effective_players": 4.87,
+      "top1_share": 0.3811,
+      "top2_share": 0.4998,
+      "points_per_effective_player": 4.77,
       "core": [
         {
-          "name": "James Cook III",
-          "position": "RB",
-          "adp": 16.0,
-          "share": 0.4084
+          "name": "Justin Jefferson",
+          "position": "WR",
+          "adp": 8.0,
+          "share": 0.3813
         },
         {
-          "name": "Josh Allen",
+          "name": "Jordan Addison",
+          "position": "WR",
+          "adp": 109.0,
+          "share": 0.1187
+        },
+        {
+          "name": "Kyler Murray",
           "position": "QB",
-          "adp": 26.0,
-          "share": 0.3241
+          "adp": 111.0,
+          "share": 0.1162
         },
         {
-          "name": "DJ Moore",
-          "position": "WR",
-          "adp": 52.0,
-          "share": 0.1779
-        },
-        {
-          "name": "Dalton Kincaid",
-          "position": "TE",
-          "adp": 115.0,
-          "share": 0.0416
-        },
-        {
-          "name": "Khalil Shakir",
-          "position": "WR",
-          "adp": 123.0,
-          "share": 0.0347
-        },
-        {
-          "name": "Ray Davis",
+          "name": "Aaron Jones Sr.",
           "position": "RB",
-          "adp": 179.0,
-          "share": 0.0092
+          "adp": 113.0,
+          "share": 0.1133
+        },
+        {
+          "name": "Jordan Mason",
+          "position": "RB",
+          "adp": 120.0,
+          "share": 0.1046
+        },
+        {
+          "name": "Jauan Jennings",
+          "position": "WR",
+          "adp": 156.0,
+          "share": 0.0691
         }
       ],
       "rank": 15,
-      "quadrant": "condensed scoring"
+      "quadrant": "condensed but low scoring"
     },
     {
-      "team": "NYJ",
-      "implied_points_per_game": 18.29,
-      "vegas_rank": 31,
-      "capital_rank": 25,
-      "capital": 0.996,
-      "drafted": 11,
-      "effective_players": 2.35,
-      "top1_share": 0.5141,
-      "top2_share": 0.9127,
-      "points_per_effective_player": 7.78,
+      "team": "CAR",
+      "implied_points_per_game": 20.95,
+      "vegas_rank": 26,
+      "capital_rank": 29,
+      "capital": 1.949,
+      "drafted": 15,
+      "effective_players": 4.71,
+      "top1_share": 0.3585,
+      "top2_share": 0.5421,
+      "points_per_effective_player": 4.45,
       "core": [
         {
-          "name": "Garrett Wilson",
+          "name": "Tetairoa McMillan",
           "position": "WR",
-          "adp": 30.0,
-          "share": 0.5141
+          "adp": 32.0,
+          "share": 0.3586
         },
         {
-          "name": "Breece Hall",
+          "name": "Chuba Hubbard",
           "position": "RB",
-          "adp": 41.0,
-          "share": 0.3986
+          "adp": 90.0,
+          "share": 0.1837
         },
         {
-          "name": "Adonai Mitchell",
-          "position": "WR",
-          "adp": 161.0,
-          "share": 0.0251
-        },
-        {
-          "name": "Omar Cooper Jr.",
-          "position": "WR",
-          "adp": 164.0,
-          "share": 0.0231
-        },
-        {
-          "name": "Braelon Allen",
+          "name": "Jonathon Brooks",
           "position": "RB",
-          "adp": 171.0,
-          "share": 0.0201
+          "adp": 99.0,
+          "share": 0.1652
         },
         {
-          "name": "Kenyon Sadiq",
-          "position": "TE",
-          "adp": 213.0,
-          "share": 0.007
+          "name": "Jalen Coker",
+          "position": "WR",
+          "adp": 126.0,
+          "share": 0.1211
+        },
+        {
+          "name": "Bryce Young",
+          "position": "QB",
+          "adp": 158.0,
+          "share": 0.0836
+        },
+        {
+          "name": "Xavier Legette",
+          "position": "WR",
+          "adp": 274.0,
+          "share": 0.0221
         }
       ],
       "rank": 16,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "NO",
-      "implied_points_per_game": 21.62,
-      "vegas_rank": 23,
-      "capital_rank": 17,
-      "capital": 1.27,
+      "team": "NYG",
+      "implied_points_per_game": 23.25,
+      "vegas_rank": 18,
+      "capital_rank": 24,
+      "capital": 2.411,
       "drafted": 14,
-      "effective_players": 2.89,
-      "top1_share": 0.5083,
-      "top2_share": 0.7746,
-      "points_per_effective_player": 7.48,
+      "effective_players": 5.32,
+      "top1_share": 0.3073,
+      "top2_share": 0.5321,
+      "points_per_effective_player": 4.37,
       "core": [
         {
-          "name": "Chris Olave",
+          "name": "Malik Nabers",
           "position": "WR",
-          "adp": 20.0,
-          "share": 0.5079
+          "adp": 27.0,
+          "share": 0.3073
         },
         {
-          "name": "Travis Etienne Jr.",
+          "name": "Cam Skattebo",
           "position": "RB",
-          "adp": 48.0,
-          "share": 0.2661
+          "adp": 54.0,
+          "share": 0.2248
         },
         {
-          "name": "Jordyn Tyson",
-          "position": "WR",
-          "adp": 85.0,
-          "share": 0.1134
-        },
-        {
-          "name": "Tyler Shough",
+          "name": "Jaxson Dart",
           "position": "QB",
-          "adp": 124.0,
-          "share": 0.0457
+          "adp": 94.0,
+          "share": 0.1418
         },
         {
-          "name": "Juwan Johnson",
+          "name": "Isaiah Likely",
           "position": "TE",
-          "adp": 140.0,
-          "share": 0.0315
+          "adp": 117.0,
+          "share": 0.1087
         },
         {
-          "name": "Alvin Kamara",
+          "name": "Tyrone Tracy Jr.",
           "position": "RB",
-          "adp": 142.0,
-          "share": 0.0299
+          "adp": 132.0,
+          "share": 0.0912
+        },
+        {
+          "name": "Darnell Mooney",
+          "position": "WR",
+          "adp": 207.0,
+          "share": 0.0386
         }
       ],
       "rank": 17,
       "quadrant": "condensed but low scoring"
     },
     {
-      "team": "DAL",
-      "implied_points_per_game": 25.46,
-      "vegas_rank": 7,
-      "capital_rank": 3,
-      "capital": 2.171,
-      "drafted": 15,
-      "effective_players": 3.42,
-      "top1_share": 0.4014,
-      "top2_share": 0.7124,
-      "points_per_effective_player": 7.44,
+      "team": "PHI",
+      "implied_points_per_game": 23.92,
+      "vegas_rank": 12,
+      "capital_rank": 6,
+      "capital": 3.032,
+      "drafted": 12,
+      "effective_players": 5.5,
+      "top1_share": 0.2559,
+      "top2_share": 0.5089,
+      "points_per_effective_player": 4.35,
       "core": [
         {
-          "name": "CeeDee Lamb",
+          "name": "DeVonta Smith",
           "position": "WR",
-          "adp": 7.0,
-          "share": 0.4012
+          "adp": 23.0,
+          "share": 0.2559
         },
         {
-          "name": "George Pickens",
-          "position": "WR",
-          "adp": 18.0,
-          "share": 0.3109
-        },
-        {
-          "name": "Javonte Williams",
+          "name": "Saquon Barkley",
           "position": "RB",
-          "adp": 46.0,
-          "share": 0.1631
+          "adp": 24.0,
+          "share": 0.253
         },
         {
-          "name": "Dak Prescott",
+          "name": "Jalen Hurts",
           "position": "QB",
-          "adp": 77.0,
-          "share": 0.0797
+          "adp": 57.0,
+          "share": 0.1728
         },
         {
-          "name": "Jake Ferguson",
-          "position": "TE",
-          "adp": 114.0,
-          "share": 0.0336
-        },
-        {
-          "name": "Ryan Flournoy",
+          "name": "Makai Lemon",
           "position": "WR",
-          "adp": 177.0,
-          "share": 0.0078
+          "adp": 102.0,
+          "share": 0.1026
+        },
+        {
+          "name": "Dallas Goedert",
+          "position": "TE",
+          "adp": 121.0,
+          "share": 0.0825
+        },
+        {
+          "name": "Tank Bigsby",
+          "position": "RB",
+          "adp": 159.0,
+          "share": 0.0531
         }
       ],
       "rank": 18,
       "quadrant": "spread scoring"
     },
     {
-      "team": "CIN",
-      "implied_points_per_game": 25.65,
-      "vegas_rank": 6,
-      "capital_rank": 1,
-      "capital": 2.576,
+      "team": "NE",
+      "implied_points_per_game": 23.71,
+      "vegas_rank": 15,
+      "capital_rank": 5,
+      "capital": 3.042,
       "drafted": 13,
-      "effective_players": 3.51,
-      "top1_share": 0.3882,
-      "top2_share": 0.6693,
-      "points_per_effective_player": 7.31,
+      "effective_players": 5.46,
+      "top1_share": 0.2895,
+      "top2_share": 0.5015,
+      "points_per_effective_player": 4.34,
       "core": [
         {
-          "name": "Ja'Marr Chase",
+          "name": "A.J. Brown",
           "position": "WR",
-          "adp": 1.0,
-          "share": 0.3882
+          "adp": 12.0,
+          "share": 0.2896
         },
         {
-          "name": "Chase Brown",
-          "position": "RB",
-          "adp": 15.0,
-          "share": 0.2811
-        },
-        {
-          "name": "Tee Higgins",
-          "position": "WR",
-          "adp": 33.0,
-          "share": 0.1852
-        },
-        {
-          "name": "Joe Burrow",
+          "name": "Drake Maye",
           "position": "QB",
-          "adp": 44.0,
-          "share": 0.1436
+          "adp": 39.0,
+          "share": 0.212
         },
         {
-          "name": "Samaje Perine",
+          "name": "TreVeyon Henderson",
           "position": "RB",
-          "adp": 269.0,
-          "share": 0.0008
+          "adp": 63.0,
+          "share": 0.1607
         },
         {
-          "name": "Mike Gesicki",
+          "name": "Rhamondre Stevenson",
+          "position": "RB",
+          "adp": 78.0,
+          "share": 0.1351
+        },
+        {
+          "name": "Romeo Doubs",
+          "position": "WR",
+          "adp": 130.0,
+          "share": 0.074
+        },
+        {
+          "name": "Hunter Henry",
           "position": "TE",
-          "adp": 301.0,
-          "share": 0.0004
+          "adp": 154.0,
+          "share": 0.0562
         }
       ],
       "rank": 19,
       "quadrant": "spread scoring"
     },
     {
-      "team": "NE",
-      "implied_points_per_game": 23.71,
-      "vegas_rank": 15,
-      "capital_rank": 7,
-      "capital": 1.693,
-      "drafted": 13,
-      "effective_players": 3.32,
-      "top1_share": 0.4581,
-      "top2_share": 0.7037,
-      "points_per_effective_player": 7.14,
+      "team": "NYJ",
+      "implied_points_per_game": 18.29,
+      "vegas_rank": 31,
+      "capital_rank": 28,
+      "capital": 2.076,
+      "drafted": 11,
+      "effective_players": 4.32,
+      "top1_share": 0.3447,
+      "top2_share": 0.6485,
+      "points_per_effective_player": 4.23,
       "core": [
         {
-          "name": "A.J. Brown",
+          "name": "Garrett Wilson",
           "position": "WR",
-          "adp": 12.0,
-          "share": 0.4584
+          "adp": 30.0,
+          "share": 0.3444
         },
         {
-          "name": "Drake Maye",
-          "position": "QB",
-          "adp": 39.0,
-          "share": 0.2457
-        },
-        {
-          "name": "TreVeyon Henderson",
+          "name": "Breece Hall",
           "position": "RB",
-          "adp": 63.0,
-          "share": 0.1412
+          "adp": 41.0,
+          "share": 0.3035
         },
         {
-          "name": "Rhamondre Stevenson",
-          "position": "RB",
-          "adp": 78.0,
-          "share": 0.0998
-        },
-        {
-          "name": "Romeo Doubs",
+          "name": "Adonai Mitchell",
           "position": "WR",
-          "adp": 130.0,
-          "share": 0.0301
+          "adp": 161.0,
+          "share": 0.0756
         },
         {
-          "name": "Hunter Henry",
+          "name": "Omar Cooper Jr.",
+          "position": "WR",
+          "adp": 164.0,
+          "share": 0.0732
+        },
+        {
+          "name": "Braelon Allen",
+          "position": "RB",
+          "adp": 171.0,
+          "share": 0.0674
+        },
+        {
+          "name": "Kenyon Sadiq",
           "position": "TE",
-          "adp": 154.0,
-          "share": 0.0171
+          "adp": 213.0,
+          "share": 0.0414
         }
       ],
       "rank": 20,
-      "quadrant": "spread scoring"
+      "quadrant": "condensed but low scoring"
     },
     {
-      "team": "LAC",
-      "implied_points_per_game": 23.92,
-      "vegas_rank": 13,
-      "capital_rank": 14,
-      "capital": 1.446,
-      "drafted": 14,
-      "effective_players": 3.47,
-      "top1_share": 0.3967,
-      "top2_share": 0.7194,
-      "points_per_effective_player": 6.89,
+      "team": "CHI",
+      "implied_points_per_game": 24.83,
+      "vegas_rank": 11,
+      "capital_rank": 4,
+      "capital": 3.082,
+      "drafted": 11,
+      "effective_players": 5.94,
+      "top1_share": 0.2115,
+      "top2_share": 0.4022,
+      "points_per_effective_player": 4.18,
       "core": [
         {
-          "name": "Omarion Hampton",
-          "position": "RB",
-          "adp": 25.0,
-          "share": 0.397
+          "name": "Colston Loveland",
+          "position": "TE",
+          "adp": 38.0,
+          "share": 0.2116
         },
         {
-          "name": "Ladd McConkey",
+          "name": "Luther Burden III",
           "position": "WR",
-          "adp": 34.0,
-          "share": 0.323
+          "adp": 47.0,
+          "share": 0.1908
         },
         {
-          "name": "Justin Herbert",
+          "name": "Rome Odunze",
+          "position": "WR",
+          "adp": 58.0,
+          "share": 0.1681
+        },
+        {
+          "name": "D'Andre Swift",
+          "position": "RB",
+          "adp": 60.0,
+          "share": 0.1642
+        },
+        {
+          "name": "Caleb Williams",
           "position": "QB",
-          "adp": 69.0,
-          "share": 0.1438
+          "adp": 67.0,
+          "share": 0.1515
         },
         {
-          "name": "Quentin Johnston",
-          "position": "WR",
-          "adp": 100.0,
-          "share": 0.0705
-        },
-        {
-          "name": "Keaton Mitchell",
+          "name": "Kyle Monangai",
           "position": "RB",
-          "adp": 150.0,
-          "share": 0.0221
-        },
-        {
-          "name": "Tre' Harris",
-          "position": "WR",
-          "adp": 166.0,
-          "share": 0.0152
+          "adp": 107.0,
+          "share": 0.0954
         }
       ],
       "rank": 21,
       "quadrant": "spread scoring"
     },
     {
-      "team": "PHI",
-      "implied_points_per_game": 23.92,
-      "vegas_rank": 12,
-      "capital_rank": 8,
-      "capital": 1.669,
+      "team": "GB",
+      "implied_points_per_game": 25.17,
+      "vegas_rank": 8,
+      "capital_rank": 19,
+      "capital": 2.536,
       "drafted": 12,
-      "effective_players": 3.49,
-      "top1_share": 0.3607,
-      "top2_share": 0.713,
-      "points_per_effective_player": 6.85,
+      "effective_players": 6.08,
+      "top1_share": 0.2374,
+      "top2_share": 0.4464,
+      "points_per_effective_player": 4.14,
       "core": [
         {
-          "name": "DeVonta Smith",
-          "position": "WR",
-          "adp": 23.0,
-          "share": 0.3607
-        },
-        {
-          "name": "Saquon Barkley",
+          "name": "Josh Jacobs",
           "position": "RB",
-          "adp": 24.0,
-          "share": 0.3523
+          "adp": 45.0,
+          "share": 0.2374
         },
         {
-          "name": "Jalen Hurts",
-          "position": "QB",
-          "adp": 57.0,
-          "share": 0.1642
-        },
-        {
-          "name": "Makai Lemon",
+          "name": "Christian Watson",
           "position": "WR",
-          "adp": 102.0,
-          "share": 0.0581
+          "adp": 56.0,
+          "share": 0.209
         },
         {
-          "name": "Dallas Goedert",
+          "name": "Tucker Kraft",
           "position": "TE",
-          "adp": 121.0,
-          "share": 0.0371
+          "adp": 70.0,
+          "share": 0.1778
         },
         {
-          "name": "Tank Bigsby",
-          "position": "RB",
-          "adp": 159.0,
-          "share": 0.0156
+          "name": "Jayden Reed",
+          "position": "WR",
+          "adp": 110.0,
+          "share": 0.112
+        },
+        {
+          "name": "Jordan Love",
+          "position": "QB",
+          "adp": 118.0,
+          "share": 0.1021
+        },
+        {
+          "name": "Matthew Golden",
+          "position": "WR",
+          "adp": 131.0,
+          "share": 0.0879
         }
       ],
       "rank": 22,
       "quadrant": "spread scoring"
     },
     {
-      "team": "WAS",
-      "implied_points_per_game": 23.42,
-      "vegas_rank": 16,
-      "capital_rank": 27,
-      "capital": 0.959,
-      "drafted": 19,
-      "effective_players": 3.48,
-      "top1_share": 0.396,
-      "top2_share": 0.7325,
-      "points_per_effective_player": 6.73,
+      "team": "PIT",
+      "implied_points_per_game": 22.21,
+      "vegas_rank": 22,
+      "capital_rank": 30,
+      "capital": 1.922,
+      "drafted": 12,
+      "effective_players": 5.48,
+      "top1_share": 0.229,
+      "top2_share": 0.4477,
+      "points_per_effective_player": 4.05,
       "core": [
         {
-          "name": "Terry McLaurin",
-          "position": "WR",
-          "adp": 43.0,
-          "share": 0.3952
+          "name": "Jaylen Warren",
+          "position": "RB",
+          "adp": 72.0,
+          "share": 0.2289
         },
         {
-          "name": "Jayden Daniels",
+          "name": "DK Metcalf",
+          "position": "WR",
+          "adp": 76.0,
+          "share": 0.2185
+        },
+        {
+          "name": "Michael Pittman Jr.",
+          "position": "WR",
+          "adp": 83.0,
+          "share": 0.2019
+        },
+        {
+          "name": "Rico Dowdle",
+          "position": "RB",
+          "adp": 88.0,
+          "share": 0.1904
+        },
+        {
+          "name": "Aaron Rodgers",
           "position": "QB",
-          "adp": 50.0,
-          "share": 0.3358
+          "adp": 218.0,
+          "share": 0.0427
         },
         {
-          "name": "Rachaad White",
-          "position": "RB",
-          "adp": 108.0,
-          "share": 0.0876
-        },
-        {
-          "name": "Stefon Diggs",
-          "position": "WR",
-          "adp": 119.0,
-          "share": 0.0678
-        },
-        {
-          "name": "Jacory Croskey-Merritt",
-          "position": "RB",
-          "adp": 122.0,
-          "share": 0.0636
-        },
-        {
-          "name": "Chig Okonkwo",
+          "name": "Pat Freiermuth",
           "position": "TE",
-          "adp": 148.0,
-          "share": 0.0344
+          "adp": 229.0,
+          "share": 0.0375
         }
       ],
       "rank": 23,
-      "quadrant": "spread scoring"
+      "quadrant": "spread and low scoring"
     },
     {
-      "team": "TB",
-      "implied_points_per_game": 23.8,
-      "vegas_rank": 14,
-      "capital_rank": 22,
-      "capital": 1.089,
-      "drafted": 11,
-      "effective_players": 3.82,
-      "top1_share": 0.409,
-      "top2_share": 0.6498,
-      "points_per_effective_player": 6.23,
+      "team": "NO",
+      "implied_points_per_game": 21.62,
+      "vegas_rank": 23,
+      "capital_rank": 16,
+      "capital": 2.611,
+      "drafted": 14,
+      "effective_players": 5.37,
+      "top1_share": 0.3074,
+      "top2_share": 0.5299,
+      "points_per_effective_player": 4.03,
       "core": [
         {
-          "name": "Emeka Egbuka",
+          "name": "Chris Olave",
           "position": "WR",
-          "adp": 36.0,
-          "share": 0.4086
+          "adp": 20.0,
+          "share": 0.3075
         },
         {
-          "name": "Bucky Irving",
+          "name": "Travis Etienne Jr.",
           "position": "RB",
-          "adp": 59.0,
-          "share": 0.2406
+          "adp": 48.0,
+          "share": 0.2225
         },
         {
-          "name": "Chris Godwin Jr.",
+          "name": "Jordyn Tyson",
           "position": "WR",
-          "adp": 80.0,
-          "share": 0.1478
+          "adp": 85.0,
+          "share": 0.1452
         },
         {
-          "name": "Kenny Gainwell",
-          "position": "RB",
-          "adp": 98.0,
-          "share": 0.0973
-        },
-        {
-          "name": "Baker Mayfield",
+          "name": "Tyler Shough",
           "position": "QB",
-          "adp": 116.0,
-          "share": 0.0643
+          "adp": 124.0,
+          "share": 0.0923
         },
         {
-          "name": "Jalen McMillan",
-          "position": "WR",
-          "adp": 163.0,
-          "share": 0.022
+          "name": "Juwan Johnson",
+          "position": "TE",
+          "adp": 140.0,
+          "share": 0.077
+        },
+        {
+          "name": "Alvin Kamara",
+          "position": "RB",
+          "adp": 142.0,
+          "share": 0.0751
         }
       ],
       "rank": 24,
-      "quadrant": "spread scoring"
+      "quadrant": "spread and low scoring"
     },
     {
-      "team": "GB",
-      "implied_points_per_game": 25.17,
-      "vegas_rank": 8,
-      "capital_rank": 23,
-      "capital": 1.057,
-      "drafted": 12,
-      "effective_players": 4.22,
-      "top1_share": 0.3425,
-      "top2_share": 0.6083,
-      "points_per_effective_player": 5.96,
+      "team": "LAC",
+      "implied_points_per_game": 23.92,
+      "vegas_rank": 13,
+      "capital_rank": 8,
+      "capital": 2.967,
+      "drafted": 14,
+      "effective_players": 6.08,
+      "top1_share": 0.2555,
+      "top2_share": 0.4857,
+      "points_per_effective_player": 3.93,
       "core": [
         {
-          "name": "Josh Jacobs",
+          "name": "Omarion Hampton",
           "position": "RB",
-          "adp": 45.0,
-          "share": 0.3425
+          "adp": 25.0,
+          "share": 0.2555
         },
         {
-          "name": "Christian Watson",
+          "name": "Ladd McConkey",
           "position": "WR",
-          "adp": 56.0,
-          "share": 0.2658
+          "adp": 34.0,
+          "share": 0.2302
         },
         {
-          "name": "Tucker Kraft",
-          "position": "TE",
-          "adp": 70.0,
-          "share": 0.1921
-        },
-        {
-          "name": "Jayden Reed",
-          "position": "WR",
-          "adp": 110.0,
-          "share": 0.0766
-        },
-        {
-          "name": "Jordan Love",
+          "name": "Justin Herbert",
           "position": "QB",
-          "adp": 118.0,
-          "share": 0.0634
+          "adp": 69.0,
+          "share": 0.1537
         },
         {
-          "name": "Matthew Golden",
+          "name": "Quentin Johnston",
           "position": "WR",
-          "adp": 131.0,
-          "share": 0.0473
+          "adp": 100.0,
+          "share": 0.1075
+        },
+        {
+          "name": "Keaton Mitchell",
+          "position": "RB",
+          "adp": 150.0,
+          "share": 0.0603
+        },
+        {
+          "name": "Tre' Harris",
+          "position": "WR",
+          "adp": 166.0,
+          "share": 0.0502
         }
       ],
       "rank": 25,
       "quadrant": "spread scoring"
     },
     {
-      "team": "DEN",
-      "implied_points_per_game": 21.25,
-      "vegas_rank": 25,
-      "capital_rank": 26,
-      "capital": 0.983,
-      "drafted": 15,
-      "effective_players": 3.63,
-      "top1_share": 0.4644,
-      "top2_share": 0.6069,
-      "points_per_effective_player": 5.85,
+      "team": "TB",
+      "implied_points_per_game": 23.8,
+      "vegas_rank": 14,
+      "capital_rank": 17,
+      "capital": 2.586,
+      "drafted": 11,
+      "effective_players": 6.14,
+      "top1_share": 0.258,
+      "top2_share": 0.4561,
+      "points_per_effective_player": 3.88,
       "core": [
         {
-          "name": "Jaylen Waddle",
+          "name": "Emeka Egbuka",
           "position": "WR",
-          "adp": 35.0,
-          "share": 0.4639
+          "adp": 36.0,
+          "share": 0.2579
         },
         {
-          "name": "Courtland Sutton",
-          "position": "WR",
-          "adp": 86.0,
-          "share": 0.1424
-        },
-        {
-          "name": "RJ Harvey",
+          "name": "Bucky Irving",
           "position": "RB",
-          "adp": 91.0,
-          "share": 0.1272
+          "adp": 59.0,
+          "share": 0.198
         },
         {
-          "name": "Bo Nix",
+          "name": "Chris Godwin Jr.",
+          "position": "WR",
+          "adp": 80.0,
+          "share": 0.1551
+        },
+        {
+          "name": "Kenny Gainwell",
+          "position": "RB",
+          "adp": 98.0,
+          "share": 0.1261
+        },
+        {
+          "name": "Baker Mayfield",
           "position": "QB",
-          "adp": 97.0,
-          "share": 0.1109
+          "adp": 116.0,
+          "share": 0.1025
         },
         {
-          "name": "J.K. Dobbins",
-          "position": "RB",
-          "adp": 101.0,
-          "share": 0.1007
-        },
-        {
-          "name": "Jonah Coleman",
-          "position": "RB",
-          "adp": 162.0,
-          "share": 0.0244
+          "name": "Jalen McMillan",
+          "position": "WR",
+          "adp": 163.0,
+          "share": 0.0596
         }
       ],
       "rank": 26,
-      "quadrant": "spread and low scoring"
+      "quadrant": "spread scoring"
     },
     {
-      "team": "CLE",
-      "implied_points_per_game": 18.5,
-      "vegas_rank": 30,
-      "capital_rank": 32,
-      "capital": 0.586,
-      "drafted": 11,
-      "effective_players": 3.34,
-      "top1_share": 0.4274,
-      "top2_share": 0.7436,
-      "points_per_effective_player": 5.54,
+      "team": "WAS",
+      "implied_points_per_game": 23.42,
+      "vegas_rank": 16,
+      "capital_rank": 21,
+      "capital": 2.442,
+      "drafted": 19,
+      "effective_players": 6.21,
+      "top1_share": 0.2521,
+      "top2_share": 0.4847,
+      "points_per_effective_player": 3.77,
       "core": [
         {
-          "name": "Quinshon Judkins",
-          "position": "RB",
-          "adp": 61.0,
-          "share": 0.4266
+          "name": "Terry McLaurin",
+          "position": "WR",
+          "adp": 43.0,
+          "share": 0.2523
         },
         {
-          "name": "Harold Fannin Jr.",
+          "name": "Jayden Daniels",
+          "position": "QB",
+          "adp": 50.0,
+          "share": 0.2326
+        },
+        {
+          "name": "Rachaad White",
+          "position": "RB",
+          "adp": 108.0,
+          "share": 0.1192
+        },
+        {
+          "name": "Stefon Diggs",
+          "position": "WR",
+          "adp": 119.0,
+          "share": 0.1048
+        },
+        {
+          "name": "Jacory Croskey-Merritt",
+          "position": "RB",
+          "adp": 122.0,
+          "share": 0.1011
+        },
+        {
+          "name": "Chig Okonkwo",
           "position": "TE",
-          "adp": 74.0,
-          "share": 0.3157
-        },
-        {
-          "name": "KC Concepcion",
-          "position": "WR",
-          "adp": 129.0,
-          "share": 0.0887
-        },
-        {
-          "name": "Dylan Sampson",
-          "position": "RB",
-          "adp": 145.0,
-          "share": 0.0614
-        },
-        {
-          "name": "Denzel Boston",
-          "position": "WR",
-          "adp": 152.0,
-          "share": 0.0529
-        },
-        {
-          "name": "Jerry Jeudy",
-          "position": "WR",
-          "adp": 155.0,
-          "share": 0.0478
+          "adp": 148.0,
+          "share": 0.0749
         }
       ],
       "rank": 27,
-      "quadrant": "spread and low scoring"
+      "quadrant": "spread scoring"
     },
     {
       "team": "ARI",
       "implied_points_per_game": 18.17,
       "vegas_rank": 32,
-      "capital_rank": 11,
-      "capital": 1.496,
+      "capital_rank": 10,
+      "capital": 2.838,
       "drafted": 13,
-      "effective_players": 3.35,
-      "top1_share": 0.4409,
-      "top2_share": 0.7121,
-      "points_per_effective_player": 5.42,
+      "effective_players": 5.39,
+      "top1_share": 0.2861,
+      "top2_share": 0.5106,
+      "points_per_effective_player": 3.37,
       "core": [
         {
           "name": "Trey McBride",
           "position": "TE",
           "adp": 19.0,
-          "share": 0.4412
+          "share": 0.2861
         },
         {
           "name": "Jeremiyah Love",
           "position": "RB",
           "adp": 40.0,
-          "share": 0.2714
+          "share": 0.2245
         },
         {
           "name": "Marvin Harrison Jr.",
           "position": "WR",
           "adp": 66.0,
-          "share": 0.1491
+          "share": 0.1663
         },
         {
           "name": "Michael Wilson",
           "position": "WR",
           "adp": 89.0,
-          "share": 0.0876
+          "share": 0.1276
         },
         {
           "name": "Tyler Allgeier",
           "position": "RB",
           "adp": 134.0,
-          "share": 0.0307
+          "share": 0.0758
         },
         {
           "name": "Jacoby Brissett",
           "position": "QB",
           "adp": 178.0,
-          "share": 0.0114
+          "share": 0.0455
         }
       ],
       "rank": 28,
       "quadrant": "spread and low scoring"
     },
     {
-      "team": "PIT",
-      "implied_points_per_game": 22.21,
-      "vegas_rank": 22,
-      "capital_rank": 30,
-      "capital": 0.673,
-      "drafted": 12,
-      "effective_players": 4.14,
-      "top1_share": 0.2883,
-      "top2_share": 0.5513,
-      "points_per_effective_player": 5.36,
+      "team": "CLE",
+      "implied_points_per_game": 18.5,
+      "vegas_rank": 30,
+      "capital_rank": 31,
+      "capital": 1.832,
+      "drafted": 11,
+      "effective_players": 5.72,
+      "top1_share": 0.2731,
+      "top2_share": 0.5079,
+      "points_per_effective_player": 3.23,
       "core": [
         {
-          "name": "Jaylen Warren",
+          "name": "Quinshon Judkins",
           "position": "RB",
-          "adp": 72.0,
-          "share": 0.2883
+          "adp": 61.0,
+          "share": 0.2729
         },
         {
-          "name": "DK Metcalf",
-          "position": "WR",
-          "adp": 76.0,
-          "share": 0.263
-        },
-        {
-          "name": "Michael Pittman Jr.",
-          "position": "WR",
-          "adp": 83.0,
-          "share": 0.2229
-        },
-        {
-          "name": "Rico Dowdle",
-          "position": "RB",
-          "adp": 88.0,
-          "share": 0.1991
-        },
-        {
-          "name": "Aaron Rodgers",
-          "position": "QB",
-          "adp": 218.0,
-          "share": 0.0104
-        },
-        {
-          "name": "Pat Freiermuth",
+          "name": "Harold Fannin Jr.",
           "position": "TE",
-          "adp": 229.0,
-          "share": 0.0074
+          "adp": 74.0,
+          "share": 0.2347
+        },
+        {
+          "name": "KC Concepcion",
+          "position": "WR",
+          "adp": 129.0,
+          "share": 0.1245
+        },
+        {
+          "name": "Dylan Sampson",
+          "position": "RB",
+          "adp": 145.0,
+          "share": 0.1032
+        },
+        {
+          "name": "Denzel Boston",
+          "position": "WR",
+          "adp": 152.0,
+          "share": 0.0955
+        },
+        {
+          "name": "Jerry Jeudy",
+          "position": "WR",
+          "adp": 155.0,
+          "share": 0.0922
         }
       ],
       "rank": 29,
       "quadrant": "spread and low scoring"
     },
     {
-      "team": "TEN",
-      "implied_points_per_game": 20.33,
-      "vegas_rank": 27,
-      "capital_rank": 31,
-      "capital": 0.647,
-      "drafted": 13,
-      "effective_players": 4.05,
-      "top1_share": 0.3601,
-      "top2_share": 0.6151,
-      "points_per_effective_player": 5.02,
+      "team": "DEN",
+      "implied_points_per_game": 21.25,
+      "vegas_rank": 25,
+      "capital_rank": 18,
+      "capital": 2.572,
+      "drafted": 15,
+      "effective_players": 6.73,
+      "top1_share": 0.2624,
+      "top2_share": 0.4082,
+      "points_per_effective_player": 3.16,
       "core": [
         {
-          "name": "Carnell Tate",
+          "name": "Jaylen Waddle",
           "position": "WR",
-          "adp": 64.0,
-          "share": 0.3601
+          "adp": 35.0,
+          "share": 0.2624
         },
         {
-          "name": "Tony Pollard",
-          "position": "RB",
-          "adp": 79.0,
-          "share": 0.255
-        },
-        {
-          "name": "Wan'Dale Robinson",
+          "name": "Courtland Sutton",
           "position": "WR",
-          "adp": 87.0,
-          "share": 0.2117
+          "adp": 86.0,
+          "share": 0.1458
         },
         {
-          "name": "Tyjae Spears",
+          "name": "RJ Harvey",
           "position": "RB",
-          "adp": 139.0,
-          "share": 0.0634
+          "adp": 91.0,
+          "share": 0.1376
         },
         {
-          "name": "Cam Ward",
+          "name": "Bo Nix",
           "position": "QB",
-          "adp": 147.0,
-          "share": 0.0526
+          "adp": 97.0,
+          "share": 0.1283
         },
         {
-          "name": "Calvin Ridley",
-          "position": "WR",
-          "adp": 194.0,
-          "share": 0.0185
+          "name": "J.K. Dobbins",
+          "position": "RB",
+          "adp": 101.0,
+          "share": 0.1225
+        },
+        {
+          "name": "Jonah Coleman",
+          "position": "RB",
+          "adp": 162.0,
+          "share": 0.0607
         }
       ],
       "rank": 30,
       "quadrant": "spread and low scoring"
     },
     {
-      "team": "CHI",
-      "implied_points_per_game": 24.83,
-      "vegas_rank": 11,
-      "capital_rank": 9,
-      "capital": 1.599,
-      "drafted": 11,
-      "effective_players": 5.19,
-      "top1_share": 0.266,
-      "top2_share": 0.4819,
-      "points_per_effective_player": 4.78,
-      "core": [
-        {
-          "name": "Colston Loveland",
-          "position": "TE",
-          "adp": 38.0,
-          "share": 0.2658
-        },
-        {
-          "name": "Luther Burden III",
-          "position": "WR",
-          "adp": 47.0,
-          "share": 0.2158
-        },
-        {
-          "name": "Rome Odunze",
-          "position": "WR",
-          "adp": 58.0,
-          "share": 0.1676
-        },
-        {
-          "name": "D'Andre Swift",
-          "position": "RB",
-          "adp": 60.0,
-          "share": 0.1601
-        },
-        {
-          "name": "Caleb Williams",
-          "position": "QB",
-          "adp": 67.0,
-          "share": 0.1363
-        },
-        {
-          "name": "Kyle Monangai",
-          "position": "RB",
-          "adp": 107.0,
-          "share": 0.0538
-        }
-      ],
-      "rank": 31,
-      "quadrant": "spread scoring"
-    },
-    {
       "team": "JAX",
       "implied_points_per_game": 22.75,
       "vegas_rank": 21,
-      "capital_rank": 24,
-      "capital": 1.003,
+      "capital_rank": 13,
+      "capital": 2.703,
       "drafted": 12,
-      "effective_players": 5.65,
-      "top1_share": 0.2273,
-      "top2_share": 0.4397,
-      "points_per_effective_player": 4.03,
+      "effective_players": 7.29,
+      "top1_share": 0.1765,
+      "top2_share": 0.347,
+      "points_per_effective_player": 3.12,
       "core": [
         {
           "name": "Parker Washington",
           "position": "WR",
           "adp": 65.0,
-          "share": 0.2273
+          "share": 0.1765
         },
         {
           "name": "Bhayshul Tuten",
           "position": "RB",
           "adp": 68.0,
-          "share": 0.2124
+          "share": 0.1706
         },
         {
           "name": "Brian Thomas Jr.",
           "position": "WR",
           "adp": 73.0,
-          "share": 0.1884
+          "share": 0.1609
         },
         {
           "name": "Trevor Lawrence",
           "position": "QB",
           "adp": 75.0,
-          "share": 0.1805
+          "share": 0.1572
         },
         {
           "name": "Jakobi Meyers",
           "position": "WR",
           "adp": 103.0,
-          "share": 0.0947
+          "share": 0.1139
         },
         {
           "name": "Chris Rodriguez Jr.",
           "position": "RB",
           "adp": 135.0,
-          "share": 0.0449
+          "share": 0.0788
+        }
+      ],
+      "rank": 31,
+      "quadrant": "spread and low scoring"
+    },
+    {
+      "team": "TEN",
+      "implied_points_per_game": 20.33,
+      "vegas_rank": 27,
+      "capital_rank": 27,
+      "capital": 2.09,
+      "drafted": 13,
+      "effective_players": 6.75,
+      "top1_share": 0.2312,
+      "top2_share": 0.4256,
+      "points_per_effective_player": 3.01,
+      "core": [
+        {
+          "name": "Carnell Tate",
+          "position": "WR",
+          "adp": 64.0,
+          "share": 0.2311
+        },
+        {
+          "name": "Tony Pollard",
+          "position": "RB",
+          "adp": 79.0,
+          "share": 0.1943
+        },
+        {
+          "name": "Wan'Dale Robinson",
+          "position": "WR",
+          "adp": 87.0,
+          "share": 0.177
+        },
+        {
+          "name": "Tyjae Spears",
+          "position": "RB",
+          "adp": 139.0,
+          "share": 0.0971
+        },
+        {
+          "name": "Cam Ward",
+          "position": "QB",
+          "adp": 147.0,
+          "share": 0.0885
+        },
+        {
+          "name": "Calvin Ridley",
+          "position": "WR",
+          "adp": 194.0,
+          "share": 0.0517
         }
       ],
       "rank": 32,

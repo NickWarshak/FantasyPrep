@@ -201,6 +201,24 @@ def _value_rows(rows: list[dict], n: int = 8) -> tuple[str, str]:
     return block(sorted(gaps, key=lambda x: -x[1])[:n]), block(sorted(gaps, key=lambda x: x[1])[:n])
 
 
+def _fit_bars(fit: dict, best_key: str, count_baseline: float) -> str:
+    entries = sorted(fit.items(), key=lambda kv: int(kv[0]))
+    mx = max(list(fit.values()) + [count_baseline]) or 1.0
+    out = []
+    for k, v in entries:
+        cls = " best" if k == best_key else ""
+        out.append(
+            f'<div class="fit-row{cls}"><span class="fit-lab">{k}</span>'
+            f'<span class="fit-bar" style="width:{v / mx * 100:.1f}%">{v:.3f}</span></div>'
+        )
+    out.append(
+        f'<div class="fit-row baseline"><span class="fit-lab">count</span>'
+        f'<span class="fit-bar" style="width:{count_baseline / mx * 100:.1f}%">'
+        f'{count_baseline:.3f}</span></div>'
+    )
+    return "".join(out)
+
+
 def _gap_row(team: str, capital_rank: int, other_rank: int) -> str:
     d = other_rank - capital_rank
     cls = "down" if d > 0 else ("up" if d < 0 else "dim")
@@ -273,18 +291,26 @@ def render(report: dict, offense: dict | None = None, condensed: dict | None = N
     )
 
     det = next((r for r in rows if r["team"] == "DET"), rows[0])
+    # Driven by whatever keys the data actually carries, so changing the
+    # alternates in `adp_share` cannot leave this hardcoded list stale.
+    def _sens_label(key: str) -> str:
+        if key.startswith("half_life_"):
+            return f"Half life {key.rsplit('_', 1)[1]} picks"
+        return {
+            "linear": "Linear weighting instead",
+            "top100_count": "Just counting top-100 players",
+        }.get(key, key)
+
     sens_rows = "".join(
-        f'<tr><td class="nm">{label}</td><td class="n">{sens[key]:+.3f}</td>'
+        f'<tr><td class="nm">{_sens_label(key)}</td><td class="n">{value:+.3f}</td>'
         f'<td class="n dim">{str(moves[key]) + " places" if key in moves else "&mdash;"}</td></tr>'
-        for key, label in (
-            ("half_life_15", "Half life 15 picks"),
-            ("half_life_45", "Half life 45 picks"),
-            ("half_life_60", "Half life 60 picks"),
-            ("linear", "Linear weighting instead"),
-            ("top100_count", "Just counting top-100 players"),
-        )
+        for key, value in sens.items()
     )
     curve_pts = json.dumps([[a, 0.5 ** ((a - 1) / hl)] for a in range(1, 201, 2)])
+    fit = report.get("half_life_fit", {})
+    count_baseline = report.get("half_life_fit_count_baseline", 0.0)
+    fit_bars = _fit_bars(fit, str(int(hl)), count_baseline) if fit else ""
+    worst_move = max(moves.values()) if moves else 0
 
     by_tilt = sorted(rows, key=lambda r: -r["tilt"])
     tilt_rows = "".join(_tilt_row(r) for r in by_tilt)
@@ -529,8 +555,12 @@ alpha = {projection["alpha"]}    QB {mults["QB"]}   RB {mults["RB"]}   WR {mults
   </div>
   <div class="prose">
     <p>The calibrated version is <strong>more than twice as accurate</strong> as multiplying by
-    raw capital share, and beats splitting a team pool evenly. Independently, it correlates
-    <strong>0.94</strong> with ESPN's own projections &mdash; which it never sees.</p>
+    raw capital share, and beats splitting a team pool evenly.</p>
+    <p class="caption">It also correlates 0.94 with ESPN's projections, which it never sees.
+    That is worth a line and not more: agreeing with another projection system measures
+    whether this reconstructs the consensus, not whether it predicts football. The table above
+    &mdash; real points, walk-forward &mdash; is the test that counts, and it is the one to
+    argue with.</p>
   </div>
 
   <h3>The projections</h3>
@@ -673,6 +703,16 @@ canvas {{ width:100%; height:190px; display:block; }}
 #sc-vegas, #sc-fpi {{ height:230px; }}
 .caption {{ font-family:Archivo,sans-serif; font-size:.82rem; color:var(--muted); }}
 #quadrant {{ height:340px; }}
+.fit {{ display:flex; flex-direction:column; gap:4px; }}
+.fit-row {{ display:grid; grid-template-columns:34px 1fr; gap:9px; align-items:center; }}
+.fit-lab {{ font-family:Archivo,sans-serif; font-size:.74rem; color:var(--muted);
+            text-align:right; font-variant-numeric:tabular-nums; }}
+.fit-bar {{ display:flex; align-items:center; justify-content:flex-end; height:16px;
+            border-radius:2px; padding-right:6px; background:var(--rule-strong);
+            font-family:Archivo,sans-serif; font-size:.63rem; font-weight:600;
+            color:var(--ink); min-width:34px; }}
+.fit-row.best .fit-bar {{ background:var(--wr); color:#fff; }}
+.fit-row.baseline .fit-bar {{ background:var(--rb); color:#fff; }}
 .calib {{ display:flex; flex-direction:column; gap:7px; }}
 .calib-row {{ display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:center; }}
 .calib-lab {{ font-family:Archivo,sans-serif; font-size:.78rem; color:var(--muted);
@@ -843,10 +883,28 @@ share         = team capital / all 32 teams</div>
 {projection_section}
 
 <section>
-  <h2>Does the {hl:.0f} matter?</h2>
+  <h2>Choosing the half life</h2>
   <div class="prose">
-    <p>It's a knob I chose, so it's worth checking the ordering isn't an artifact of it.
-    Re-ranking every team under different settings and correlating against the headline:</p>
+    <p>An earlier version of this page used 30 because it read well, and defended it by
+    showing the ranking barely moved at nearby settings. That was the wrong defence: stability
+    shows a number is not load-bearing, not that it is right.</p>
+    <p>So it is now fitted. Each candidate was scored on how well the resulting team capital
+    predicts a team's <strong>real</strong> fantasy production &mdash; every skill player who
+    suited up for it, 2015&ndash;2024, so the answer is not driven by how many of them happened
+    to be drafted:</p>
+  </div>
+  <div class="card" style="max-width:560px">
+    <div class="fit">{fit_bars}</div>
+    <p class="caption">Rank correlation with real team production. Higher is better.</p>
+  </div>
+  <div class="prose">
+    <p>Two things worth taking from that. The optimum is <strong>broad</strong> &mdash;
+    everything from 40 to 120 lands within 0.02 &mdash; so <strong>{hl:.0f}</strong> is a round
+    number chosen inside a flat region rather than a tuned parameter, and nobody should read
+    much into it. But simply <em>counting</em> a team's drafted players scores
+    <strong>{count_baseline:.3f}</strong>, far below any sensible decay, so the curve is doing
+    real work rather than dressing up a headcount.</p>
+    <p>How much does the choice actually move the table? Re-ranking under other settings:</p>
   </div>
   <div class="card" style="max-width:520px">
     <div class="scroll"><table>
@@ -855,10 +913,15 @@ share         = team capital / all 32 teams</div>
     </table></div>
   </div>
   <div class="prose">
-    <p>Stable across half lives ({sens["half_life_15"]:.2f} to {sens["half_life_45"]:.2f}), so
-    the order reflects the rosters rather than the knob. But stable is not identical: one team
-    still moves {max(moves.values())} places between settings, so treat neighbours in the table
-    as ties rather than a strict order.</p>
+    <p>Across that wider range the ordering is <strong>meaningfully sensitive</strong> &mdash;
+    a single team moves as much as {worst_move} places. Neighbouring teams in the main table
+    should be read as ties, and the fitted half life is doing more than cosmetic work, which is
+    the case for fitting it rather than picking it.</p>
+    <p class="caption">One technical note. This parameter is only identified here, where
+    capital is a <em>sum</em>. In the player-share model below, the fitted exponent absorbs it
+    exactly &mdash; only alpha divided by the half life is identified, and share error is
+    unchanged at 0.0589 whether the pair is 0.25/30, 0.45/60 or 0.95/120. Fitting both there
+    would be fitting one thing twice.</p>
   </div>
 </section>
 
@@ -890,7 +953,30 @@ share         = team capital / all 32 teams</div>
 </section>
 
 <section>
-  <h2>Every team, every player</h2>
+  <h2>What this adds up to</h2>
+  <div class="prose">
+    <p><strong>Draft capital is far more top-heavy than production.</strong> The most-drafted
+    player on a team holds about half its capital and returns about a quarter of its points.
+    Every other finding here follows from that one.</p>
+    <p><strong>Offence size and offence shape are separate questions.</strong> The best place to
+    own a player is not simply the highest-scoring team &mdash; it is a high-scoring team with
+    few mouths. Seattle and Jacksonville score within two points a game of each other and
+    divide it between 1.8 and 5.7 effective players.</p>
+    <p><strong>The market can disagree with itself in three different places</strong>: how much a
+    team scores (Vegas), how good its offence is (FPI), and who on it gets the ball (draft
+    capital). The third is the least examined and probably the most actionable.</p>
+    <p><strong>The projection is a market baseline, not a forecast.</strong> It prices in the
+    injuries, committees and lost jobs that the average player at that draft slot actually
+    suffers. Read it against a projection service, not instead of one.</p>
+    <p class="caption">Checked and not shipped: a &ldquo;concentration gap&rdquo; comparing each
+    team's capital concentration against its expected production concentration. It correlates
+    0.94 with top-two capital share on its own, so it is close to a relabelling of a column
+    already in the table rather than a new signal.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Appendix &mdash; every team, every player</h2>
   <div class="details-grid">{"".join(_team_detail(r, unit) for r in rows)}</div>
 </section>
 
