@@ -1,0 +1,536 @@
+{
+  "year": 2026,
+  "vegas": {
+    "metric": "Vegas implied points per game",
+    "source": "DraftKings lines via ESPN scoreboard",
+    "weeks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "rows": [
+      {
+        "team": "LAR",
+        "implied_points_per_game": 27.0,
+        "games_priced": 6,
+        "min": 24.2,
+        "max": 30.5,
+        "rank": 1
+      },
+      {
+        "team": "DET",
+        "implied_points_per_game": 26.75,
+        "games_priced": 5,
+        "min": 24.8,
+        "max": 28.5,
+        "rank": 2
+      },
+      {
+        "team": "BAL",
+        "implied_points_per_game": 26.67,
+        "games_priced": 6,
+        "min": 25.5,
+        "max": 28.0,
+        "rank": 3
+      },
+      {
+        "team": "SF",
+        "implied_points_per_game": 25.83,
+        "games_priced": 6,
+        "min": 22.5,
+        "max": 29.0,
+        "rank": 4
+      },
+      {
+        "team": "BUF",
+        "implied_points_per_game": 25.83,
+        "games_priced": 6,
+        "min": 23.0,
+        "max": 27.8,
+        "rank": 5
+      },
+      {
+        "team": "CIN",
+        "implied_points_per_game": 25.65,
+        "games_priced": 5,
+        "min": 22.0,
+        "max": 27.8,
+        "rank": 6
+      },
+      {
+        "team": "DAL",
+        "implied_points_per_game": 25.46,
+        "games_priced": 6,
+        "min": 22.5,
+        "max": 28.0,
+        "rank": 7
+      },
+      {
+        "team": "GB",
+        "implied_points_per_game": 25.17,
+        "games_priced": 6,
+        "min": 22.0,
+        "max": 27.2,
+        "rank": 8
+      },
+      {
+        "team": "KC",
+        "implied_points_per_game": 24.95,
+        "games_priced": 5,
+        "min": 22.8,
+        "max": 27.0,
+        "rank": 9
+      },
+      {
+        "team": "SEA",
+        "implied_points_per_game": 24.92,
+        "games_priced": 6,
+        "min": 23.0,
+        "max": 27.2,
+        "rank": 10
+      },
+      {
+        "team": "CHI",
+        "implied_points_per_game": 24.83,
+        "games_priced": 6,
+        "min": 23.2,
+        "max": 27.0,
+        "rank": 11
+      },
+      {
+        "team": "PHI",
+        "implied_points_per_game": 23.92,
+        "games_priced": 6,
+        "min": 22.5,
+        "max": 26.0,
+        "rank": 12
+      },
+      {
+        "team": "LAC",
+        "implied_points_per_game": 23.92,
+        "games_priced": 6,
+        "min": 21.2,
+        "max": 28.5,
+        "rank": 13
+      },
+      {
+        "team": "TB",
+        "implied_points_per_game": 23.8,
+        "games_priced": 5,
+        "min": 23.0,
+        "max": 24.5,
+        "rank": 14
+      },
+      {
+        "team": "NE",
+        "implied_points_per_game": 23.71,
+        "games_priced": 6,
+        "min": 20.5,
+        "max": 26.5,
+        "rank": 15
+      },
+      {
+        "team": "WAS",
+        "implied_points_per_game": 23.42,
+        "games_priced": 6,
+        "min": 21.5,
+        "max": 26.0,
+        "rank": 16
+      },
+      {
+        "team": "MIN",
+        "implied_points_per_game": 23.25,
+        "games_priced": 4,
+        "min": 21.0,
+        "max": 25.5,
+        "rank": 17
+      },
+      {
+        "team": "NYG",
+        "implied_points_per_game": 23.25,
+        "games_priced": 6,
+        "min": 20.0,
+        "max": 26.2,
+        "rank": 18
+      },
+      {
+        "team": "HOU",
+        "implied_points_per_game": 23.08,
+        "games_priced": 6,
+        "min": 20.5,
+        "max": 25.0,
+        "rank": 19
+      },
+      {
+        "team": "IND",
+        "implied_points_per_game": 22.92,
+        "games_priced": 6,
+        "min": 20.5,
+        "max": 25.5,
+        "rank": 20
+      },
+      {
+        "team": "JAX",
+        "implied_points_per_game": 22.75,
+        "games_priced": 6,
+        "min": 20.5,
+        "max": 24.5,
+        "rank": 21
+      },
+      {
+        "team": "PIT",
+        "implied_points_per_game": 22.21,
+        "games_priced": 6,
+        "min": 19.5,
+        "max": 25.0,
+        "rank": 22
+      },
+      {
+        "team": "NO",
+        "implied_points_per_game": 21.62,
+        "games_priced": 6,
+        "min": 19.5,
+        "max": 24.0,
+        "rank": 23
+      },
+      {
+        "team": "ATL",
+        "implied_points_per_game": 21.25,
+        "games_priced": 6,
+        "min": 19.5,
+        "max": 22.5,
+        "rank": 24
+      },
+      {
+        "team": "DEN",
+        "implied_points_per_game": 21.25,
+        "games_priced": 6,
+        "min": 19.8,
+        "max": 23.0,
+        "rank": 25
+      },
+      {
+        "team": "CAR",
+        "implied_points_per_game": 20.95,
+        "games_priced": 5,
+        "min": 18.5,
+        "max": 22.5,
+        "rank": 26
+      },
+      {
+        "team": "TEN",
+        "implied_points_per_game": 20.33,
+        "games_priced": 6,
+        "min": 19.0,
+        "max": 22.0,
+        "rank": 27
+      },
+      {
+        "team": "LV",
+        "implied_points_per_game": 19.33,
+        "games_priced": 6,
+        "min": 17.0,
+        "max": 22.0,
+        "rank": 28
+      },
+      {
+        "team": "MIA",
+        "implied_points_per_game": 18.95,
+        "games_priced": 5,
+        "min": 18.0,
+        "max": 21.8,
+        "rank": 29
+      },
+      {
+        "team": "CLE",
+        "implied_points_per_game": 18.5,
+        "games_priced": 6,
+        "min": 16.5,
+        "max": 19.0,
+        "rank": 30
+      },
+      {
+        "team": "NYJ",
+        "implied_points_per_game": 18.29,
+        "games_priced": 6,
+        "min": 16.5,
+        "max": 20.5,
+        "rank": 31
+      },
+      {
+        "team": "ARI",
+        "implied_points_per_game": 18.17,
+        "games_priced": 6,
+        "min": 17.0,
+        "max": 20.0,
+        "rank": 32
+      }
+    ]
+  },
+  "fpi": {
+    "metric": "ESPN FPI offense component",
+    "source": "ESPN Football Power Index",
+    "split_verified": "32/32",
+    "rows": [
+      {
+        "team": "LAR",
+        "offense": 3.95,
+        "defense": 1.51,
+        "special": 0.12,
+        "fpi": 5.57,
+        "rank": 1
+      },
+      {
+        "team": "BUF",
+        "offense": 3.88,
+        "defense": 0.1,
+        "special": -0.03,
+        "fpi": 3.95,
+        "rank": 2
+      },
+      {
+        "team": "SF",
+        "offense": 3.24,
+        "defense": -0.12,
+        "special": 0.18,
+        "fpi": 3.31,
+        "rank": 3
+      },
+      {
+        "team": "GB",
+        "offense": 3.04,
+        "defense": -0.12,
+        "special": -0.14,
+        "fpi": 2.79,
+        "rank": 4
+      },
+      {
+        "team": "BAL",
+        "offense": 3.01,
+        "defense": 0.7,
+        "special": -0.01,
+        "fpi": 3.71,
+        "rank": 5
+      },
+      {
+        "team": "DET",
+        "offense": 2.59,
+        "defense": 0.04,
+        "special": -0.12,
+        "fpi": 2.5,
+        "rank": 6
+      },
+      {
+        "team": "CIN",
+        "offense": 2.45,
+        "defense": -0.81,
+        "special": -0.02,
+        "fpi": 1.63,
+        "rank": 7
+      },
+      {
+        "team": "DAL",
+        "offense": 1.78,
+        "defense": -0.23,
+        "special": 0.22,
+        "fpi": 1.76,
+        "rank": 8
+      },
+      {
+        "team": "KC",
+        "offense": 1.59,
+        "defense": 0.82,
+        "special": -0.03,
+        "fpi": 2.39,
+        "rank": 9
+      },
+      {
+        "team": "SEA",
+        "offense": 1.34,
+        "defense": 2.15,
+        "special": 0.14,
+        "fpi": 3.63,
+        "rank": 10
+      },
+      {
+        "team": "NE",
+        "offense": 1.01,
+        "defense": 0.57,
+        "special": -0.18,
+        "fpi": 1.4,
+        "rank": 11
+      },
+      {
+        "team": "LAC",
+        "offense": 0.75,
+        "defense": 1.56,
+        "special": 0.29,
+        "fpi": 2.61,
+        "rank": 12
+      },
+      {
+        "team": "PHI",
+        "offense": 0.69,
+        "defense": 1.54,
+        "special": -0.24,
+        "fpi": 1.99,
+        "rank": 13
+      },
+      {
+        "team": "CHI",
+        "offense": 0.68,
+        "defense": 0.49,
+        "special": 0.04,
+        "fpi": 1.2,
+        "rank": 14
+      },
+      {
+        "team": "TB",
+        "offense": 0.6,
+        "defense": -0.7,
+        "special": 0.19,
+        "fpi": 0.09,
+        "rank": 15
+      },
+      {
+        "team": "WAS",
+        "offense": 0.42,
+        "defense": -0.86,
+        "special": -0.39,
+        "fpi": -0.83,
+        "rank": 16
+      },
+      {
+        "team": "IND",
+        "offense": 0.38,
+        "defense": -0.92,
+        "special": -0.09,
+        "fpi": -0.63,
+        "rank": 17
+      },
+      {
+        "team": "JAX",
+        "offense": -0.01,
+        "defense": 0.82,
+        "special": 0.19,
+        "fpi": 1.01,
+        "rank": 18
+      },
+      {
+        "team": "DEN",
+        "offense": -0.08,
+        "defense": 1.41,
+        "special": -0.04,
+        "fpi": 1.29,
+        "rank": 19
+      },
+      {
+        "team": "NYG",
+        "offense": -0.36,
+        "defense": -0.84,
+        "special": 0.05,
+        "fpi": -1.16,
+        "rank": 20
+      },
+      {
+        "team": "HOU",
+        "offense": -0.63,
+        "defense": 1.89,
+        "special": 0.2,
+        "fpi": 1.45,
+        "rank": 21
+      },
+      {
+        "team": "ATL",
+        "offense": -0.98,
+        "defense": -0.89,
+        "special": 0.38,
+        "fpi": -1.5,
+        "rank": 22
+      },
+      {
+        "team": "PIT",
+        "offense": -1.26,
+        "defense": 0.09,
+        "special": 0.3,
+        "fpi": -0.87,
+        "rank": 23
+      },
+      {
+        "team": "MIN",
+        "offense": -1.73,
+        "defense": 1.11,
+        "special": 0.19,
+        "fpi": -0.43,
+        "rank": 24
+      },
+      {
+        "team": "CAR",
+        "offense": -2.19,
+        "defense": -0.73,
+        "special": -0.04,
+        "fpi": -2.96,
+        "rank": 25
+      },
+      {
+        "team": "NO",
+        "offense": -2.3,
+        "defense": -0.36,
+        "special": -0.03,
+        "fpi": -2.7,
+        "rank": 26
+      },
+      {
+        "team": "ARI",
+        "offense": -2.78,
+        "defense": -2.27,
+        "special": -0.14,
+        "fpi": -5.19,
+        "rank": 27
+      },
+      {
+        "team": "TEN",
+        "offense": -3.27,
+        "defense": -0.53,
+        "special": -0.1,
+        "fpi": -3.9,
+        "rank": 28
+      },
+      {
+        "team": "MIA",
+        "offense": -3.33,
+        "defense": -2.5,
+        "special": 0.03,
+        "fpi": -5.8,
+        "rank": 29
+      },
+      {
+        "team": "NYJ",
+        "offense": -3.5,
+        "defense": -1.86,
+        "special": -0.18,
+        "fpi": -5.54,
+        "rank": 30
+      },
+      {
+        "team": "LV",
+        "offense": -3.68,
+        "defense": -0.82,
+        "special": -0.13,
+        "fpi": -4.63,
+        "rank": 31
+      },
+      {
+        "team": "CLE",
+        "offense": -5.29,
+        "defense": -0.23,
+        "special": 0.05,
+        "fpi": -5.47,
+        "rank": 32
+      }
+    ]
+  }
+}

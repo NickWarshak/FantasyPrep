@@ -32,7 +32,34 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from fantasyprep.historical.sources import ffc
+from fantasyprep.historical.sources.fantasypros_rankings import load_fantasypros_rankings
 from fantasyprep.league.settings import LeagueSettings, default_settings
+
+# Where the draft order comes from.
+#
+# `fantasypros` is the default because it is what the live draft tool ranks by,
+# so this report and the tool describe the same board. It is expert consensus
+# rank (ECR), not true ADP -- a considered opinion of where players *should* go
+# rather than a measurement of where they *did*. The two disagree enough to
+# matter: FFC's real draft data has Rashee Rice at 13.6 while FantasyPros has
+# him 22nd, roughly nine picks apart.
+#
+# `ffc` is real measured ADP from actual drafts, kept because it is the honest
+# answer to "where is this player really being taken".
+SOURCES = ("fantasypros", "ffc")
+
+# Not a team.
+EXCLUDED_TEAMS = {"FA"}
+
+# Sources spell two clubs differently. Without this Jacksonville silently drops
+# out of every cross-source comparison -- it is present on both sides, just
+# under different names, so nothing errors and the table quietly covers 31
+# teams instead of 32.
+TEAM_ALIASES = {"JAC": "JAX", "WSH": "WAS"}
+
+
+def normalize_team(team: str) -> str:
+    return TEAM_ALIASES.get(team, team)
 
 # Positions that count as fantasy draft capital. Kickers and defenses are
 # excluded: nobody means them by "highly drafted players", and their ADPs say
@@ -105,20 +132,44 @@ def spearman(a: list[float], b: list[float]) -> float:
     return num / den if den else 0.0
 
 
+def load_pool(
+    source: str, year: int, raw_dir: Path, settings: LeagueSettings
+) -> tuple[list[ffc.FfcPlayer], str, str]:
+    """Returns (players, human-readable source name, what the number is)."""
+    if source == "fantasypros":
+        return (
+            load_fantasypros_rankings(raw_dir / f"fantasypros_{year}_rankings.csv"),
+            "FantasyPros expert consensus rank",
+            "rank",
+        )
+    if source == "ffc":
+        return (
+            ffc.fetch_adp(
+                year, teams=settings.teams,
+                cache_path=raw_dir / f".ffc_{settings.teams}_{year}.json",
+            ),
+            "Fantasy Football Calculator consensus ADP",
+            "ADP",
+        )
+    raise ValueError(f"unknown source {source!r}, expected one of {SOURCES}")
+
+
 def compute(
-    year: int = 2026, data_dir: Path = Path("data"), settings: LeagueSettings | None = None
+    year: int = 2026,
+    data_dir: Path = Path("data"),
+    settings: LeagueSettings | None = None,
+    source: str = "fantasypros",
 ) -> dict:
     settings = settings or default_settings()
     raw_dir = data_dir / "raw"
-    pool = ffc.fetch_adp(
-        year, teams=settings.teams, cache_path=raw_dir / f".ffc_{settings.teams}_{year}.json"
-    )
+    pool, source_name, unit = load_pool(source, year, raw_dir, settings)
 
     teams: dict[str, TeamCapital] = {}
     for p in pool:
-        if p.position not in CAPITAL_POSITIONS:
+        team = normalize_team(p.team)
+        if p.position not in CAPITAL_POSITIONS or team in EXCLUDED_TEAMS:
             continue
-        teams.setdefault(p.team, TeamCapital(p.team)).players.append(p)
+        teams.setdefault(team, TeamCapital(team)).players.append(p)
     for t in teams.values():
         t.players.sort(key=lambda p: p.adp)
 
@@ -188,7 +239,9 @@ def compute(
 
     return {
         "year": year,
-        "source": "Fantasy Football Calculator consensus ADP",
+        "source": source_name,
+        "source_key": source,
+        "unit": unit,
         "teams_in_league_settings": settings.teams,
         "scoring": "PPR" if settings.scoring.reception == 1.0 else "non-PPR",
         "half_life": HALF_LIFE,
@@ -201,13 +254,17 @@ def compute(
 
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(description="Rank NFL teams by fantasy draft capital (ADP only).")
+    parser.add_argument("--source", choices=list(SOURCES), default="fantasypros",
+                        help="fantasypros = what the live draft tool ranks by (expert "
+                             "consensus rank); ffc = real measured ADP from actual drafts")
     parser.add_argument("--year", type=int, default=2026)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    report = compute(args.year, args.data_dir)
-    print(f"{args.year} ADP share -- weight = 0.5 ^ ((ADP - 1) / {report['half_life']:.0f})\n")
+    report = compute(args.year, args.data_dir, source=args.source)
+    print(f"{args.year} draft-capital share -- {report['source']}")
+    print(f"weight = 0.5 ^ (({report['unit']} - 1) / {report['half_life']:.0f})\n")
     print(f"{'#':>3}  {'TM':<4} {'share':>7} {'capital':>8} {'t24':>4}{'t50':>4}{'t100':>5}   best player")
     for r in report["rows"]:
         c = r["counts"]
