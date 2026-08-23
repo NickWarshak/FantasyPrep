@@ -97,6 +97,53 @@ def _tilt_row(r: dict) -> str:
     )
 
 
+SUFFIXES = {"Jr.", "Sr.", "II", "III", "IV", "V"}
+
+
+def _short_name(name: str) -> str:
+    """Surname, skipping suffixes -- 'James Cook III' -> 'Cook', not 'III'."""
+    parts = [p for p in name.split() if p not in SUFFIXES]
+    return parts[-1] if parts else name
+
+
+def _condensed_rows(rows: list[dict], max_points: float) -> str:
+    """One row per team: bar width is the size of the offense, segments are how
+    its draft capital divides. Both questions answered in a single mark."""
+    out = []
+    for r in rows:
+        width = (r["implied_points_per_game"] / max_points) * 100
+        segs = []
+        for c in r["core"]:
+            share = c["share"]
+            if share < 0.02:
+                continue
+            label = _short_name(c["name"]) if share >= 0.28 else ""
+            segs.append(
+                f'<span class="cseg cseg-{HUE.get(c["position"], "qb")}" '
+                f'style="flex:{share:.4f}" '
+                f'title="{html.escape(c["name"])} &mdash; {share * 100:.0f}% of capital">'
+                f'{html.escape(label)}</span>'
+            )
+        rest = max(0.0, 1 - sum(c["share"] for c in r["core"]))
+        if rest > 0.02:
+            segs.append(
+                f'<span class="cseg cseg-rest" style="flex:{rest:.4f}" '
+                f'title="everyone else &mdash; {rest * 100:.0f}%"></span>'
+            )
+        sweet = " sweet" if r["quadrant"] == "condensed scoring" else ""
+        out.append(
+            f'<div class="cond-row{sweet}">'
+            f'<span class="cond-team">{html.escape(r["team"])}</span>'
+            f'<span class="cond-track"><span class="cond-bar" style="width:{width:.1f}%">'
+            f'{"".join(segs)}</span></span>'
+            f'<span class="cond-n">{r["implied_points_per_game"]:.1f}</span>'
+            f'<span class="cond-n dim">{r["effective_players"]:.2f}</span>'
+            f'<span class="cond-n val">{r["points_per_effective_player"]:.1f}</span>'
+            f"</div>"
+        )
+    return "".join(out)
+
+
 def _gap_row(team: str, capital_rank: int, other_rank: int) -> str:
     d = other_rank - capital_rank
     cls = "down" if d > 0 else ("up" if d < 0 else "dim")
@@ -142,7 +189,7 @@ def _comparison(
 # --------------------------------------------------------------------------- #
 # page
 # --------------------------------------------------------------------------- #
-def render(report: dict, offense: dict | None = None) -> str:
+def render(report: dict, offense: dict | None = None, condensed: dict | None = None) -> str:
     rows = report["rows"]
     unit = report.get("unit", "ADP")
     max_capital = max(r["capital"] for r in rows)
@@ -277,7 +324,82 @@ margin = +spread if favoured, &minus;spread if not</div>
 </section>
 """
 
-    scatter_js = f"var SCATTERS = {json.dumps(scatters)};"
+    condensed_section, quadrant_js = "", "var QUADRANT = null;"
+    if condensed:
+        crows = condensed["rows"]
+        max_points = max(r["implied_points_per_game"] for r in crows)
+        sweet = condensed["sweet_spot"]
+        best = crows[0]
+        top_sweet = next(r for r in crows if r["quadrant"] == "condensed scoring")
+        quadrant_js = "var QUADRANT = " + json.dumps({
+            "points": [
+                [r["effective_players"], r["implied_points_per_game"], r["team"],
+                 r["quadrant"] == "condensed scoring"]
+                for r in crows
+            ],
+            "mx": condensed["median_effective"],
+            "my": condensed["median_points"],
+        }) + ";"
+        condensed_section = f"""
+<section>
+  <h2>Condensed offenses</h2>
+  <div class="prose">
+    <p>Two things make a team's players worth owning, and they pull against each other.
+    A <strong>big pie</strong> &mdash; the offense scores a lot &mdash; and
+    <strong>few mouths</strong>, so each drafted player gets a large slice. A high-scoring
+    offense that spreads the ball over six draftable players can be a worse place to own
+    someone than a mediocre one funnelling everything through two.</p>
+    <p>Mouths is not a headcount. A raw count is dominated by irrelevant depth &mdash; four
+    bench fliers ranked past 300 would make a team look twice as &ldquo;spread&rdquo; as one
+    with two, when neither matters. Instead:</p>
+  </div>
+  <div class="formula">share&#8202;&#7522;           = player weight / team capital
+effective players = 1 / &Sigma; share&#8202;&#7522;&sup2;
+
+points per effective player = implied points per game / effective players</div>
+  <div class="prose">
+    <p>That answers &ldquo;how many players <em>is</em> this offense, really?&rdquo;. One
+    superstar holding everything scores 1.0; an even three-way split scores 3.0. Deep fliers
+    barely move it, which is exactly why it beats counting heads.</p>
+    <p><strong>One caution about the ratio.</strong> On its own it doesn't answer the
+    question, because a weak offense funnelling everything through one player maximises it:
+    <strong>{best["team"]} tops it on {best["implied_points_per_game"]:.1f} implied points</strong>,
+    among the lowest in the league, purely because
+    {html.escape(best["core"][0]["name"])} holds {best["core"][0]["share"] * 100:.0f}% of its
+    draft capital. True about that player, poor as an answer about the offense. So the chart
+    below splits on both medians, and the shaded corner is the only quadrant that is genuinely
+    both.</p>
+  </div>
+  <div class="card chartwrap">
+    <canvas id="quadrant" width="960" height="520" role="img"
+      aria-label="Teams plotted by effective drafted players against implied points per game"></canvas>
+    <p class="caption">Fewer mouths to the right, more points upward. The shaded corner is
+    above-median scoring <em>and</em> below-median mouths &mdash;
+    <strong>{len(sweet)} teams</strong>: {html.escape(", ".join(sweet))}.</p>
+  </div>
+  <div class="prose">
+    <p><strong>{top_sweet["team"]}</strong> is the cleanest case:
+    {top_sweet["implied_points_per_game"]:.1f} implied points a game, above the league median,
+    divided as though the offense were only
+    <strong>{top_sweet["effective_players"]:.2f} players</strong> &mdash;
+    {html.escape(top_sweet["core"][0]["name"])} alone holds
+    {top_sweet["core"][0]["share"] * 100:.0f}% of its draft capital.</p>
+  </div>
+  <div class="cond-head">
+    <span class="cond-team">Team</span>
+    <span class="cond-track">Pie size &amp; how it splits</span>
+    <span class="cond-n">Pts/g</span>
+    <span class="cond-n">Eff.</span>
+    <span class="cond-n">Ratio</span>
+  </div>
+  <div class="cond-list">{_condensed_rows(crows, max_points)}</div>
+  <p class="prose caption">Bar <strong>length</strong> is implied points per game; the
+  <strong>segments</strong> are how that team's draft capital divides between its players.
+  Long and few-segmented is the shape you want. Highlighted rows are the shaded quadrant.</p>
+</section>
+"""
+
+    scatter_js = f"var SCATTERS = {json.dumps(scatters)};\n{quadrant_js}"
 
     return f"""<title>NFL Draft Capital Share</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,6 +412,7 @@ margin = +spread if favoured, &minus;spread if not</div>
   --rule:rgba(23,28,35,.13); --rule-strong:rgba(23,28,35,.28);
   --qb:#7C6AA8; --rb:#C0703C; --wr:#35709B; --te:#6E8B3D;
   --up:#2F7D5B; --down:#A6543C;
+  --sweet:rgba(53,112,155,.10);
   --shadow:0 1px 2px rgba(23,28,35,.06),0 8px 24px rgba(23,28,35,.05);
 }}
 @media (prefers-color-scheme: dark) {{
@@ -299,6 +422,7 @@ margin = +spread if favoured, &minus;spread if not</div>
     --rule:rgba(231,236,242,.14); --rule-strong:rgba(231,236,242,.3);
     --qb:#9C8AC8; --rb:#D98F5C; --wr:#5A93BE; --te:#8FAC5C;
     --up:#56A57E; --down:#C97A5E;
+    --sweet:rgba(90,147,190,.16);
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
   }}
 }}
@@ -308,6 +432,7 @@ margin = +spread if favoured, &minus;spread if not</div>
   --rule:rgba(231,236,242,.14); --rule-strong:rgba(231,236,242,.3);
   --qb:#9C8AC8; --rb:#D98F5C; --wr:#5A93BE; --te:#8FAC5C;
   --up:#56A57E; --down:#C97A5E;
+  --sweet:rgba(90,147,190,.16);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
 }}
 
@@ -380,6 +505,34 @@ td {{ padding:7px 10px; border-bottom:1px solid var(--rule); font-size:.9rem; }}
 canvas {{ width:100%; height:190px; display:block; }}
 #sc-vegas, #sc-fpi {{ height:230px; }}
 .caption {{ font-family:Archivo,sans-serif; font-size:.82rem; color:var(--muted); }}
+#quadrant {{ height:340px; }}
+.cond-head, .cond-row {{
+  display:grid; grid-template-columns:44px 1fr 52px 48px 48px; gap:10px;
+  align-items:center; font-family:Archivo,sans-serif;
+}}
+.cond-head {{
+  font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  padding-bottom:7px; border-bottom:1px solid var(--rule-strong);
+}}
+.cond-head .cond-n, .cond-head .cond-track {{ font-weight:600; }}
+.cond-head .cond-track {{ text-align:left; }}
+.cond-list {{ display:flex; flex-direction:column; }}
+.cond-row {{ padding:5px 0; border-bottom:1px solid var(--rule); }}
+.cond-row.sweet {{ background:var(--sweet); }}
+.cond-team {{ font-weight:700; font-size:.88rem; }}
+.cond-track {{ display:block; width:100%; }}
+.cond-bar {{
+  display:flex; height:20px; border-radius:3px; overflow:hidden; min-width:12px;
+}}
+.cseg {{
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  font-size:.63rem; font-weight:600; color:#fff; white-space:nowrap;
+  letter-spacing:.01em;
+}}
+.cseg-qb {{ background:var(--qb); }} .cseg-rb {{ background:var(--rb); }}
+.cseg-wr {{ background:var(--wr); }} .cseg-te {{ background:var(--te); }}
+.cseg-rest {{ background:var(--rule-strong); }}
+.cond-n {{ text-align:right; font-variant-numeric:tabular-nums; font-size:.82rem; }}
 .details-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:10px; }}
 .team-detail {{ background:var(--surface); border:1px solid var(--rule);
                 border-radius:8px; overflow:hidden; }}
@@ -502,6 +655,8 @@ share         = team capital / all 32 teams</div>
 </section>
 
 {offense_sections}
+
+{condensed_section}
 
 <section>
   <h2>Does the {hl:.0f} matter?</h2>
@@ -669,8 +824,67 @@ function drawScatter(spec) {{
   }});
 }}
 
+function drawQuadrant() {{
+  var cv = document.getElementById('quadrant');
+  if (!cv || !QUADRANT) return;
+  var c = themeColors(), f = fit(cv), g = f.g;
+  var pts = QUADRANT.points;
+  var padL = 46, padR = 16, padT = 16, padB = 40;
+  var iw = f.w - padL - padR, ih = f.h - padT - padB;
+  var xs = pts.map(function (d) {{ return d[0]; }});
+  var ys = pts.map(function (d) {{ return d[1]; }});
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var xr = x1 - x0 || 1, yr = y1 - y0 || 1;
+  x0 -= xr * .10; x1 += xr * .10; y0 -= yr * .12; y1 += yr * .12;
+  // x reversed: fewer effective players (more condensed) sits to the RIGHT,
+  // so the desirable corner is up-and-right, which reads as "good" by default.
+  var X = function (v) {{ return padL + (1 - (v - x0) / (x1 - x0)) * iw; }};
+  var Y = function (v) {{ return padT + (1 - (v - y0) / (y1 - y0)) * ih; }};
+
+  var mx = X(QUADRANT.mx), my = Y(QUADRANT.my);
+  g.fillStyle = c.accent; g.globalAlpha = .09;
+  g.fillRect(mx, padT, (padL + iw) - mx, my - padT);
+  g.globalAlpha = 1;
+
+  g.strokeStyle = c.rule; g.lineWidth = 1;
+  g.font = '11px Archivo, sans-serif'; g.fillStyle = c.muted; g.textAlign = 'right';
+  for (var i = 0; i <= 4; i++) {{
+    var v = y0 + (y1 - y0) * i / 4;
+    g.beginPath(); g.moveTo(padL, Y(v)); g.lineTo(padL + iw, Y(v)); g.stroke();
+    g.fillText(v.toFixed(0), padL - 6, Y(v) + 3);
+  }}
+  g.textAlign = 'center';
+  for (var j = 0; j <= 4; j++) {{
+    var xv = x0 + (x1 - x0) * j / 4;
+    g.fillText(xv.toFixed(1), X(xv), f.h - 22);
+  }}
+  g.fillText('effective drafted players  (fewer →)', padL + iw / 2, f.h - 6);
+  g.save(); g.translate(12, padT + ih / 2); g.rotate(-Math.PI / 2);
+  g.textAlign = 'center'; g.fillText('implied points per game', 0, 0); g.restore();
+
+  g.setLineDash([4, 4]); g.strokeStyle = c.muted; g.globalAlpha = .55;
+  g.beginPath(); g.moveTo(mx, padT); g.lineTo(mx, padT + ih); g.stroke();
+  g.beginPath(); g.moveTo(padL, my); g.lineTo(padL + iw, my); g.stroke();
+  g.globalAlpha = 1; g.setLineDash([]);
+
+  g.font = '600 10px Archivo, sans-serif'; g.fillStyle = c.accent; g.textAlign = 'right';
+  g.fillText('CONDENSED SCORING', padL + iw - 6, padT + 14);
+
+  pts.forEach(function (d) {{
+    var px = X(d[0]), py = Y(d[1]), hot = d[3];
+    g.beginPath(); g.arc(px, py, hot ? 6 : 4, 0, Math.PI * 2);
+    g.fillStyle = c.accent; g.globalAlpha = hot ? 1 : .45; g.fill(); g.globalAlpha = 1;
+    g.fillStyle = hot ? c.ink : c.muted;
+    g.font = (hot ? '600 ' : '') + '10px Archivo, sans-serif';
+    g.textAlign = 'center';
+    g.fillText(d[2], px, py - 9);
+  }});
+}}
+
 function drawAll() {{
   drawCurve();
+  drawQuadrant();
   SCATTERS.forEach(drawScatter);
 }}
 drawAll();
@@ -690,6 +904,7 @@ def main(argv=None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in", dest="src", type=Path, default=Path("data/adp_share_2026.json"))
     parser.add_argument("--offense", type=Path, default=Path("data/offense_rankings_2026.json"))
+    parser.add_argument("--condensed", type=Path, default=Path("data/condensed_offense_2026.json"))
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     report = json.loads(args.src.read_text(encoding="utf-8"))
@@ -698,7 +913,12 @@ def main(argv=None) -> None:
         if args.offense and args.offense.exists()
         else None
     )
-    args.out.write_text(render(report, offense), encoding="utf-8")
+    condensed = (
+        json.loads(args.condensed.read_text(encoding="utf-8"))
+        if args.condensed and args.condensed.exists()
+        else None
+    )
+    args.out.write_text(render(report, offense, condensed), encoding="utf-8")
     print(f"Wrote {args.out} ({args.out.stat().st_size:,} bytes)")
 
 
