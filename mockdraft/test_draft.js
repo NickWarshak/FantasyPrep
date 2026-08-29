@@ -25,7 +25,7 @@ const persistence = events.slice(events.indexOf('const CFG_KEY'),
 const stub = `
   function renderAll(){} function renderClockbar(){} function renderClock(){}
   function renderPool(){} function renderRail(){} function renderRecap(){}
-  function renderRoomBar(){} function buildFilters(){}
+  function renderRoomBar(){} function buildFilters(){} function syncHideButton(){}
   const __els = {};
   const document = {
     getElementById: (id) => (__els[id] = __els[id] || { hidden: false, textContent: '', value: '',
@@ -46,6 +46,7 @@ const api = new Function(stub + engine + persistence + `
            botChoice, autoChoice, startDraft, makePick, applyPick, rounds,
            normalizeSeats, isBot, isLocal, teamName, keeperProblems, placeKeepers,
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
+           assignPick, pickAt, boardEditable, skipFilled,
            configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
@@ -335,6 +336,93 @@ for (const cfg of configs) {
       S.keepers.every(k => !drafted.includes(k.id)));
   }
 }
+
+/* ── Editing the board by hand ──────────────────────────────────────────── */
+console.log('\nboard editing');
+function freshDraft(over) {
+  api.S = settings(Object.assign({ teams: 12, seats: seats(12, { 4: 'me' }) }, over));
+  api.S.rounds = api.rounds();
+  api.startDraft();
+  return api.St;
+}
+function stepPicks(n) {
+  for (let i = 0; i < n && api.St.onClock < api.totalPicks(); i++) {
+    const t = api.teamAt(api.St.onClock);
+    api.makePick((api.isBot(t) ? api.botChoice(t, false) : api.autoChoice(t)).id);
+  }
+}
+
+// Filling the live square is just making the pick.
+freshDraft();
+const liveAt = api.St.onClock;
+api.assignPick(liveAt, gib0);
+check('filling the square on the clock drafts that player',
+  api.pickAt(liveAt) && api.pickAt(liveAt).id === gib0 && api.St.onClock === liveAt + 1);
+check('the drafted player leaves the board', api.St.taken[gib0] === true);
+
+// Overwriting a past pick swaps the players and frees the old one.
+freshDraft();
+stepPicks(6);
+const past = api.pickAt(2), oldId = past.id, oldTeam = past.team;
+const spare = api.available()[0].id;
+check('a past square can be overwritten', api.assignPick(2, spare) === true);
+check('the replaced player goes back on the board', !api.St.taken[oldId]);
+check('the replaced player leaves that roster', !api.St.rosters[oldTeam].includes(oldId));
+check('the new player joins that roster', api.St.rosters[oldTeam].includes(spare));
+check('overwriting does not change how many picks exist', api.pickAt(2).id === spare &&
+  api.St.picks.filter(p => p.overall === 2).length === 1);
+check('overwriting does not move the clock', api.St.onClock === 6);
+
+// A player already on a roster cannot be put on a second one.
+const takenElsewhere = api.pickAt(0).id;
+check('a player already drafted cannot be assigned elsewhere',
+  api.assignPick(4, takenElsewhere) === false);
+check('the refused assignment changed nothing', api.pickAt(4).id !== takenElsewhere);
+
+// Filling a future square reserves it, and the draft skips it when it arrives.
+const st = freshDraft();
+const future = api.St.onClock + 25;
+const futureTeam = api.teamAt(future);
+api.assignPick(future, gib0);
+check('a future square can be reserved', api.pickAt(future) && api.pickAt(future).id === gib0);
+check('a reserved player is off the board immediately', api.St.taken[gib0] === true);
+check('a reserved player is on that roster immediately', st.rosters[futureTeam].includes(gib0));
+check('reserving does not move the clock', api.St.onClock < future);
+while (api.St.onClock < api.totalPicks()) {
+  const t = api.teamAt(api.St.onClock);
+  api.makePick((api.isBot(t) ? api.botChoice(t, false) : api.autoChoice(t)).id);
+}
+check('the reserved square is not drafted over',
+  api.St.picks.filter(p => p.overall === future).length === 1 &&
+  api.pickAt(future).id === gib0);
+check('a draft with a reserved square still fills every square',
+  new Set(api.St.picks.map(p => p.overall)).size === api.totalPicks());
+check('a draft with a reserved square still fills every roster',
+  api.St.rosters.every(r => r.length === api.S.rounds));
+check('nobody ends up drafted twice',
+  new Set(api.St.picks.map(p => p.id)).size === api.St.picks.length);
+
+// Clearing a reserved square hands the player back.
+freshDraft();
+const spot = api.St.onClock + 10;
+api.assignPick(spot, gib0);
+api.assignPick(spot, null);
+check('a reserved square can be cleared', !api.pickAt(spot));
+check('clearing puts the player back on the board', !api.St.taken[gib0]);
+check('clearing frees the roster spot',
+  !api.St.rosters[api.teamAt(spot)].includes(gib0));
+
+// Shared rooms only let you set your own live pick.
+api.S = settings({ mode: 'online', teams: 8, clock: 0, seats: seats(8, { 2: 'me' }) });
+api.S.rounds = api.rounds();
+api.normalizeSeats();
+api.St = api.newState();
+api.St.onClock = api.overallFor(2, 1);
+check('online: your own live pick is editable', api.boardEditable(api.St.onClock));
+check("online: someone else’s pick is not", !api.boardEditable(api.overallFor(5, 1)));
+check('online: a future square of your own is not', !api.boardEditable(api.overallFor(2, 3)));
+api.S.mode = 'solo';
+check('offline: any square is editable', api.boardEditable(api.overallFor(5, 1)));
 
 /* ── Online room round-trip ─────────────────────────────────────────────── */
 console.log('\nonline room');

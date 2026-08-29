@@ -67,33 +67,26 @@ setting scales that whole curve. At `None` the room drafts the sheet straight
 down -- useful for seeing exactly where a player goes at par. `Realistic` is the
 default and is what the measured draft shape below describes.
 
-## Playing with other people
+## In the draft room
 
-Three modes, chosen in the lobby.
+- The player list shows **only who is left**. `Show drafted` puts everyone back,
+  struck through.
+- `Settings` opens the pick clock, the exact seconds between bot picks, and the
+  randomness, all changeable mid-draft. Changing the clock re-times a countdown
+  that is already running rather than waiting for the next pick.
+- `Pause` banks whatever time was left, so resuming does not hand you a clock
+  that has quietly expired.
+- **Every square on the board is editable.** Click one and pick a player:
+  - the square **on the clock** -- makes that pick;
+  - a **past** square -- rewrites it, putting the replaced player back on the
+    board. Past squares can be replaced but not emptied, since a hole would
+    leave that team a player short with no way to fill it;
+  - a **future** square -- reserves it, spending that pick exactly like a keeper.
+    The draft skips it when it arrives.
 
-**Just me** - one seat is yours, bots take the rest.
-
-**Same screen** - give a seat to each person in the room. Every human seat keeps
-its own queue, and when the device changes hands the board and queue are covered
-by a hand-off screen until the next drafter says they're ready. Fully reliable,
-and it keeps the pick clock.
-
-**Online with friends** - everyone opens the artifact link and claims a seat on
-their own device. Read the constraints before relying on it:
-
-- There is **no shared database available to this page**. The page itself is the
-  record: each human turn rewrites this document with the draft embedded and
-  republishes it, and every open view reloads to that new version.
-- So play is **turn-based, not live**, and **untimed** - there is no way to run a
-  trustworthy shared countdown across devices, so the clock is switched off.
-- Friends need **edit access, not just the link**. A view-only viewer gets
-  `not_writer` and cannot pick; the room tells them so rather than failing quietly.
-- Seat ownership is per device and on the honour system (there is no viewer
-  identity here). Each person picks their seat once; it is remembered locally.
-- Bots between two people are resolved by whoever picked last and saved with the
-  same write, so the draft is one save per human turn rather than one per pick.
-- If two people somehow pick at once, one save wins and the other view reloads to
-  the winner's board. Only one seat is ever on the clock, so this should be rare.
+  A player already on someone's roster is never offered, and `assignPick` refuses
+  one anyway so no caller can put one man on two rosters. In a shared online room
+  editing is limited to your own live pick.
 
 ## How the bots draft
 

@@ -119,6 +119,33 @@ button { cursor: pointer; border: 0; background: none; }
 
 .cb-tools { display: flex; gap: 7px; flex: none; }
 
+/* ── In-draft settings ─────────────────────────────────────────────────── */
+.setbar {
+  flex: none; display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #131926; border-bottom: 1px solid var(--line);
+}
+.setfield { display: flex; flex-direction: column; gap: 6px; }
+.setfield > span:first-child {
+  font: 600 11px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
+}
+.setrow { display: flex; align-items: center; gap: 8px; }
+.setrow em { font-style: normal; font-size: 12px; color: var(--ink-dim); }
+.setbar input, .setbar select {
+  padding: 7px 9px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line); color: var(--ink);
+  font-family: var(--mono); font-size: 13px;
+}
+.setbar input { width: 82px; }
+.setbar select { font-family: var(--sans); }
+.setbar input:focus, .setbar select:focus { border-color: var(--ink-dim); outline: none; }
+.sethint { margin: 0 0 2px; font-size: 12px; line-height: 1.5; color: var(--ink-dim); max-width: 34ch; }
+
+/* Live board squares are editable, so they have to read as pressable. */
+.bd-pick { cursor: pointer; }
+.bd-pick:hover { box-shadow: inset 0 0 0 1px var(--ink-dim); }
+.bd-pick.is-onclock:hover { box-shadow: inset 0 0 0 1px var(--bone); }
+
 .btn {
   padding: 7px 13px; border-radius: var(--r);
   background: var(--raise); color: var(--ink-mid);
@@ -573,6 +600,8 @@ button { cursor: pointer; border: 0; background: none; }
 .picker-list .prow { padding: 7px 11px; grid-template-columns: 36px 44px 1fr auto; }
 .picker-list .prow:last-child { border-bottom: 0; }
 .picker-foot { display: flex; justify-content: flex-end; min-height: 1px; }
+.pk-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-dim); }
+.pk-note:empty { display: none; }
 
 /* ── Saved setups ──────────────────────────────────────────────────────── */
 .preset-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
@@ -635,12 +664,8 @@ button { cursor: pointer; border: 0; background: none; }
               <option value="90">90 seconds</option>
               <option value="0">No clock</option>
             </select></label>
-          <label class="field"><span>Bot pace</span>
-            <select id="f-pace">
-              <option value="1">Lifelike</option>
-              <option value="0.45" selected>Brisk</option>
-              <option value="0.12">Instant</option>
-            </select></label>
+          <label class="field"><span>Seconds between bot picks</span>
+            <input id="f-pace" type="number" min="0" max="30" step="0.1" value="0.6"></label>
           <label class="field"><span>Randomness</span>
             <select id="f-rand">
               <option value="0">None &mdash; straight off the sheet</option>
@@ -725,9 +750,34 @@ button { cursor: pointer; border: 0; background: none; }
       <div class="cb-tools">
         <button class="btn" id="btn-auto" title="Let the room draft for you">Autopick</button>
         <button class="btn" id="btn-pause">Pause</button>
+        <button class="btn" id="btn-set">Settings</button>
         <button class="btn" id="btn-quit">Exit</button>
       </div>
     </header>
+
+    <div class="setbar" id="setbar" hidden>
+      <label class="setfield"><span>Your clock</span>
+        <span class="setrow">
+          <input id="s-clock" type="number" min="0" max="600" step="5">
+          <em>seconds &middot; 0 for none</em>
+        </span></label>
+      <label class="setfield"><span>Between bot picks</span>
+        <span class="setrow">
+          <input id="s-delay" type="number" min="0" max="30" step="0.1">
+          <em>seconds</em>
+        </span></label>
+      <label class="setfield"><span>Randomness</span>
+        <select id="s-rand">
+          <option value="0">None &mdash; straight off the sheet</option>
+          <option value="0.35">Chalk</option>
+          <option value="0.7">Tame</option>
+          <option value="1">Realistic</option>
+          <option value="1.6">Loose</option>
+          <option value="2.4">Chaos</option>
+        </select></label>
+      <p class="sethint" id="s-hint">Changes apply from the next pick. Click any
+         square on the board to set who was taken there.</p>
+    </div>
 
     <div class="board-wrap" id="board-wrap"><div class="board" id="board"></div></div>
 
@@ -736,7 +786,7 @@ button { cursor: pointer; border: 0; background: none; }
         <div class="pool-top">
           <div class="pool-row">
             <input class="search" id="q" type="search" placeholder="Search players" autocomplete="off">
-            <button class="btn" id="btn-hide">Hide drafted</button>
+            <button class="btn" id="btn-hide">Show drafted</button>
           </div>
           <div class="filters" id="filters"></div>
         </div>
@@ -779,6 +829,7 @@ button { cursor: pointer; border: 0; background: none; }
       </div>
       <input class="search" id="pk-q" type="search" placeholder="Search the sheet" autocomplete="off">
       <div class="picker-list" id="pk-list"></div>
+      <p class="pk-note" id="pk-note"></p>
       <div class="picker-foot">
         <button class="btn" id="pk-clear" hidden>Remove this keeper</button>
       </div>
@@ -843,7 +894,7 @@ const FLEX_POS = ['RB', 'WR', 'TE'];
 
 function freshSettings() {
   return {
-    mode: 'solo', teams: 12, type: 'snake', clock: 30, pace: 0.45, rounds: 16, randomness: 1,
+    mode: 'solo', teams: 12, type: 'snake', clock: 30, botDelay: 0.6, rounds: 16, randomness: 1,
     slots: Object.assign({}, STANDARD),
     seats: null,      // per team: 'me' | 'friend' | 'bot'
     keepers: [],      // { team, id, round }  round is 1-based and costs that pick
@@ -868,6 +919,10 @@ function useCap(name) {
     }
     return Promise.resolve(claude.use(name)).catch(function () { return null; });
   } catch (e) { return Promise.resolve(null); }
+}
+function clampDelay(v) {
+  const n = +v;
+  return isFinite(n) ? Math.max(0, Math.min(30, n)) : 0.6;
 }
 function rounds() { return SLOTS.reduce(function (n, s) { return n + (S.slots[s.k] || 0); }, 0); }
 function gauss() {
@@ -1074,12 +1129,69 @@ function keeperProblems(list, teams, nRounds) {
 </script>
 
 <script>
+/* ── Editing the board by hand ──────────────────────────────────────────────
+   Any square can be set to a player: fill the live pick to draft, overwrite a
+   past square to rewrite history, or fill a future square to reserve it, which
+   spends that pick exactly like a keeper does. */
+function pickAt(overall) {
+  for (let i = 0; i < St.picks.length; i++) if (St.picks[i].overall === overall) return St.picks[i];
+  return null;
+}
+/* Online rooms are shared, so hand-editing is limited to your own live pick;
+   rewriting someone else's board underneath them is not a thing to allow. */
+function boardEditable(overall) {
+  if (S.mode !== 'online') return true;
+  return overall === St.onClock && teamAt(overall) === MySeat && !St.busy;
+}
+function assignPick(overall, id) {
+  if (overall < 0 || overall >= totalPicks()) return false;
+  const team = teamAt(overall);
+  const existing = pickAt(overall);
+  const wasLive = overall === St.onClock;
+  // The picker never offers a player who is already somewhere else, but the
+  // guard belongs here too so no caller can put one man on two rosters.
+  if (id !== null && id !== undefined && St.taken[id] && (!existing || existing.id !== id)) return false;
+  if (existing) {
+    delete St.taken[existing.id];
+    const r = St.rosters[team], i = r.indexOf(existing.id);
+    if (i >= 0) r.splice(i, 1);
+    St.picks.splice(St.picks.indexOf(existing), 1);
+    delete St.filled[overall];
+  }
+  if (id !== null && id !== undefined) {
+    St.taken[id] = true;
+    St.rosters[team].push(id);
+    St.picks.push({ overall: overall, team: team, id: id, keeper: existing ? !!existing.keeper : false });
+    St.landed = overall;
+    // A square ahead of the clock is spent now and skipped when reached.
+    if (overall > St.onClock) St.filled[overall] = id;
+    if (wasLive) St.onClock++;
+  }
+  skipFilled();
+
+  if (!wasLive) {                       // an edit elsewhere; the clock keeps running
+    renderAll();
+    if (S.mode === 'online') pushRoom();
+    return true;
+  }
+  if (S.mode === 'online') {
+    runBotsUntilHuman();
+    renderAll();
+    if (St.onClock >= totalPicks()) { pushRoom(false, true); finish(); return true; }
+    pushRoom();
+    return true;
+  }
+  renderAll();
+  advance();
+  return true;
+}
+
 /* ── Draft engine ───────────────────────────────────────────────────────── */
 function newState() {
   const st = {
-    picks: [], taken: {}, rosters: [], queues: {}, keeperAt: {},
+    picks: [], taken: {}, rosters: [], queues: {}, filled: {},
     onClock: 0, deadline: 0, paused: false, auto: false,
-    tab: 'queue', filter: 'ALL', q: '', hideTaken: false, landed: -1,
+    tab: 'queue', filter: 'ALL', q: '', hideTaken: true, landed: -1,
     timer: null, botAt: 0, scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
     lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '',
   };
@@ -1096,7 +1208,7 @@ function placeKeepers() {
     St.taken[k.id] = true;
     St.rosters[k.team].push(k.id);
     St.picks.push({ overall: overall, team: k.team, id: k.id, keeper: true });
-    St.keeperAt[overall] = k.id;
+    St.filled[overall] = k.id;
   });
 }
 
@@ -1130,15 +1242,17 @@ function showRoom() {
   el('btn-pause').textContent = 'Pause';
   el('btn-pause').hidden = S.mode === 'online';
   el('q').value = '';
+  syncHideButton();
 }
 
-/* Skip past picks already spent on keepers. */
-function skipKeepers() {
-  while (St.onClock < totalPicks() && St.keeperAt[St.onClock] !== undefined) St.onClock++;
+/* Skip picks already spent, whether on a pre-draft keeper or on a square the
+   user filled in by hand during the draft. */
+function skipFilled() {
+  while (St.onClock < totalPicks() && St.filled[St.onClock] !== undefined) St.onClock++;
 }
 
 function advance() {
-  skipKeepers();
+  skipFilled();
   if (St.onClock >= totalPicks()) return finish();
   const team = teamAt(St.onClock);
 
@@ -1159,7 +1273,7 @@ function advance() {
     St.botAt = 0;
   } else {
     St.deadline = 0;
-    St.botAt = Date.now() + (isBot(team) ? (280 + Math.random() * 900) * S.pace : 400);
+    St.botAt = Date.now() + (isBot(team) ? S.botDelay * 1000 : 400);
   }
   renderClockbar();
 }
@@ -1203,7 +1317,7 @@ function applyPick(id) {
   St.deadline = 0;
   St.botAt = 0;
   St.onClock++;
-  skipKeepers();
+  skipFilled();
 }
 
 function makePick(id) {
@@ -1228,7 +1342,7 @@ function makePick(id) {
 /* Resolve consecutive bot seats. Returns true if it made any pick. */
 function runBotsUntilHuman() {
   let made = false, guard = 0;
-  skipKeepers();
+  skipFilled();
   while (St.onClock < totalPicks() && isBot(teamAt(St.onClock))) {
     if (++guard > 1000) break;
     const p = botChoice(teamAt(St.onClock), false);
@@ -1269,7 +1383,7 @@ function roomState() {
   return {
     v: 1,
     s: {
-      mode: 'online', teams: S.teams, type: S.type, pace: S.pace, clock: 0,
+      mode: 'online', teams: S.teams, type: S.type, botDelay: S.botDelay, clock: 0,
       randomness: S.randomness,
       rounds: S.rounds, slots: S.slots, seats: S.seats,
       keepers: S.keepers.map(function (k) { return [k.team, k.id, k.round]; }),
@@ -1320,7 +1434,7 @@ async function pushRoom(first, silent) {
 function restoreRoom(state) {
   const s = state.s;
   S = Object.assign(freshSettings(), {
-    mode: 'online', teams: s.teams, type: s.type, pace: s.pace, clock: 0,
+    mode: 'online', teams: s.teams, type: s.type, botDelay: s.botDelay, clock: 0,
     randomness: s.randomness === undefined ? 1 : s.randomness,
     rounds: s.rounds, slots: s.slots, seats: s.seats.slice(),
     keepers: (s.keepers || []).map(function (k) { return { team: k[0], id: k[1], round: k[2] }; }),
@@ -1333,21 +1447,21 @@ function restoreRoom(state) {
   MySeat = S.seats.indexOf('me');
 
   St = newState();
-  St.keeperAt = {};
+  St.filled = {};
   state.picks.forEach(function (p) {
     const overall = p[0], team = p[1], id = p[2], keep = p[3];
     St.taken[id] = true;
     St.rosters[team].push(id);
     St.picks.push({ overall: overall, team: team, id: id, keeper: !!keep });
-    if (keep) St.keeperAt[overall] = id;
+    if (keep) St.filled[overall] = id;
   });
   const live = St.picks.filter(function (p) { return !p.keeper; }).length;
   St.onClock = 0;
   for (let i = 0, seen = 0; i < totalPicks() && seen < live; i++) {
-    if (St.keeperAt[i] === undefined) seen++;
+    if (St.filled[i] === undefined) seen++;
     St.onClock = i + 1;
   }
-  skipKeepers();
+  skipFilled();
   St.railTeam = Math.max(0, MySeat);
   showRoom();
   buildFilters();
@@ -1442,22 +1556,23 @@ function renderBoard() {
       const pk = byOverall[overall];
       const cls = ['bd-pick', 'bd-cell'];
       if (S.seats[t] === 'me') cls.push('is-yours');
+      const tag = ' data-ov="' + overall + '"';
       if (overall === St.landed) cls.push('just-landed');
       if (pk) {
         const p = P[pk.id];
         cls.push('p-' + p.pos);
         if (pk.keeper) cls.push('is-keeper');
-        h += '<div class="' + cls.join(' ') + '">' +
+        h += '<div class="' + cls.join(' ') + '"' + tag + '>' +
              '<div class="pn">' + esc(p.name) + (pk.keeper ? '<span class="kept">KEPT</span>' : '') + '</div>' +
              '<div class="pm"><b>' + POS_LABEL[p.pos] + '</b> ' + esc(p.team) +
              ' · ' + (pk.keeper ? 'R' + (r + 1) : overall + 1) + '</div></div>';
       } else if (overall === St.onClock) {
         cls.push('is-onclock');
-        h += '<div class="' + cls.join(' ') + '"><div class="waiting">On the clock</div>' +
+        h += '<div class="' + cls.join(' ') + '"' + tag + '><div class="waiting">On the clock</div>' +
              '<div class="pm">Pick ' + (overall + 1) + '</div></div>';
       } else {
         cls.push('is-empty');
-        h += '<div class="' + cls.join(' ') + '"><div class="pm">' + (overall + 1) + '</div></div>';
+        h += '<div class="' + cls.join(' ') + '"' + tag + '><div class="pm">' + (overall + 1) + '</div></div>';
       }
     }
   }
@@ -1525,6 +1640,12 @@ function renderPool() {
       '<div class="act">' + act + '</div></div>';
   }).join('');
   list.scrollTop = top;
+}
+
+function syncHideButton() {
+  const b = el('btn-hide');
+  b.classList.toggle('is-on', !St.hideTaken);
+  b.textContent = St.hideTaken ? 'Show drafted' : 'Hide drafted';
 }
 
 function renderRail() {
@@ -1645,7 +1766,7 @@ const PRESET_KEY = 'otc-presets';
 
 function configBlob() {
   return {
-    mode: S.mode, teams: S.teams, type: S.type, clock: S.clock, pace: S.pace,
+    mode: S.mode, teams: S.teams, type: S.type, clock: S.clock, botDelay: S.botDelay,
     randomness: S.randomness, slots: Object.assign({}, S.slots),
     seats: (S.seats || []).slice(),
     keepers: S.keepers.map(function (k) { return { team: k.team, id: k.id, round: k.round }; }),
@@ -1661,7 +1782,9 @@ function applyConfig(c) {
   S.teams = teams;
   S.type = ['snake', '3rr', 'linear'].indexOf(c.type) >= 0 ? c.type : 'snake';
   S.clock = [0, 15, 30, 60, 90].indexOf(+c.clock) >= 0 ? +c.clock : 30;
-  S.pace = +c.pace > 0 ? +c.pace : 0.45;
+  // `pace` was a multiplier in earlier saved setups; carry those over.
+  S.botDelay = c.botDelay !== undefined ? clampDelay(c.botDelay)
+             : c.pace !== undefined ? clampDelay(+c.pace * 1.3) : 0.6;
   S.randomness = c.randomness === undefined ? 1 : Math.max(0, Math.min(4, +c.randomness));
   if (c.slots && typeof c.slots === 'object') {
     S.slots = {};
@@ -1722,7 +1845,7 @@ function renderLobby() {
   teamsSel.value = S.teams;
   el('f-type').value = S.type;
   el('f-clock').value = S.clock;
-  el('f-pace').value = S.pace;
+  el('f-pace').value = S.botDelay;
   el('f-rand').value = S.randomness;
   el('f-clock').disabled = S.mode === 'online';
 
@@ -1806,7 +1929,7 @@ el('f-teams').addEventListener('change', function (e) {
 });
 el('f-type').addEventListener('change', function (e) { S.type = e.target.value; renderLobby(); });
 el('f-clock').addEventListener('change', function (e) { S.clock = +e.target.value; });
-el('f-pace').addEventListener('change', function (e) { S.pace = +e.target.value; saveConfig(); });
+el('f-pace').addEventListener('input', function (e) { S.botDelay = clampDelay(e.target.value); saveConfig(); });
 el('f-rand').addEventListener('change', function (e) { S.randomness = +e.target.value; saveConfig(); });
 
 el('f-seats').addEventListener('change', function (e) {
@@ -1821,7 +1944,9 @@ el('f-seats').addEventListener('change', function (e) {
 });
 
 /* ── Keeper board and picker ────────────────────────────────────────────── */
-let PickCell = null;   // { team, round } while the picker is open
+/* The picker serves two callers: the lobby's keeper board, and the live board
+   during a draft. `mode` says which, and everything below branches on it. */
+let PickCell = null;   // { mode:'keeper', team, round } | { mode:'board', overall }
 
 function renderKeeperBoard(nRounds) {
   const board = el('k-board');
@@ -1860,11 +1985,34 @@ function renderKeeperBoard(nRounds) {
 }
 
 function openPicker(team, round) {
-  PickCell = { team: team, round: round };
+  PickCell = { mode: 'keeper', team: team, round: round };
   el('pk-title').textContent = teamName(team) + ' · round ' + round;
   el('pk-q').value = '';
   const existing = S.keepers.find(function (k) { return k.team === team && k.round === round; });
   el('pk-clear').hidden = !existing;
+  el('pk-clear').textContent = 'Remove this keeper';
+  el('pk-note').textContent = '';
+  el('picker').hidden = false;
+  renderPickerList();
+  el('pk-q').focus();
+}
+
+function openBoardPicker(overall) {
+  const team = teamAt(overall);
+  const round = Math.floor(overall / S.teams) + 1;
+  const existing = pickAt(overall);
+  PickCell = { mode: 'board', overall: overall };
+  el('pk-title').textContent = teamName(team) + ' · round ' + round + ' · pick ' + (overall + 1);
+  el('pk-q').value = '';
+  // Emptying a square that has already gone by would leave that team a player
+  // short with no way to fill it, so past picks can be replaced but not cleared.
+  el('pk-clear').hidden = !existing || overall < St.onClock;
+  el('pk-clear').textContent = 'Clear this pick';
+  el('pk-note').textContent =
+    overall < St.onClock ? 'This pick has already happened. Choosing someone else rewrites it and puts ' +
+      (existing ? P[existing.id].name : 'the old player') + ' back on the board.'
+    : overall === St.onClock ? 'This is the pick on the clock.'
+    : 'This pick is in the future. Filling it now reserves it, spending that pick like a keeper.';
   el('picker').hidden = false;
   renderPickerList();
   el('pk-q').focus();
@@ -1873,11 +2021,18 @@ function closePicker() { PickCell = null; el('picker').hidden = true; }
 
 function renderPickerList() {
   const q = el('pk-q').value.trim().toLowerCase();
-  // A player kept elsewhere is off the table; the one in this cell is not.
+  // Whoever is already spoken for is off the table; the player sitting in this
+  // very square is not, so re-picking them is a no-op rather than an error.
   const spoken = {};
-  S.keepers.forEach(function (k) {
-    if (!PickCell || k.team !== PickCell.team || k.round !== PickCell.round) spoken[k.id] = 1;
-  });
+  if (PickCell && PickCell.mode === 'board') {
+    const here = pickAt(PickCell.overall);
+    Object.keys(St.taken).forEach(function (id) { spoken[id] = 1; });
+    if (here) delete spoken[here.id];
+  } else {
+    S.keepers.forEach(function (k) {
+      if (!PickCell || k.team !== PickCell.team || k.round !== PickCell.round) spoken[k.id] = 1;
+    });
+  }
   const rows = P.filter(function (p) {
     if (spoken[p.id]) return false;
     return !q || p.name.toLowerCase().indexOf(q) >= 0 || p.team.toLowerCase().indexOf(q) >= 0;
@@ -1908,17 +2063,31 @@ el('pk-list').addEventListener('click', function (e) {
   const row = e.target.closest('[data-pk]');
   if (!row || !PickCell) return;
   const cell = PickCell;
-  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
-  S.keepers.push({ team: cell.team, id: +row.dataset.pk, round: cell.round });
+  const id = +row.dataset.pk;
   closePicker();
+  if (cell.mode === 'board') return assignPick(cell.overall, id);
+  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
+  S.keepers.push({ team: cell.team, id: id, round: cell.round });
   renderLobby();
 });
 el('pk-clear').addEventListener('click', function () {
   if (!PickCell) return;
   const cell = PickCell;
-  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
   closePicker();
+  if (cell.mode === 'board') return assignPick(cell.overall, null);
+  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
   renderLobby();
+});
+
+el('board').addEventListener('click', function (e) {
+  const cell = e.target.closest('[data-ov]');
+  if (!cell || !St) return;
+  const overall = +cell.dataset.ov;
+  if (!boardEditable(overall)) {
+    St.warn = 'In a shared room you can only set your own pick, and only when it is your turn.';
+    return renderRoomBar();
+  }
+  openBoardPicker(overall);
 });
 el('k-clear').addEventListener('click', function () {
   S.keepers = [];
@@ -2012,6 +2181,38 @@ el('btn-pause').addEventListener('click', function () {
   renderClockbar();
 });
 
+el('btn-set').addEventListener('click', function () {
+  const bar = el('setbar');
+  bar.hidden = !bar.hidden;
+  this.classList.toggle('is-on', !bar.hidden);
+  if (!bar.hidden) syncSettings();
+});
+function syncSettings() {
+  el('s-clock').value = S.clock;
+  el('s-delay').value = S.botDelay;
+  el('s-rand').value = S.randomness;
+  el('s-clock').disabled = S.mode === 'online';
+  el('s-hint').textContent = S.mode === 'online'
+    ? 'An online room has no shared clock, so picks are untimed. Only your own live pick can be set from the board.'
+    : 'Changes apply from the next pick. Click any square on the board to set who was taken there.';
+}
+el('s-clock').addEventListener('input', function (e) {
+  const n = Math.max(0, Math.min(600, +e.target.value || 0));
+  S.clock = n;
+  // Re-time a clock already running rather than waiting for the next pick.
+  if (St.deadline) St.deadline = n > 0 ? Date.now() + n * 1000 : 0;
+  saveConfig();
+  renderClockbar();
+});
+el('s-delay').addEventListener('input', function (e) {
+  S.botDelay = clampDelay(e.target.value);
+  saveConfig();
+});
+el('s-rand').addEventListener('change', function (e) {
+  S.randomness = +e.target.value;
+  saveConfig();
+});
+
 el('btn-auto').addEventListener('click', function () {
   if (!St || S.mode === 'online') return;
   St.auto = !St.auto;
@@ -2028,8 +2229,7 @@ el('btn-auto').addEventListener('click', function () {
 el('q').addEventListener('input', function (e) { St.q = e.target.value; renderPool(); });
 el('btn-hide').addEventListener('click', function () {
   St.hideTaken = !St.hideTaken;
-  this.classList.toggle('is-on', St.hideTaken);
-  this.textContent = St.hideTaken ? 'Showing available' : 'Hide drafted';
+  syncHideButton();
   renderPool();
 });
 
