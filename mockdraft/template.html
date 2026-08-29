@@ -1,4 +1,5 @@
 <title>On the Clock</title>
+<script src="firebase-config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
@@ -526,6 +527,18 @@ button { cursor: pointer; border: 0; background: none; }
 @keyframes pulse { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .room-bar.is-busy .live::before { animation: none; } }
 .room-bar .warn { color: var(--TE); }
+.room-bar .code {
+  font: 700 15px/1 var(--mono); letter-spacing: .18em; color: var(--bone);
+  padding: 4px 9px; border-radius: 5px; background: rgba(242,233,216,.09);
+}
+.room-bar .code:empty { display: none; }
+.seatclaim { display: inline-flex; align-items: center; gap: 6px; }
+.seatclaim select, .seatclaim input {
+  padding: 5px 7px; border-radius: 5px;
+  background: var(--ground); border: 1px solid var(--line); color: var(--ink); font-size: 13px;
+}
+.seatclaim input { width: 120px; }
+.preset-row .btn { flex: none; }
 
 .mode-pick { display: flex; gap: 8px; flex-wrap: wrap; }
 .mode {
@@ -646,6 +659,16 @@ button { cursor: pointer; border: 0; background: none; }
         <p class="hint" id="mode-hint"></p>
       </div>
 
+      <div class="card" id="room-card" hidden>
+        <span class="eyebrow">Room</span>
+        <div class="preset-row" id="rm-controls">
+          <button class="btn btn-primary" id="rm-create">Create a room</button>
+          <input id="rm-code" placeholder="or enter a room code" maxlength="12" autocomplete="off">
+          <button class="btn" id="rm-join">Join</button>
+        </div>
+        <p class="hint" id="rm-hint"></p>
+      </div>
+
       <div class="card">
         <span class="eyebrow">The room</span>
         <div class="grid2">
@@ -733,7 +756,15 @@ button { cursor: pointer; border: 0; background: none; }
   <div id="room" hidden>
     <div class="room-bar" id="room-bar" hidden>
       <span class="live" id="room-live">Shared room</span>
+      <span class="code" id="room-code"></span>
+      <button class="btn" id="room-copy">Copy invite link</button>
       <span id="room-msg"></span>
+      <span class="seatclaim" id="seat-claim" hidden>
+        <select id="sc-seat"></select>
+        <input id="sc-name" placeholder="Your name" maxlength="24" autocomplete="off">
+        <button class="btn" id="sc-go">Take seat</button>
+      </span>
+      <button class="btn" id="sc-leave" hidden>Leave seat</button>
       <span class="warn" id="room-warn"></span>
     </div>
 
@@ -1145,6 +1176,13 @@ function boardEditable(overall) {
 }
 function assignPick(overall, id) {
   if (overall < 0 || overall >= totalPicks()) return false;
+  // A live room only ever accepts the pick on the clock, written through the
+  // transport; rewriting history is not something to do to other people.
+  if (Net.kind === 'firebase') {
+    if (overall !== St.onClock || id === null || id === undefined) return false;
+    makePick(id);
+    return true;
+  }
   const team = teamAt(overall);
   const existing = pickAt(overall);
   const wasLive = overall === St.onClock;
@@ -1221,13 +1259,13 @@ function startDraft() {
   showRoom();
   buildFilters();
   renderAll();
-  if (S.mode === 'online') {
-    // One client resolves any bots that open the draft, then saves the room.
+  if (S.mode === 'online' && Net.kind !== 'firebase') {
+    // The republish transport has no clock, so one client resolves the opening
+    // bots and saves the room.
     if (runBotsUntilHuman()) { renderAll(); }
     pushRoom(true);
-  } else {
-    St.timer = setInterval(tick, 100);
   }
+  St.timer = setInterval(tick, 100);
   advance();
 }
 
@@ -1257,7 +1295,8 @@ function advance() {
   const team = teamAt(St.onClock);
 
   if (S.mode === 'online') {
-    St.deadline = 0; St.botAt = 0;
+    if (Net.kind !== 'firebase') St.deadline = 0;
+    St.botAt = 0;
     renderAll();
     return;
   }
@@ -1285,8 +1324,12 @@ function showCurtain(team) {
   el('curtain').hidden = false;
 }
 
+function nowMs() { return Net.kind === 'firebase' ? netNow() : Date.now(); }
+
 function tick() {
-  if (!St || St.paused || S.mode === 'online') return;
+  if (!St) return;
+  if (Net.kind === 'firebase') { if (St.deadline) renderClock(); return; }
+  if (St.paused || S.mode === 'online') return;
   if (!el('curtain').hidden) return;
   const team = teamAt(St.onClock);
   if (St.botAt && Date.now() >= St.botAt) {
@@ -1322,6 +1365,17 @@ function applyPick(id) {
 
 function makePick(id) {
   if (!St || St.taken[id] || St.onClock >= totalPicks()) return;
+  if (Net.kind === 'firebase') {
+    const overall = St.onClock;
+    if (teamAt(overall) !== MySeat) return;
+    St.busy = true;
+    renderRoomBar();
+    fbWritePick(overall, id, false).then(function (ok) {
+      St.busy = false;
+      if (!ok) { St.warn = 'Someone picked first — catching up.'; renderRoomBar(); }
+    });
+    return;
+  }
   const wasLocal = isLocal(teamAt(St.onClock));
   if (S.mode !== 'hotseat' && wasLocal) St.lastHuman = teamAt(St.onClock);
   applyPick(id);
@@ -1471,6 +1525,277 @@ function restoreRoom(state) {
 </script>
 
 <script>
+/* ── Online drafting over Firebase ──────────────────────────────────────────
+   A published Artifact cannot open a socket, so its online mode had to work by
+   republishing the page — turn-based, untimed, and edit-access only. Served as
+   a normal web page there is no such limit, so this transport does the job
+   properly: live picks, a real shared clock, and rejoining a room you closed.
+
+   The room lives at /rooms/<code> and is the single source of truth. Nothing is
+   held on any one client, so no host has to stay online.
+
+     meta   the settings the room was created with, written once
+     seats  claimed human seats; anything unclaimed drafts as a bot
+     picks  keyed by overall pick number, create-only
+     clock  who is on the clock and when their time expires
+
+   Picks are keyed by pick number and the rules make them create-only, so two
+   people picking at the same instant cannot both land: the transaction that
+   arrives second sees a value and aborts, and that client just re-renders onto
+   the winner's board. That is also why nobody can rewrite an earlier pick. */
+
+const Net = {
+  kind: null,      // 'firebase' once a room is joined
+  code: null, db: null, ref: null, off: null,
+  me: null, seats: {}, meta: null, clock: null,
+  skew: 0, botTimer: null, autoTimer: null, err: '', joining: false,
+};
+
+function fbConfigured() {
+  const c = window.OTC_FIREBASE;
+  return !!(c && typeof c.apiKey === 'string' && c.apiKey.length > 10 &&
+            typeof c.databaseURL === 'string' && c.databaseURL.indexOf('http') === 0);
+}
+function clientId() {
+  if (Net.me) return Net.me;
+  let v = null;
+  try { v = localStorage.getItem('otc-cid'); } catch (e) { /* no storage */ }
+  if (!v) {
+    v = 'c' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    try { localStorage.setItem('otc-cid', v); } catch (e) { /* no storage */ }
+  }
+  Net.me = v;
+  return v;
+}
+/* Server-corrected time, so every client's countdown agrees. */
+function netNow() { return Date.now() + (Net.skew || 0); }
+
+function loadScript(src) {
+  return new Promise(function (res, rej) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = function () { rej(new Error('could not load ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+let fbReady = null;
+function fbInit() {
+  if (fbReady) return fbReady;
+  fbReady = (async function () {
+    if (!fbConfigured()) return null;
+    if (typeof firebase === 'undefined') {
+      const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+      await loadScript(base + 'firebase-app-compat.js');
+      await loadScript(base + 'firebase-database-compat.js');
+    }
+    const app = (firebase.apps && firebase.apps.length) ? firebase.app()
+              : firebase.initializeApp(window.OTC_FIREBASE);
+    Net.db = firebase.database(app);
+    Net.db.ref('.info/serverTimeOffset').on('value', function (s) { Net.skew = s.val() || 0; });
+    return Net.db;
+  })().catch(function (e) {
+    Net.err = e.message || 'Firebase would not start.';
+    fbReady = null;                    // let a later attempt retry
+    return null;
+  });
+  return fbReady;
+}
+
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no O/0, no I/1
+function makeCode() {
+  let s = '';
+  for (let i = 0; i < 5; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  return s;
+}
+
+async function fbCreateRoom() {
+  const db = await fbInit();
+  if (!db) return null;
+  S.rounds = rounds();
+  const code = makeCode();
+  const ref = db.ref('rooms/' + code);
+  const snap = await ref.child('meta').get();
+  if (snap.exists()) return fbCreateRoom();          // astronomically unlikely; just try again
+  await ref.child('meta').set({
+    teams: S.teams, type: S.type, rounds: S.rounds, clock: S.clock,
+    botDelay: S.botDelay, randomness: S.randomness, slots: S.slots,
+    keepers: S.keepers.map(function (k) { return [k.team, k.id, k.round]; }),
+    createdAt: Date.now(),
+  });
+  // Keepers are ordinary picks that happen to be spoken for before the draft.
+  for (let i = 0; i < S.keepers.length; i++) {
+    const k = S.keepers[i];
+    const ov = overallFor(k.team, k.round);
+    if (ov >= 0) await ref.child('picks/' + ov).set({ t: k.team, p: k.id, k: 1 });
+  }
+  return code;
+}
+
+async function fbJoin(code) {
+  const db = await fbInit();
+  if (!db) return false;
+  code = String(code || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) { Net.err = 'That is not a room code.'; return false; }
+  const ref = db.ref('rooms/' + code);
+  const meta = await ref.child('meta').get();
+  if (!meta.exists()) { Net.err = 'No room with the code ' + code + '.'; return false; }
+
+  if (Net.off) { Net.off(); Net.off = null; }
+  Net.code = code;
+  Net.ref = ref;
+  Net.kind = 'firebase';
+  Net.err = '';
+  clientId();
+  const handler = ref.on('value', function (snap) { onRoomData(snap.val()); },
+                         function (e) { Net.err = 'Lost the room: ' + e.message; renderRoomBar(); });
+  Net.off = function () { ref.off('value', handler); };
+  try { localStorage.setItem('otc-room', code); } catch (e) { /* no storage */ }
+  return true;
+}
+
+function fbLeave() {
+  if (Net.off) { Net.off(); Net.off = null; }
+  clearTimeout(Net.botTimer);
+  clearTimeout(Net.autoTimer);
+  Net.kind = null; Net.code = null; Net.ref = null; Net.seats = {}; Net.meta = null; Net.clock = null;
+  try { localStorage.removeItem('otc-room'); } catch (e) { /* no storage */ }
+}
+
+function fbClaimSeat(i, name) {
+  if (!Net.ref) return Promise.resolve(false);
+  const cid = clientId();
+  return Net.ref.child('seats/' + i).transaction(function (cur) {
+    if (cur !== null && cur.cid !== cid) return;      // already taken by someone else
+    return { name: String(name || 'Player').slice(0, 24), cid: cid };
+  }).then(function (r) { return !!(r && r.committed); });
+}
+function fbReleaseSeat(i) {
+  if (!Net.ref) return Promise.resolve();
+  return Net.ref.child('seats/' + i).transaction(function (cur) {
+    if (cur && cur.cid === clientId()) return null;
+    return;
+  });
+}
+
+/* Only ever creates. A second writer for the same pick number aborts and
+   re-renders onto whatever landed first. */
+function fbWritePick(overall, id, keeper) {
+  if (!Net.ref) return Promise.resolve(false);
+  const team = teamAt(overall);
+  return Net.ref.child('picks/' + overall).transaction(function (cur) {
+    if (cur !== null) return;
+    return { t: team, p: id, k: keeper ? 1 : 0 };
+  }).then(function (r) { return !!(r && r.committed); });
+}
+
+function fbSetClock(next) {
+  if (!Net.ref) return;
+  const secs = Net.meta && Net.meta.clock ? Net.meta.clock : 0;
+  Net.ref.child('clock').transaction(function (cur) {
+    if (cur && cur.onClock === next) return;          // already running for this pick
+    return { onClock: next, endsAt: secs > 0 ? netNow() + secs * 1000 : 0 };
+  });
+}
+
+/* ── Applying a room snapshot ─────────────────────────────────────────────── */
+function onRoomData(data) {
+  if (!data || !data.meta) {
+    Net.err = 'This room no longer exists.';
+    fbLeave();
+    quitDraft();
+    return;
+  }
+  const m = Net.meta = data.meta;
+  Net.seats = data.seats || {};
+  Net.clock = data.clock || null;
+
+  S = Object.assign(freshSettings(), {
+    mode: 'online', teams: m.teams, type: m.type, rounds: m.rounds,
+    clock: m.clock || 0, botDelay: m.botDelay === undefined ? 0.6 : m.botDelay,
+    randomness: m.randomness === undefined ? 1 : m.randomness,
+    slots: m.slots || Object.assign({}, STANDARD),
+    keepers: (m.keepers || []).map(function (k) { return { team: k[0], id: k[1], round: k[2] }; }),
+  });
+
+  const cid = clientId();
+  S.seats = [];
+  for (let t = 0; t < S.teams; t++) {
+    const seat = Net.seats[t];
+    S.seats.push(!seat ? 'bot' : (seat.cid === cid ? 'me' : 'friend'));
+  }
+  MySeat = S.seats.indexOf('me');
+
+  const keepQueues = St ? St.queues : {};
+  const keepUi = St ? { tab: St.tab, filter: St.filter, q: St.q, hideTaken: St.hideTaken,
+                        railTeam: St.railTeam, scrolledTo: St.scrolledTo } : null;
+  St = newState();
+  if (keepUi) Object.assign(St, keepUi);
+  St.queues = keepQueues || {};
+
+  const picks = data.picks || {};
+  Object.keys(picks).forEach(function (k) {
+    const overall = +k, v = picks[k];
+    if (!(overall >= 0 && overall < totalPicks())) return;
+    St.taken[v.p] = true;
+    St.rosters[v.t].push(v.p);
+    St.picks.push({ overall: overall, team: v.t, id: v.p, keeper: !!v.k });
+    if (v.k) St.filled[overall] = v.p;
+  });
+  // The clock stands at the first pick nobody has made.
+  St.onClock = totalPicks();
+  for (let i = 0; i < totalPicks(); i++) {
+    if (picks[i] === undefined) { St.onClock = i; break; }
+  }
+  if (St.railTeam >= S.teams) St.railTeam = Math.max(0, MySeat);
+
+  if (el('lobby').hidden === false) { showRoom(); buildFilters(); }
+  el('room').hidden = St.onClock < totalPicks() ? false : true;
+  if (St.onClock >= totalPicks()) { renderRecap(); el('recap').hidden = false; }
+  renderAll();
+  driveRoom();
+}
+
+/* Keep the room moving: run bot seats, keep the shared clock wound, and cover
+   for a drafter who has wandered off. Every one of these paths is a create-only
+   transaction, so several clients trying at once is harmless. */
+function driveRoom() {
+  clearTimeout(Net.botTimer);
+  clearTimeout(Net.autoTimer);
+  if (!Net.ref || St.onClock >= totalPicks()) return;
+
+  const overall = St.onClock;
+  const team = teamAt(overall);
+  const claimed = Object.keys(Net.seats).map(Number).sort(function (a, b) { return a - b; });
+  // One client nominally drives the bots; the others stand by a few seconds in
+  // case that client has closed the tab, so a room never stalls.
+  const isDriver = claimed.length === 0 || (Net.seats[claimed[0]] || {}).cid === clientId();
+  const standby = isDriver ? 0 : 4000;
+
+  if (isBot(team)) {
+    Net.botTimer = setTimeout(function () {
+      const p = botChoice(team, false);
+      if (p) fbWritePick(overall, p.id, false);
+    }, S.botDelay * 1000 + standby + Math.random() * 250);
+    return;
+  }
+
+  fbSetClock(overall);
+  const endsAt = Net.clock && Net.clock.onClock === overall ? Net.clock.endsAt : 0;
+  if (!endsAt) return;                      // untimed room
+  St.deadline = endsAt;
+  // Your own clock is yours to run out; anyone else's gets a grace period first.
+  const mine = team === MySeat;
+  const fireAt = endsAt + (mine ? 0 : 5000) - netNow();
+  Net.autoTimer = setTimeout(function () {
+    const p = mine ? autoChoice(team) : botChoice(team, true);
+    if (p) fbWritePick(overall, p.id, false);
+  }, Math.max(120, fireAt));
+}
+</script>
+
+<script>
 /* ── Queues ─────────────────────────────────────────────────────────────────
    One queue per seat, so passing the device around doesn't hand your shortlist
    to the next drafter. */
@@ -1500,13 +1825,37 @@ function renderRoomBar() {
   const bar = el('room-bar');
   bar.hidden = false;
   bar.classList.toggle('is-busy', !!St.busy);
+  const live = Net.kind === 'firebase';
   const done = St.onClock >= totalPicks();
-  el('room-live').textContent = St.busy ? 'Saving' : 'Shared room';
+
+  el('room-live').textContent = St.busy ? 'Saving' : live ? 'Live' : 'Shared room';
+  el('room-code').textContent = live && Net.code ? Net.code : '';
+  el('room-copy').hidden = !live || !Net.code;
+
   el('room-msg').textContent = done ? 'Draft complete.'
-    : MySeat < 0 ? 'Pick your seat in the Rosters tab to join.'
-    : teamAt(St.onClock) === MySeat ? 'Your pick — the room saves when you draft.'
-    : 'Waiting on ' + teamName(teamAt(St.onClock)) + '. This page updates when they pick.';
-  el('room-warn').textContent = St.warn || '';
+    : MySeat < 0 ? (live ? 'Take a seat to join the draft. Unclaimed seats draft as bots.'
+                         : 'Pick your seat in the Rosters tab to join.')
+    : teamAt(St.onClock) === MySeat ? 'Your pick.'
+    : 'Waiting on ' + teamName(teamAt(St.onClock)) +
+      (live ? '.' : '. This page updates when they pick.');
+
+  // Seat claiming only exists in a live room, where seats are shared state.
+  const claim = el('seat-claim');
+  claim.hidden = !live || MySeat >= 0 || done;
+  el('sc-leave').hidden = !live || MySeat < 0 || St.picks.some(function (p) {
+    return !p.keeper && p.team === MySeat;                 // no bailing out mid-draft
+  });
+  if (!claim.hidden) {
+    const sel = el('sc-seat');
+    let opts = '';
+    for (let t = 0; t < S.teams; t++) {
+      if (Net.seats[t]) continue;
+      opts += '<option value="' + t + '">Team ' + (t + 1) + '</option>';
+    }
+    sel.innerHTML = opts || '<option value="">Every seat is taken</option>';
+    el('sc-go').disabled = !opts;
+  }
+  el('room-warn').textContent = St.warn || Net.err || '';
 }
 
 function renderClock() {
@@ -1516,7 +1865,7 @@ function renderClock() {
     c.classList.remove('is-low');
     return;
   }
-  const s = Math.ceil(Math.max(0, St.deadline - Date.now()) / 1000);
+  const s = Math.ceil(Math.max(0, St.deadline - nowMs()) / 1000);
   c.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   c.classList.toggle('is-low', s <= 10);
 }
@@ -1825,15 +2174,40 @@ function renderPresets() {
 function presetHint(msg) { el('ps-hint').textContent = msg; }
 
 /* ── Lobby ──────────────────────────────────────────────────────────────── */
+let HasArtifact = false;      // set once the capability answers, if it ever does
+
+/* Online drafting needs somewhere to keep the room. Served as a normal web page
+   that is Firebase; inside the Artifact viewer, where sockets are blocked, it
+   falls back to republishing the page. With neither, online mode is hidden
+   rather than left in place quietly broken. */
+function onlineTransport() {
+  if (fbConfigured()) return 'firebase';
+  if (HasArtifact) return 'artifact';
+  return null;
+}
+
 const MODE_HINT = {
   solo: 'One seat is yours. Bots fill the rest and pick straight away.',
   hotseat: 'Give a seat to each person here. The room covers itself when the ' +
            'device changes hands, and every seat keeps its own queue.',
-  online: 'Everyone opens this same page and claims a seat on their own device. ' +
-          'Each pick saves the room and the other views catch up, so play is ' +
-          'turn-based and untimed. Friends need edit access, not just the link — ' +
-          'a view-only viewer cannot pick.',
+  online: '',   // filled in per transport by onlineHint()
 };
+function onlineHint() {
+  const t = onlineTransport();
+  if (t === 'firebase') {
+    return 'Create a room, send the code or the invite link, and everyone drafts live ' +
+           'on their own device. Picks appear straight away, the clock is shared, and ' +
+           'you can close the tab and come back. Any seat nobody claims drafts as a bot.';
+  }
+  if (t === 'artifact') {
+    return 'This copy has no live connection, so a room works by saving the page after ' +
+           'each pick: turn-based, untimed, and everyone needs edit access rather than ' +
+           'just the link. Hosting the page with Firebase configured makes it properly live.';
+  }
+  return 'Online drafting is switched off because this copy has nowhere to keep the room. ' +
+         'Add your Firebase details to firebase-config.js — the file has the steps — and ' +
+         'this becomes a live draft. Solo and same-screen need no setup.';
+}
 
 function renderLobby() {
   const teamsSel = el('f-teams');
@@ -1852,7 +2226,11 @@ function renderLobby() {
   document.querySelectorAll('#f-mode .mode').forEach(function (b) {
     b.classList.toggle('is-on', b.dataset.mode === S.mode);
   });
-  el('mode-hint').textContent = MODE_HINT[S.mode];
+  el('mode-hint').textContent = S.mode === 'online' ? onlineHint() : MODE_HINT[S.mode];
+  const t = onlineTransport();
+  document.querySelector('[data-mode="online"]').disabled = !t;
+  el('room-card').hidden = !(S.mode === 'online' && t === 'firebase');
+  el('go').hidden = S.mode === 'online' && t === 'firebase';
 
   normalizeSeats();
   const opts = S.mode === 'solo'
@@ -2103,6 +2481,77 @@ el('f-slots').addEventListener('click', function (e) {
   renderLobby();
 });
 
+/* ── Room controls ──────────────────────────────────────────────────────── */
+function roomHint(msg) { el('rm-hint').textContent = msg; }
+
+el('rm-create').addEventListener('click', async function () {
+  this.disabled = true;
+  roomHint('Creating the room…');
+  S.rounds = rounds();
+  try {
+    const code = await fbCreateRoom();
+    if (!code) { roomHint(Net.err || 'Could not reach Firebase. Check firebase-config.js.'); return; }
+    if (!(await fbJoin(code))) { roomHint(Net.err || 'Made the room but could not join it.'); return; }
+    setRoomUrl(code);
+    roomHint('');
+  } catch (e) {
+    roomHint('Could not create the room: ' + (e && e.message ? e.message : 'unknown error'));
+  } finally { this.disabled = false; }
+});
+
+el('rm-join').addEventListener('click', async function () {
+  const code = el('rm-code').value.trim().toUpperCase();
+  if (!code) { roomHint('Enter the code someone sent you.'); return; }
+  this.disabled = true;
+  roomHint('Looking for ' + code + '…');
+  try {
+    if (await fbJoin(code)) { setRoomUrl(code); roomHint(''); }
+    else roomHint(Net.err || 'Could not join that room.');
+  } finally { this.disabled = false; }
+});
+el('rm-code').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('rm-join').click(); });
+
+function setRoomUrl(code) {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('room', code);
+    history.replaceState(null, '', u.toString());
+  } catch (e) { /* file:// and the like */ }
+}
+function inviteUrl() {
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('room', Net.code);
+    return u.toString();
+  } catch (e) { return Net.code; }
+}
+
+el('room-copy').addEventListener('click', async function () {
+  const url = inviteUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    this.textContent = 'Link copied';
+    setTimeout(() => { this.textContent = 'Copy invite link'; }, 1800);
+  } catch (e) {
+    // Clipboard access is often refused in an iframe; show the link instead.
+    St.warn = 'Copy this: ' + url;
+    renderRoomBar();
+  }
+});
+
+el('sc-go').addEventListener('click', async function () {
+  const seat = el('sc-seat').value;
+  if (seat === '') return;
+  const name = el('sc-name').value.trim() || 'Team ' + (+seat + 1);
+  this.disabled = true;
+  const ok = await fbClaimSeat(+seat, name);
+  this.disabled = false;
+  if (!ok) { St.warn = 'Somebody just took that seat.'; renderRoomBar(); }
+});
+el('sc-leave').addEventListener('click', function () {
+  if (MySeat >= 0) fbReleaseSeat(MySeat);
+});
+
 el('ps-save').addEventListener('click', function () {
   const name = el('ps-name').value.trim();
   if (!name) { presetHint('Give the setup a name first.'); return; }
@@ -2147,7 +2596,15 @@ el('go').addEventListener('click', function () {
 });
 el('btn-again').addEventListener('click', quitDraft);
 el('btn-quit').addEventListener('click', function () {
-  if (S.mode === 'online' && !confirm('Leave this room? The draft stays saved for everyone else.')) return;
+  if (S.mode === 'online' && !confirm('Leave this room? The draft carries on without you.')) return;
+  if (Net.kind === 'firebase') {
+    fbLeave();
+    try {
+      const u = new URL(location.href);
+      u.searchParams.delete('room');
+      history.replaceState(null, '', u.toString());
+    } catch (e) { /* ignore */ }
+  }
   quitDraft();
 });
 el('btn-board').addEventListener('click', function () {
@@ -2303,6 +2760,27 @@ useCap('downloads').then(function (dl) {
 }).catch(function () { /* no downloads in this view */ });
 
 /* ── Boot ───────────────────────────────────────────────────────────────── */
+/* The Artifact capability answers late or not at all, so ask once and redraw
+   the lobby if it turns out to be there. */
+useCap('artifact').then(function (a) {
+  if (!a) return;
+  HasArtifact = true;
+  if (!el('lobby').hidden) renderLobby();
+});
+
+/* An invite link drops you straight into the room it names. */
+(function () {
+  let code = null;
+  try { code = new URLSearchParams(location.search).get('room'); } catch (e) { /* ignore */ }
+  if (!code || !fbConfigured()) return;
+  S.mode = 'online';
+  fbJoin(code).then(function (ok) {
+    if (ok) return;
+    renderLobby();
+    roomHint(Net.err || 'Could not open that room.');
+  });
+})();
+
 if (ROOM0 && ROOM0.picks) {
   try { restoreRoom(ROOM0); }
   catch (e) { renderLobby(); }

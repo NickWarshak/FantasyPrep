@@ -13,12 +13,21 @@ const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // Only bare <script> blocks; the room-state blob carries attributes.
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-// Blocks 3 and 4 are rendering and DOM event wiring; 1 and 2 are the engine.
-const engine = scripts.slice(0, 2).join('\n');
+// Find blocks by what is in them rather than by position, so inserting a new
+// one (the network transport did exactly that) doesn't silently break the suite.
+const block = (needle) => {
+  const hit = scripts.find(b => b.includes(needle));
+  if (!hit) throw new Error('no script block containing ' + needle);
+  return hit;
+};
+// The engine, plus the transport it now calls into. Rendering and DOM wiring
+// stay out and are stubbed below.
+const engine = [block('function teamAt('), block('function makePick('), block('const Net =')]
+  .join('\n');
 // The saved-setup helpers live inside the events block; take just the pure part
 // (up to the first function that touches the DOM) so they are tested from the
 // shipped source rather than a copy.
-const events = scripts[3];
+const events = block('const CFG_KEY');
 const persistence = events.slice(events.indexOf('const CFG_KEY'),
                                  events.indexOf('function renderPresets()'));
 
@@ -31,12 +40,16 @@ const stub = `
     getElementById: (id) => (__els[id] = __els[id] || { hidden: false, textContent: '', value: '',
       classList: { remove(){}, add(){}, toggle(){} } }),
     querySelector: () => null, querySelectorAll: () => [], addEventListener(){},
+    createElement: () => ({ set src(v) {}, set onload(v) {}, set onerror(v) {} }),
+    head: { appendChild(){} },
     documentElement: { outerHTML: '<html><body><script id="room-state" type="application/json">null<\/script></body></html>' },
   };
   const __store = {};
   const localStorage = { getItem: k => (k in __store ? __store[k] : null),
                          setItem: (k, v) => { __store[k] = String(v); } };
   function setInterval(){ return 1; } function clearInterval(){}
+  function setTimeout(){ return 1; } function clearTimeout(){}
+  const window = {}; const location = { href: 'http://test/', search: '' };
 `;
 
 const api = new Function(stub + engine + persistence + `
@@ -46,7 +59,8 @@ const api = new Function(stub + engine + persistence + `
            botChoice, autoChoice, startDraft, makePick, applyPick, rounds,
            normalizeSeats, isBot, isLocal, teamName, keeperProblems, placeKeepers,
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
-           assignPick, pickAt, boardEditable, skipFilled,
+           assignPick, pickAt, boardEditable, skipFilled, Net, fbConfigured,
+           onRoomData, clientId, makeCode,
            configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
@@ -423,6 +437,64 @@ check("online: someone else’s pick is not", !api.boardEditable(api.overallFor(
 check('online: a future square of your own is not', !api.boardEditable(api.overallFor(2, 3)));
 api.S.mode = 'solo';
 check('offline: any square is editable', api.boardEditable(api.overallFor(5, 1)));
+
+/* ── Reading a live room ────────────────────────────────────────────────────
+   Every client rebuilds the whole draft from the room snapshot, so this is the
+   piece that has to be exactly right: picks arrive as a sparse map keyed by
+   pick number, and keepers leave gaps in it. */
+console.log('\nlive room snapshot');
+const STD = Object.assign({}, api.STANDARD);
+function snapshot(over) {
+  return Object.assign({
+    meta: { teams: 8, type: 'snake', rounds: 16, clock: 30, botDelay: 0.6,
+            randomness: 1, slots: STD, keepers: [], createdAt: 1 },
+    seats: {}, picks: {},
+  }, over);
+}
+const cid = api.clientId();
+
+api.onRoomData(snapshot({
+  seats: { 2: { name: 'Nick', cid: cid }, 5: { name: 'Sam', cid: 'someone-else' } },
+  picks: { 0: { t: 0, p: 10, k: 0 }, 1: { t: 1, p: 11, k: 0 } },
+}));
+check('your own claimed seat comes back as yours', api.MySeat === 2, 'seat ' + api.MySeat);
+check('another person reads as a friend, not a bot', api.S.seats[5] === 'friend');
+check('an unclaimed seat drafts as a bot', api.S.seats[7] === 'bot');
+check('the clock lands on the first pick nobody has made', api.St.onClock === 2, api.St.onClock);
+check('rosters rebuild from the snapshot',
+  api.St.rosters[0].join() === '10' && api.St.rosters[1].join() === '11');
+check('drafted players are off the board', api.St.taken[10] && api.St.taken[11]);
+
+// A keeper sits at a pick number ahead of the live one, leaving a hole in the
+// map. The clock must stop at the hole, not run past it to the keeper.
+api.onRoomData(snapshot({
+  meta: { teams: 8, type: 'snake', rounds: 16, clock: 30, botDelay: 0.6, randomness: 1,
+          slots: STD, keepers: [[3, gib0, 1]], createdAt: 1 },
+  picks: { 0: { t: 0, p: 10, k: 0 }, 3: { t: 3, p: gib0, k: 1 } },
+}));
+check('a gap left by a keeper stops the clock at the gap', api.St.onClock === 1, api.St.onClock);
+check('the keeper is flagged as kept',
+  api.St.picks.filter(p => p.keeper).length === 1 && api.pickAt(3).id === gib0);
+check('the keeper is already on its roster', api.St.rosters[3].includes(gib0));
+check('the keeper is off the board', api.St.taken[gib0] === true);
+check('the keeper square is marked spent', api.St.filled[3] === gib0);
+
+// A finished room.
+const full = {};
+for (let i = 0; i < 8 * 16; i++) full[i] = { t: api.teamAt(i), p: i, k: 0 };
+api.onRoomData(snapshot({ picks: full }));
+check('a finished room reports the draft complete', api.St.onClock === 8 * 16);
+
+// Nobody has claimed anything yet.
+api.onRoomData(snapshot({}));
+check('an unclaimed room leaves you watching', api.MySeat === -1);
+check('an empty room starts at pick one', api.St.onClock === 0);
+
+/* Room codes avoid the characters people misread aloud. */
+let codes = '';
+for (let i = 0; i < 200; i++) codes += api.makeCode();
+check('room codes are five characters', api.makeCode().length === 5);
+check('room codes skip O, 0, I and 1', !/[O0I1]/.test(codes));
 
 /* ── Online room round-trip ─────────────────────────────────────────────── */
 console.log('\nonline room');

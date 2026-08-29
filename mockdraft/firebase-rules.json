@@ -1,0 +1,36 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "rooms": {
+      "$code": {
+        ".read": "$code.length >= 4 && $code.length <= 12",
+
+        "meta": {
+          ".write": "!data.exists() && newData.hasChildren(['teams', 'rounds', 'createdAt'])",
+          ".validate": "newData.child('teams').isNumber() && newData.child('teams').val() <= 16 && newData.child('rounds').isNumber() && newData.child('rounds').val() <= 30"
+        },
+
+        "seats": {
+          "$seat": {
+            ".write": "!data.exists() || !newData.exists()",
+            ".validate": "newData.hasChildren(['name', 'cid']) && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('cid').isString() && newData.child('cid').val().length <= 40"
+          }
+        },
+
+        "picks": {
+          "$overall": {
+            ".write": "!data.exists()",
+            ".validate": "newData.hasChildren(['t', 'p']) && newData.child('t').isNumber() && newData.child('p').isNumber()"
+          }
+        },
+
+        "clock": {
+          ".write": true,
+          ".validate": "newData.hasChild('onClock') && newData.child('onClock').isNumber()"
+        }
+      }
+    }
+  }
+}
