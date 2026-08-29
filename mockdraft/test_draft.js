@@ -15,6 +15,12 @@ const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 // Blocks 3 and 4 are rendering and DOM event wiring; 1 and 2 are the engine.
 const engine = scripts.slice(0, 2).join('\n');
+// The saved-setup helpers live inside the events block; take just the pure part
+// (up to the first function that touches the DOM) so they are tested from the
+// shipped source rather than a copy.
+const events = scripts[3];
+const persistence = events.slice(events.indexOf('const CFG_KEY'),
+                                 events.indexOf('function renderPresets()'));
 
 const stub = `
   function renderAll(){} function renderClockbar(){} function renderClock(){}
@@ -24,7 +30,7 @@ const stub = `
   const document = {
     getElementById: (id) => (__els[id] = __els[id] || { hidden: false, textContent: '', value: '',
       classList: { remove(){}, add(){}, toggle(){} } }),
-    querySelector: () => null, querySelectorAll: () => [],
+    querySelector: () => null, querySelectorAll: () => [], addEventListener(){},
     documentElement: { outerHTML: '<html><body><script id="room-state" type="application/json">null<\/script></body></html>' },
   };
   const __store = {};
@@ -33,13 +39,14 @@ const stub = `
   function setInterval(){ return 1; } function clearInterval(){}
 `;
 
-const api = new Function(stub + engine + `
+const api = new Function(stub + engine + persistence + `
   return { get S(){return S}, set S(v){S=v}, get St(){return St}, set St(v){St=v},
            get MySeat(){return MySeat}, set MySeat(v){MySeat=v},
            teamAt, totalPicks, overallFor, lineup, needs, counts, available,
            botChoice, autoChoice, startDraft, makePick, applyPick, rounds,
            normalizeSeats, isBot, isLocal, teamName, keeperProblems, placeKeepers,
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
+           configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
 `)();
@@ -51,6 +58,7 @@ function check(name, cond, detail) {
 }
 const byName = {};
 api.P.forEach(p => { byName[p.name] = p; });
+const gib0 = byName['Jahmyr Gibbs'].id;
 const ids = names => names.map(n => {
   if (!byName[n]) throw new Error('no such player: ' + n);
   return byName[n].id;
@@ -101,6 +109,88 @@ for (const t of [4, 10, 12, 14]) {
   check(t + '-team snake: every team picks once per round',
     Object.values(perRound).every(s => s.size === t));
 }
+
+/* ── Board layout ───────────────────────────────────────────────────────────
+   Every cell of the rendered board is overallFor(team, round). For the board to
+   be right that has to tile the draft exactly: every pick once, no gaps, and no
+   cell filed under the wrong team — which is what went wrong in reversed snake
+   rounds, where the row was mirrored against its own headers. */
+console.log('\nboard layout');
+for (const [teams, type] of [[12, 'snake'], [10, '3rr'], [14, 'linear'], [8, 'snake']]) {
+  api.S = settings({ teams, type, seats: seats(teams, { 0: 'me' }) });
+  api.S.rounds = api.rounds();
+  const cells = new Set();
+  let mismatched = 0;
+  for (let r = 1; r <= api.S.rounds; r++) {
+    for (let t = 0; t < teams; t++) {
+      const ov = api.overallFor(t, r);
+      cells.add(ov);
+      if (api.teamAt(ov) !== t) mismatched++;
+    }
+  }
+  check(teams + '-team ' + type + ': the board tiles every pick exactly once',
+    cells.size === api.totalPicks() && Math.min(...cells) === 0 &&
+    Math.max(...cells) === api.totalPicks() - 1, 'cells=' + cells.size + '/' + api.totalPicks());
+  check(teams + '-team ' + type + ': every cell sits under its own team',
+    mismatched === 0, mismatched + ' mismatched');
+}
+
+/* ── Randomness ─────────────────────────────────────────────────────────── */
+console.log('\nrandomness');
+function roundOneRanks(randomness) {
+  api.S = settings({ teams: 12, seats: seats(12, { 11: 'me' }), randomness });
+  api.S.rounds = api.rounds();
+  api.startDraft();
+  const out = [];
+  for (let i = 0; i < 12; i++) {
+    const t = api.teamAt(api.St.onClock);
+    const pick = api.botChoice(t, false);
+    out.push(pick.rank);
+    api.makePick(pick.id);
+  }
+  return out;
+}
+check('zero randomness drafts the sheet straight down',
+  roundOneRanks(0).join(',') === '1,2,3,4,5,6,7,8,9,10,11,12', roundOneRanks(0).join(','));
+
+function drift(randomness, trials) {
+  let total = 0;
+  for (let k = 0; k < trials; k++) {
+    roundOneRanks(randomness).forEach((r, i) => { total += Math.abs(r - (i + 1)); });
+  }
+  return total / trials;
+}
+const tame = drift(0.35, 12), wild = drift(2.4, 12);
+check('more randomness moves round 1 further off the sheet', wild > tame * 1.5,
+  'chalk ' + tame.toFixed(1) + ' vs chaos ' + wild.toFixed(1));
+check('even the wildest setting keeps round 1 roughly sane', wild < 70,
+  'mean displacement ' + wild.toFixed(1));
+
+/* ── Saved setups ───────────────────────────────────────────────────────── */
+console.log('\nsaved setups');
+api.S = settings({ teams: 10, type: '3rr', clock: 60, randomness: 1.6, mode: 'hotseat',
+                   seats: seats(10, { 2: 'me', 5: 'friend' }),
+                   keepers: [{ team: 2, id: gib0, round: 4 }] });
+api.S.rounds = api.rounds();
+const blob = JSON.parse(JSON.stringify(api.configBlob()));
+api.S = settings({});
+api.applyConfig(blob);
+check('a saved setup restores the room', api.S.teams === 10 && api.S.type === '3rr' &&
+  api.S.clock === 60 && api.S.randomness === 1.6 && api.S.mode === 'hotseat');
+check('a saved setup restores the seats', (api.S.seats || []).join(',') === blob.seats.join(','));
+check('a saved setup restores the keepers',
+  api.S.keepers.length === 1 && api.S.keepers[0].team === 2 && api.S.keepers[0].round === 4);
+
+api.applyConfig({ teams: 4, keepers: [{ team: 9, id: gib0, round: 2 }] });
+check('keepers for teams that no longer exist are dropped', api.S.keepers.length === 0);
+api.applyConfig({ teams: 12, keepers: [{ team: 0, id: gib0, round: 9 }],
+                  slots: { QB: 1, RB: 1, WR: 1, TE: 0, FLEX: 0, SFLEX: 0, K: 0, DST: 0, BN: 0 } });
+check('keepers past the last round are dropped', api.S.keepers.length === 0, api.S.keepers.length);
+api.applyConfig({ teams: 999, type: 'nonsense', clock: 12345, randomness: -5, slots: 'junk' });
+check('a corrupted setup is clamped rather than trusted',
+  api.S.teams === 16 && api.S.type === 'snake' && api.S.clock === 30 && api.S.randomness === 0,
+  [api.S.teams, api.S.type, api.S.clock, api.S.randomness].join(' '));
+check('a corrupted setup still leaves a draftable roster', api.rounds() > 0);
 
 /* ── Seats ──────────────────────────────────────────────────────────────── */
 console.log('\nseats');
@@ -189,6 +279,9 @@ const configs = [
   { label: '8-team, no K or DEF', s: { teams: 8, seats: seats(8, { 0: 'me' }), slots: Object.assign({}, api.STANDARD, { K: 0, DST: 0, BN: 8 }) } },
   { label: '4-team deep bench', s: { teams: 4, seats: seats(4, { 0: 'me' }), slots: Object.assign({}, api.STANDARD, { BN: 12 }) } },
   { label: '12-team with keepers', s: { seats: seats(12, { 4: 'me' }), keepers: KEEPERS } },
+  { label: 'no randomness at all', s: { seats: seats(12, { 4: 'me' }), randomness: 0 } },
+  { label: 'maximum randomness + keepers',
+    s: { seats: seats(12, { 4: 'me' }), randomness: 2.4, keepers: KEEPERS } },
   { label: 'same screen, four humans + keepers',
     s: { mode: 'hotseat', seats: seats(12, { 0: 'me', 1: 'friend', 2: 'friend', 9: 'friend' }), keepers: KEEPERS } },
 ];

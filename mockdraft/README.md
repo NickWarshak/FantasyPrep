@@ -38,13 +38,34 @@ just 18 kickers and 22 defenses, so a large field with a deep bench can outrun i
 
 ## Keepers
 
-Assign any player on the sheet to any team at a **cost round**, the way a real
-keeper league works: the keeper takes that team's pick in that round. Keepers go
+Click any pick on the lobby's draft board and choose a player. The keeper spends
+that team's pick in that round, the way a real keeper league works. Keepers go
 onto rosters before the first live pick, so they leave the board immediately and
-the bots draft around them, and the board shows them in the round they cost.
+the bots draft around them; the live board shows them tagged `KEPT` in the round
+they cost. Click a filled cell to change or remove it.
 
-The lobby rejects a list it cannot draft: two keepers on one team in the same
-round, one player kept by two teams, or a keeper past the last round.
+Invalid setups are dropped rather than trusted: a keeper on a team that no longer
+exists, or past the last round, is removed when the room changes shape.
+
+## Saved setups
+
+Everything in the lobby -- room, seats, roster, keepers, randomness -- persists in
+the browser. The last setup restores itself on load, and named setups can be
+saved, loaded and deleted for more than one league. It is browser-local storage,
+so it is per device and per browser, and every access is guarded because storage
+can simply throw (private windows, blocked site data).
+
+Loaded setups are validated, not trusted: team counts are clamped, unknown draft
+types and clocks fall back to defaults, and keepers outside the current shape are
+dropped.
+
+## Randomness
+
+How far the bots stray from the cheat sheet, from `None` to `Chaos`. Noise widens
+by round at every setting, so early picks stay tight and later ones reach; the
+setting scales that whole curve. At `None` the room drafts the sheet straight
+down -- useful for seeing exactly where a player goes at par. `Realistic` is the
+default and is what the measured draft shape below describes.
 
 ## Playing with other people
 

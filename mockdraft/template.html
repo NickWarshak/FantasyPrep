@@ -511,6 +511,77 @@ button { cursor: pointer; border: 0; background: none; }
 .mode b { display: block; font: 600 15px/1.2 var(--sans); color: var(--ink); margin-bottom: 3px; }
 .mode span { font-size: 12px; line-height: 1.5; color: var(--ink-dim); }
 .mode.is-on b { color: var(--bone); }
+
+/* ── Keeper board ───────────────────────────────────────────────────────────
+   The same grid as the live board, but every cell is a target: click a pick to
+   put a kept player in it. Columns are teams, rows are rounds. */
+.kb-wrap {
+  overflow: auto; max-height: 340px;
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--ground); scrollbar-width: thin;
+}
+.kb { min-width: max-content; }
+.kb .bd-head { padding: 6px 6px 7px; }
+.kb .kb-cell {
+  min-height: 38px; padding: 4px 6px;
+  background: var(--panel);
+  border-right: 1px solid var(--line-lo); border-bottom: 1px solid var(--line-lo);
+  text-align: left; position: relative; overflow: hidden;
+  transition: background .1s;
+}
+.kb .kb-cell:hover { background: var(--raise-2); }
+.kb .kb-cell.is-set { background: #1B2430; }
+.kb .kb-cell.is-set::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--pos);
+}
+.kb .kb-cell .kn2 {
+  font: 600 12px/1.25 var(--cond); letter-spacing: .01em; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kb .kb-cell .km {
+  font: 400 9px/1.3 var(--mono); color: var(--ink-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kb .kb-cell .km b { color: var(--pos); font-weight: 700; }
+.kb .kb-cell .plus {
+  font: 400 15px/1 var(--sans); color: var(--line);
+  position: absolute; inset: 0; display: grid; place-items: center;
+}
+.kb .kb-cell:hover .plus { color: var(--ink-dim); }
+
+.kb-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 11px; }
+
+/* ── Player picker ─────────────────────────────────────────────────────── */
+#picker {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(8, 11, 16, .78);
+}
+.picker-box {
+  width: 100%; max-width: 460px; max-height: min(76vh, 640px);
+  display: flex; flex-direction: column; gap: 11px;
+  padding: 16px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .55);
+}
+.picker-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.picker-head h3 { margin: 5px 0 0; font: 600 20px/1.1 var(--cond); letter-spacing: .03em; text-transform: uppercase; }
+.picker-list {
+  flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin;
+  border: 1px solid var(--line-lo); border-radius: var(--r); background: var(--ground);
+}
+.picker-list .prow { padding: 7px 11px; grid-template-columns: 36px 44px 1fr auto; }
+.picker-list .prow:last-child { border-bottom: 0; }
+.picker-foot { display: flex; justify-content: flex-end; min-height: 1px; }
+
+/* ── Saved setups ──────────────────────────────────────────────────────── */
+.preset-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.preset-row input, .preset-row select {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line); color: var(--ink);
+}
+.preset-row input::placeholder { color: var(--ink-dim); }
+.preset-row input:focus, .preset-row select:focus { border-color: var(--ink-dim); outline: none; }
 </style>
 
 <!-- Shared state for an online room. Rewritten into the document each time the
@@ -570,6 +641,15 @@ button { cursor: pointer; border: 0; background: none; }
               <option value="0.45" selected>Brisk</option>
               <option value="0.12">Instant</option>
             </select></label>
+          <label class="field"><span>Randomness</span>
+            <select id="f-rand">
+              <option value="0">None &mdash; straight off the sheet</option>
+              <option value="0.35">Chalk</option>
+              <option value="0.7">Tame</option>
+              <option value="1" selected>Realistic</option>
+              <option value="1.6">Loose</option>
+              <option value="2.4">Chaos</option>
+            </select></label>
         </div>
       </div>
 
@@ -581,17 +661,28 @@ button { cursor: pointer; border: 0; background: none; }
 
       <div class="card">
         <span class="eyebrow">Keepers</span>
-        <div class="keeper-add">
-          <label class="field"><span>Team</span><select id="k-team"></select></label>
-          <label class="field"><span>Player</span>
-            <input id="k-player" list="k-players" placeholder="Search the sheet" autocomplete="off">
-            <datalist id="k-players"></datalist></label>
-          <label class="field"><span>Costs round</span><select id="k-round"></select></label>
-          <button class="btn" id="k-add">Add</button>
+        <p class="hint" id="k-lead">Click any pick on the board to keep a player there.
+           The keeper spends that team's pick in that round.</p>
+        <div class="kb-wrap"><div class="board kb" id="k-board"></div></div>
+        <div class="kb-foot">
+          <span class="keeper-none" id="k-none">No keepers &mdash; every pick is live.</span>
+          <button class="btn" id="k-clear" hidden>Clear all keepers</button>
         </div>
-        <div class="keeper-list" id="k-list"></div>
-        <p class="keeper-none" id="k-none">No keepers. Every pick is live.</p>
         <p class="hint" id="k-warn"></p>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Saved setups</span>
+        <div class="preset-row">
+          <input id="ps-name" placeholder="Name this setup" autocomplete="off">
+          <button class="btn" id="ps-save">Save</button>
+        </div>
+        <div class="preset-row">
+          <select id="ps-list"></select>
+          <button class="btn" id="ps-load">Load</button>
+          <button class="btn" id="ps-del">Delete</button>
+        </div>
+        <p class="hint" id="ps-hint"></p>
       </div>
 
       <div class="card">
@@ -676,6 +767,24 @@ button { cursor: pointer; border: 0; background: none; }
     </div>
   </div>
 
+  <!-- ── Keeper player picker ───────────────────────────────────────────── -->
+  <div id="picker" hidden>
+    <div class="picker-box" role="dialog" aria-modal="true" aria-labelledby="pk-title">
+      <div class="picker-head">
+        <div>
+          <span class="eyebrow">Keeper</span>
+          <h3 id="pk-title">Team 1 &middot; round 1</h3>
+        </div>
+        <button class="btn" id="pk-close">Close</button>
+      </div>
+      <input class="search" id="pk-q" type="search" placeholder="Search the sheet" autocomplete="off">
+      <div class="picker-list" id="pk-list"></div>
+      <div class="picker-foot">
+        <button class="btn" id="pk-clear" hidden>Remove this keeper</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Recap ──────────────────────────────────────────────────────────── -->
   <div id="recap" hidden>
     <div class="recap-in">
@@ -734,7 +843,7 @@ const FLEX_POS = ['RB', 'WR', 'TE'];
 
 function freshSettings() {
   return {
-    mode: 'solo', teams: 12, type: 'snake', clock: 30, pace: 0.45, rounds: 16,
+    mode: 'solo', teams: 12, type: 'snake', clock: 30, pace: 0.45, rounds: 16, randomness: 1,
     slots: Object.assign({}, STANDARD),
     seats: null,      // per team: 'me' | 'friend' | 'bot'
     keepers: [],      // { team, id, round }  round is 1-based and costs that pick
@@ -886,7 +995,11 @@ function botChoice(team, tight) {
 
   const reserve = (S.slots.K || 0) + (S.slots.DST || 0);
   const mustFill = left <= n.open;
-  const spread = tight ? 0 : 3.5 + 1.1 * rd;
+  // How far bots stray from the sheet. Noise widens by round either way, so
+  // early picks stay tight and later ones reach; the setting scales the whole
+  // curve, and zero makes the room draft the sheet straight down.
+  const rand = S.randomness === undefined ? 1 : S.randomness;
+  const spread = tight ? 0 : (3.5 + 1.1 * rd) * rand;
 
   const pool = available();
   if (!pool.length) return null;
@@ -1157,6 +1270,7 @@ function roomState() {
     v: 1,
     s: {
       mode: 'online', teams: S.teams, type: S.type, pace: S.pace, clock: 0,
+      randomness: S.randomness,
       rounds: S.rounds, slots: S.slots, seats: S.seats,
       keepers: S.keepers.map(function (k) { return [k.team, k.id, k.round]; }),
     },
@@ -1207,6 +1321,7 @@ function restoreRoom(state) {
   const s = state.s;
   S = Object.assign(freshSettings(), {
     mode: 'online', teams: s.teams, type: s.type, pace: s.pace, clock: 0,
+    randomness: s.randomness === undefined ? 1 : s.randomness,
     rounds: s.rounds, slots: s.slots, seats: s.seats.slice(),
     keepers: (s.keepers || []).map(function (k) { return { team: k[0], id: k[1], round: k[2] }; }),
   });
@@ -1320,9 +1435,10 @@ function renderBoard() {
   }
   for (let r = 0; r < S.rounds; r++) {
     h += '<div class="bd-rd bd-cell">' + (r + 1) + '</div>';
-    for (let i = 0; i < S.teams; i++) {
-      const overall = r * S.teams + i;
-      const t = teamAt(overall);
+    // A column is a team, so a reversed snake round still sits under its own
+    // owner rather than being mirrored across the board.
+    for (let t = 0; t < S.teams; t++) {
+      const overall = overallFor(t, r + 1);
       const pk = byOverall[overall];
       const cls = ['bd-pick', 'bd-cell'];
       if (S.seats[t] === 'me') cls.push('is-yours');
@@ -1518,6 +1634,73 @@ function recapCSV() {
 </script>
 
 <script>
+/* ── Saved setups ───────────────────────────────────────────────────────────
+   The room, the seats, the roster and the keepers all persist, so a keeper
+   league only has to be entered once no matter how many mocks you run. The
+   last-used setup restores itself; named setups let you keep more than one.
+   All of it is browser-local, and every access is guarded because storage can
+   simply throw (private windows, blocked site data). */
+const CFG_KEY = 'otc-config';
+const PRESET_KEY = 'otc-presets';
+
+function configBlob() {
+  return {
+    mode: S.mode, teams: S.teams, type: S.type, clock: S.clock, pace: S.pace,
+    randomness: S.randomness, slots: Object.assign({}, S.slots),
+    seats: (S.seats || []).slice(),
+    keepers: S.keepers.map(function (k) { return { team: k.team, id: k.id, round: k.round }; }),
+  };
+}
+function saveConfig() {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(configBlob())); } catch (e) { /* no storage */ }
+}
+function applyConfig(c) {
+  if (!c || typeof c !== 'object') return false;
+  const teams = Math.min(16, Math.max(4, (+c.teams || 12) - (+c.teams || 12) % 2));
+  S.mode = ['solo', 'hotseat', 'online'].indexOf(c.mode) >= 0 ? c.mode : 'solo';
+  S.teams = teams;
+  S.type = ['snake', '3rr', 'linear'].indexOf(c.type) >= 0 ? c.type : 'snake';
+  S.clock = [0, 15, 30, 60, 90].indexOf(+c.clock) >= 0 ? +c.clock : 30;
+  S.pace = +c.pace > 0 ? +c.pace : 0.45;
+  S.randomness = c.randomness === undefined ? 1 : Math.max(0, Math.min(4, +c.randomness));
+  if (c.slots && typeof c.slots === 'object') {
+    S.slots = {};
+    SLOTS.forEach(function (sl) { S.slots[sl.k] = Math.max(0, Math.min(12, +c.slots[sl.k] || 0)); });
+    if (!rounds()) S.slots = Object.assign({}, STANDARD);
+  }
+  S.seats = Array.isArray(c.seats) && c.seats.length === teams ? c.seats.slice() : null;
+  const nR = rounds();
+  S.keepers = Array.isArray(c.keepers) ? c.keepers.filter(function (k) {
+    return k && k.team >= 0 && k.team < teams && k.round >= 1 && k.round <= nR &&
+           k.id >= 0 && k.id < P.length;
+  }).map(function (k) { return { team: +k.team, id: +k.id, round: +k.round }; }) : [];
+  if (S.mode === 'online') S.clock = 0;
+  return true;
+}
+function readPresets() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter(function (x) { return x && x.name; }) : [];
+  } catch (e) { return []; }
+}
+function writePresets(list) {
+  try { localStorage.setItem(PRESET_KEY, JSON.stringify(list.slice(0, 30))); return true; }
+  catch (e) { return false; }
+}
+function renderPresets() {
+  const list = readPresets();
+  const sel = el('ps-list');
+  const keep = sel.value;
+  sel.innerHTML = list.length
+    ? list.map(function (x) { return '<option value="' + esc(x.name) + '">' + esc(x.name) + '</option>'; }).join('')
+    : '<option value="">No saved setups yet</option>';
+  if (keep) sel.value = keep;
+  sel.disabled = !list.length;
+  el('ps-load').disabled = !list.length;
+  el('ps-del').disabled = !list.length;
+}
+function presetHint(msg) { el('ps-hint').textContent = msg; }
+
 /* ── Lobby ──────────────────────────────────────────────────────────────── */
 const MODE_HINT = {
   solo: 'One seat is yours. Bots fill the rest and pick straight away.',
@@ -1540,6 +1723,7 @@ function renderLobby() {
   el('f-type').value = S.type;
   el('f-clock').value = S.clock;
   el('f-pace').value = S.pace;
+  el('f-rand').value = S.randomness;
   el('f-clock').disabled = S.mode === 'online';
 
   document.querySelectorAll('#f-mode .mode').forEach(function (b) {
@@ -1563,35 +1747,15 @@ function renderLobby() {
     : humans + ' human ' + (humans === 1 ? 'seat' : 'seats') + ', ' + (S.teams - humans) + ' drafted by bots. ' +
       (S.mode === 'online' ? 'Each person claims their own seat when they open the room.' : '');
 
-  // Keepers
+  // Keepers: rendered as a clickable board, one cell per pick.
   const nRounds = rounds();
-  let tOpts = '';
-  for (let t = 0; t < S.teams; t++) tOpts += '<option value="' + t + '">' + esc(teamName(t)) + '</option>';
-  const keepTeam = el('k-team').value;
-  el('k-team').innerHTML = tOpts;
-  if (keepTeam !== '' && +keepTeam < S.teams) el('k-team').value = keepTeam;
-  let rOpts = '';
-  for (let r = 1; r <= nRounds; r++) rOpts += '<option value="' + r + '">Round ' + r + '</option>';
-  const keepRound = el('k-round').value;
-  el('k-round').innerHTML = rOpts;
-  if (keepRound !== '' && +keepRound <= nRounds) el('k-round').value = keepRound;
-
-  el('k-players').innerHTML = P.map(function (p) {
-    return '<option value="' + esc(p.name) + '">' + POS_LABEL[p.pos] + ' · ' + esc(p.team) + ' · #' + p.rank + '</option>';
-  }).join('');
-
+  S.keepers = S.keepers.filter(function (k) { return k.team < S.teams && k.round <= nRounds; });
+  renderKeeperBoard(nRounds);
   el('k-none').hidden = S.keepers.length > 0;
-  el('k-list').innerHTML = S.keepers.map(function (k, i) {
-    const p = P[k.id];
-    return '<div class="keeper p-' + p.pos + '">' +
-      '<span class="kt">' + esc(teamName(k.team)) + '</span>' +
-      '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
-      '<span class="kn">' + esc(p.name) + '</span>' +
-      '<span class="kr">costs R' + k.round + '</span>' +
-      '<button class="qbtn" data-kdel="' + i + '" title="Remove">×</button></div>';
-  }).join('');
+  el('k-clear').hidden = S.keepers.length === 0;
   const kbad = keeperProblems(S.keepers, S.teams, nRounds);
   el('k-warn').textContent = kbad.join(' ');
+  renderPresets();
 
   // Roster
   el('f-slots').innerHTML = SLOTS.map(function (s) {
@@ -1621,6 +1785,7 @@ function renderLobby() {
   el('f-totals').classList.toggle('is-bad', warn.length > 0);
   el('go').disabled = warn.length > 0 || kbad.length > 0;
   el('go').textContent = S.mode === 'online' ? 'Create the room' : 'Start draft';
+  saveConfig();
 }
 
 /* ── Events ─────────────────────────────────────────────────────────────── */
@@ -1641,7 +1806,8 @@ el('f-teams').addEventListener('change', function (e) {
 });
 el('f-type').addEventListener('change', function (e) { S.type = e.target.value; renderLobby(); });
 el('f-clock').addEventListener('change', function (e) { S.clock = +e.target.value; });
-el('f-pace').addEventListener('change', function (e) { S.pace = +e.target.value; });
+el('f-pace').addEventListener('change', function (e) { S.pace = +e.target.value; saveConfig(); });
+el('f-rand').addEventListener('change', function (e) { S.randomness = +e.target.value; saveConfig(); });
 
 el('f-seats').addEventListener('change', function (e) {
   const sel = e.target.closest('[data-seat]');
@@ -1654,19 +1820,108 @@ el('f-seats').addEventListener('change', function (e) {
   renderLobby();
 });
 
-el('k-add').addEventListener('click', function () {
-  const name = el('k-player').value.trim().toLowerCase();
-  const p = BY_NAME[name];
-  if (!p) { el('k-warn').textContent = 'No player on the sheet called “' + el('k-player').value.trim() + '”.'; return; }
-  S.keepers.push({ team: +el('k-team').value, id: p.id, round: +el('k-round').value });
-  el('k-player').value = '';
+/* ── Keeper board and picker ────────────────────────────────────────────── */
+let PickCell = null;   // { team, round } while the picker is open
+
+function renderKeeperBoard(nRounds) {
+  const board = el('k-board');
+  const cols = ['38px'];
+  for (let t = 0; t < S.teams; t++) cols.push('minmax(92px, 1fr)');
+  board.style.gridTemplateColumns = cols.join(' ');
+
+  const at = {};
+  S.keepers.forEach(function (k) { at[k.team + ':' + k.round] = k; });
+
+  let h = '<div class="bd-corner bd-cell"></div>';
+  for (let t = 0; t < S.teams; t++) {
+    h += '<div class="bd-head bd-cell' + (S.seats && S.seats[t] === 'me' ? ' is-you' : '') +
+         '"><div class="tn">' + esc(teamName(t)) + '</div></div>';
+  }
+  for (let r = 1; r <= nRounds; r++) {
+    h += '<div class="bd-rd bd-cell">' + r + '</div>';
+    for (let t = 0; t < S.teams; t++) {
+      const k = at[t + ':' + r];
+      const overall = overallFor(t, r);
+      const label = 'Round ' + r + ', ' + teamName(t) +
+                    (k ? ': ' + P[k.id].name + '. Change or remove.' : ': add a keeper.');
+      if (k) {
+        const pl = P[k.id];
+        h += '<button type="button" class="kb-cell bd-cell is-set p-' + pl.pos + '" data-kb="' + t + ':' + r +
+             '" title="' + esc(label) + '"><div class="kn2">' + esc(pl.name) + '</div>' +
+             '<div class="km"><b>' + POS_LABEL[pl.pos] + '</b> ' + esc(pl.team) + '</div></button>';
+      } else {
+        h += '<button type="button" class="kb-cell bd-cell" data-kb="' + t + ':' + r +
+             '" title="' + esc(label) + '"><span class="plus">+</span>' +
+             '<div class="km">&nbsp;' + (overall >= 0 ? overall + 1 : '') + '</div></button>';
+      }
+    }
+  }
+  board.innerHTML = h;
+}
+
+function openPicker(team, round) {
+  PickCell = { team: team, round: round };
+  el('pk-title').textContent = teamName(team) + ' · round ' + round;
+  el('pk-q').value = '';
+  const existing = S.keepers.find(function (k) { return k.team === team && k.round === round; });
+  el('pk-clear').hidden = !existing;
+  el('picker').hidden = false;
+  renderPickerList();
+  el('pk-q').focus();
+}
+function closePicker() { PickCell = null; el('picker').hidden = true; }
+
+function renderPickerList() {
+  const q = el('pk-q').value.trim().toLowerCase();
+  // A player kept elsewhere is off the table; the one in this cell is not.
+  const spoken = {};
+  S.keepers.forEach(function (k) {
+    if (!PickCell || k.team !== PickCell.team || k.round !== PickCell.round) spoken[k.id] = 1;
+  });
+  const rows = P.filter(function (p) {
+    if (spoken[p.id]) return false;
+    return !q || p.name.toLowerCase().indexOf(q) >= 0 || p.team.toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 140);
+  el('pk-list').innerHTML = rows.length ? rows.map(function (p) {
+    return '<div class="prow p-' + p.pos + '" data-pk="' + p.id + '">' +
+      '<div class="rk">' + p.rank + '</div>' +
+      '<div><span class="chip">' + POS_LABEL[p.pos] + p.prank + '</span></div>' +
+      '<div class="nm"><div class="n">' + esc(p.name) + '</div>' +
+        '<div class="m">' + esc(p.team) + ' · bye ' + p.bye + '</div></div>' +
+      '<div class="av">' + (p.av > 0 ? '$' + p.av : '') + '</div></div>';
+  }).join('') : '<p class="pool-empty">Nobody on the sheet matches that.</p>';
+}
+
+el('k-board').addEventListener('click', function (e) {
+  const cell = e.target.closest('[data-kb]');
+  if (!cell) return;
+  const parts = cell.dataset.kb.split(':');
+  openPicker(+parts[0], +parts[1]);
+});
+el('pk-close').addEventListener('click', closePicker);
+el('picker').addEventListener('click', function (e) { if (e.target === this) closePicker(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && !el('picker').hidden) closePicker();
+});
+el('pk-q').addEventListener('input', renderPickerList);
+el('pk-list').addEventListener('click', function (e) {
+  const row = e.target.closest('[data-pk]');
+  if (!row || !PickCell) return;
+  const cell = PickCell;
+  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
+  S.keepers.push({ team: cell.team, id: +row.dataset.pk, round: cell.round });
+  closePicker();
   renderLobby();
 });
-el('k-player').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('k-add').click(); });
-el('k-list').addEventListener('click', function (e) {
-  const b = e.target.closest('[data-kdel]');
-  if (!b) return;
-  S.keepers.splice(+b.dataset.kdel, 1);
+el('pk-clear').addEventListener('click', function () {
+  if (!PickCell) return;
+  const cell = PickCell;
+  S.keepers = S.keepers.filter(function (k) { return !(k.team === cell.team && k.round === cell.round); });
+  closePicker();
+  renderLobby();
+});
+el('k-clear').addEventListener('click', function () {
+  S.keepers = [];
   renderLobby();
 });
 
@@ -1679,11 +1934,39 @@ el('f-slots').addEventListener('click', function (e) {
   renderLobby();
 });
 
+el('ps-save').addEventListener('click', function () {
+  const name = el('ps-name').value.trim();
+  if (!name) { presetHint('Give the setup a name first.'); return; }
+  const list = readPresets().filter(function (x) { return x.name !== name; });
+  list.unshift({ name: name, cfg: configBlob() });
+  if (!writePresets(list)) { presetHint('This browser will not let the page save setups.'); return; }
+  el('ps-name').value = '';
+  renderPresets();
+  el('ps-list').value = name;
+  presetHint('Saved “' + name + '”.');
+});
+el('ps-load').addEventListener('click', function () {
+  const name = el('ps-list').value;
+  const found = readPresets().find(function (x) { return x.name === name; });
+  if (!found) { presetHint('That setup is gone.'); return; }
+  applyConfig(found.cfg);
+  renderLobby();
+  el('ps-list').value = name;
+  presetHint('Loaded “' + name + '”.');
+});
+el('ps-del').addEventListener('click', function () {
+  const name = el('ps-list').value;
+  writePresets(readPresets().filter(function (x) { return x.name !== name; }));
+  renderPresets();
+  presetHint('Deleted “' + name + '”.');
+});
+
 el('reset-cfg').addEventListener('click', function () {
   const mode = S.mode;
   S = freshSettings();
   S.mode = mode;
   if (mode === 'online') S.clock = 0;
+  presetHint('Reset. Saved setups are untouched.');
   renderLobby();
 });
 
@@ -1824,6 +2107,10 @@ if (ROOM0 && ROOM0.picks) {
   try { restoreRoom(ROOM0); }
   catch (e) { renderLobby(); }
 } else {
+  try {
+    const last = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
+    if (last) applyConfig(last);
+  } catch (e) { /* start from defaults */ }
   renderLobby();
 }
 </script>
