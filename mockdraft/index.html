@@ -317,15 +317,14 @@ button { cursor: pointer; border: 0; background: none; }
 .rail-body { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
 .rail-note { padding: 26px 18px; text-align: center; color: var(--ink-dim); font-size: 13px; line-height: 1.6; }
 
-.qrow, .rrow {
+.rrow {
   display: flex; align-items: center; gap: 9px;
   padding: 7px 12px; border-bottom: 1px solid var(--line-lo);
 }
-.qrow .ord { font: 400 11px/1 var(--mono); color: var(--ink-dim); width: 16px; }
-.qrow .who, .rrow .who { flex: 1; min-width: 0; }
-.qrow .who .n, .rrow .who .n { font: 600 14px/1.25 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qrow .who .m, .rrow .who .m { font: 400 10px/1.3 var(--mono); color: var(--ink-dim); }
-.qrow.is-gone .who .n { text-decoration: line-through; color: var(--ink-dim); }
+.rrow .who { flex: 1; min-width: 0; }
+.rrow .who .n { font: 600 14px/1.25 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rrow .who .m { font: 400 10px/1.3 var(--mono); color: var(--ink-dim); }
+/* Still used by the lobby's keeper list to drop a kept player. */
 .qbtn { padding: 2px 6px; border-radius: 4px; color: var(--ink-dim); font-size: 13px; line-height: 1.2; }
 .qbtn:hover { background: var(--raise); color: var(--ink); }
 
@@ -337,6 +336,30 @@ button { cursor: pointer; border: 0; background: none; }
   color: var(--ink-dim);
 }
 .rrow.is-open .who .n { color: var(--ink-dim); font-weight: 400; font-style: italic; }
+.mrow {
+  display: grid; grid-template-columns: 30px 1fr auto auto;
+  align-items: center; gap: 9px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--line-lo);
+  border-left: 3px solid var(--pos, var(--line));
+}
+.mrow .mrk {
+  font: 700 14px/1 var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--ink); text-align: right;
+}
+.mrow .who { min-width: 0; }
+.mrow .who .n {
+  font: 600 14px/1.25 var(--sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mrow .who .m { font: 400 10px/1.3 var(--mono); color: var(--ink-dim); }
+.medge {
+  font: 700 11px/1 var(--mono); padding: 3px 5px; border-radius: 4px;
+  background: rgba(134, 162, 186, .16); color: var(--ink-mid);
+}
+.medge.is-value { background: rgba(52, 211, 166, .15); color: var(--RB); }
+.medge.is-reach { background: rgba(255, 162, 75, .15); color: var(--TE); }
+
 .rail-sub {
   padding: 9px 12px 5px; background: var(--ground);
   border-bottom: 1px solid var(--line-lo); border-top: 1px solid var(--line-lo);
@@ -429,67 +452,6 @@ button { cursor: pointer; border: 0; background: none; }
 .tcard.is-you h3 { color: var(--bone); }
 .tcard h3 span { font: 400 11px/1.4 var(--mono); color: var(--ink-dim); }
 
-/* ── My board ───────────────────────────────────────────────────────────────
-   Your own rankings, filtered to who is still on the board, sitting under the
-   pool so it is readable without taking the room over. The ESPN sheet is what
-   the bots draft by; this is what you draft by, and the gap between the two is
-   the whole point of showing it. */
-.myboard {
-  flex: none; display: flex; flex-direction: column;
-  background: var(--panel); border-top: 1px solid var(--line);
-}
-.mb-head {
-  display: flex; align-items: center; gap: 12px;
-  padding: 8px 14px;
-}
-.mb-head .eyebrow { flex: none; }
-.mb-head .eyebrow em {
-  font-style: normal; color: var(--ink-mid); margin-left: 7px; letter-spacing: .06em;
-}
-.mb-note { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mb-head .btn { flex: none; padding: 5px 11px; font-size: 12px; }
-
-.mb-list {
-  display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden;
-  padding: 0 14px 12px; scrollbar-width: thin;
-}
-.myboard.is-shut .mb-list { display: none; }
-.myboard.is-shut { border-top-color: var(--line-lo); }
-
-.mb-card {
-  flex: none; width: 156px; text-align: left;
-  display: flex; flex-direction: column; gap: 3px;
-  padding: 8px 10px 9px; border-radius: var(--r);
-  background: var(--ground);
-  border: 1px solid var(--line); border-left: 3px solid var(--pos, var(--line));
-  transition: border-color .12s, background .12s;
-}
-.mb-card:hover { background: var(--raise); border-color: var(--ink-dim); }
-.mb-card.is-queued { border-color: color-mix(in srgb, var(--bone) 55%, transparent); }
-.mb-card .mb-top { display: flex; align-items: baseline; gap: 7px; }
-.mb-card .mb-rk {
-  font: 700 17px/1 var(--mono); color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.mb-card .mb-pos { font: 700 10px/1 var(--sans); letter-spacing: .06em; color: var(--pos); }
-.mb-card .mb-nm {
-  font: 600 13.5px/1.25 var(--sans); color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mb-card .mb-sub {
-  display: flex; align-items: center; gap: 6px;
-  font: 400 10px/1.4 var(--mono); color: var(--ink-dim);
-}
-.mb-edge {
-  padding: 1px 4px; border-radius: 3px; font-weight: 700;
-  background: rgba(134,162,186,.16); color: var(--ink-mid);
-}
-.mb-edge.is-value { background: rgba(52,211,166,.15); color: var(--RB); }
-.mb-edge.is-reach { background: rgba(255,162,75,.15); color: var(--TE); }
-.mb-card .mini { margin-top: 4px; align-self: flex-start; }
-.mb-empty { padding: 4px 14px 14px; color: var(--ink-dim); font-size: 13px; }
-
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   #app { height: auto; min-height: 100dvh; }
@@ -498,7 +460,6 @@ button { cursor: pointer; border: 0; background: none; }
   .pool-list { max-height: 58vh; }
   .rail-body { max-height: 52vh; }
   .board-wrap { max-height: 300px; }
-  .mb-card { width: 138px; }
   .clockbar { height: auto; padding: 10px 12px; gap: 12px; flex-wrap: wrap; }
   .cb-clock { font-size: 25px; min-width: 74px; }
   .prow { grid-template-columns: 34px 42px 1fr auto; gap: 9px; padding: 9px 12px; }
@@ -888,7 +849,7 @@ button { cursor: pointer; border: 0; background: none; }
 
       <aside class="rail">
         <div class="tabs">
-          <button class="tab is-on" data-tab="queue">Queue <span class="ct" id="q-ct"></span></button>
+          <button class="tab is-on" data-tab="mine">My board <span class="ct" id="mb-ct"></span></button>
           <button class="tab" data-tab="roster">Rosters</button>
         </div>
         <div class="rail-pick" id="rail-pick" hidden>
@@ -899,14 +860,6 @@ button { cursor: pointer; border: 0; background: none; }
       </aside>
     </div>
 
-    <section class="myboard" id="myboard" hidden>
-      <div class="mb-head">
-        <span class="eyebrow">My board<em id="mb-scope"></em></span>
-        <span class="mb-note" id="mb-note"></span>
-        <button class="btn" id="mb-toggle">Hide</button>
-      </div>
-      <div class="mb-list" id="mb-list"></div>
-    </section>
   </div>
 
   <!-- ── Hand-off curtain ───────────────────────────────────────────────── -->
@@ -1130,11 +1083,26 @@ function counts(roster) {
   roster.forEach(function (id) { c[P[id].pos] = (c[P[id].pos] || 0) + 1; });
   return c;
 }
-function myBoardRows(limit) {
+/* How many of a position one roster may hold. Shared, so your own autopick
+   obeys the same limits the bots do. */
+function rosterCaps() {
+  const caps = {
+    QB: S.slots.SFLEX > 0 ? 3 : 2, TE: 2, RB: 7, WR: 7,
+    K: Math.max(1, S.slots.K || 0), DST: Math.max(1, S.slots.DST || 0),
+  };
+  // A deep enough bench can demand more players than these caps allow, which
+  // would force teams into a third quarterback just to fill out a roster. Give
+  // the extra room to running back and receiver, where real rosters go deep.
+  let room = caps.QB + caps.TE + caps.RB + caps.WR + caps.K + caps.DST;
+  while (room < S.rounds + 2) { caps.RB++; caps.WR++; room += 2; }
+  return caps;
+}
+
+function myBoardRows(limit, filter) {
   return P.filter(function (p) {
     if (!p.mine || St.taken[p.id]) return false;
-    if (St.filter === 'FLEX') return FLEX_POS.indexOf(p.pos) >= 0;
-    return St.filter === 'ALL' || p.pos === St.filter;
+    if (filter === 'FLEX') return FLEX_POS.indexOf(p.pos) >= 0;
+    return !filter || filter === 'ALL' || p.pos === filter;
   }).sort(function (a, b) { return a.mine - b.mine; }).slice(0, limit);
 }
 
@@ -1152,15 +1120,7 @@ function botChoice(team, tight) {
   const n      = needs(roster);
   const c      = counts(roster);
   const rd     = Math.floor(St.onClock / S.teams);
-  const caps   = {
-    QB: S.slots.SFLEX > 0 ? 3 : 2, TE: 2, RB: 7, WR: 7,
-    K: Math.max(1, S.slots.K || 0), DST: Math.max(1, S.slots.DST || 0),
-  };
-  // A deep enough bench can demand more players than these caps allow, which
-  // would force teams into a third quarterback just to fill out a roster. Give
-  // the extra room to running back and receiver, where real rosters go deep.
-  let room = caps.QB + caps.TE + caps.RB + caps.WR + caps.K + caps.DST;
-  while (room < S.rounds + 2) { caps.RB++; caps.WR++; room += 2; }
+  const caps   = rosterCaps();
 
   const reserve = (S.slots.K || 0) + (S.slots.DST || 0);
   const mustFill = left <= n.open;
@@ -1208,12 +1168,29 @@ function botChoice(team, tight) {
   return best || capped || pool[0];
 }
 
-/* A human seat's pick when the clock runs out or autopick is on: honour the
-   queue first, then fall back to the bot's judgement with the noise off. */
+/* A human seat's pick when the clock runs out or autopick is on.
+
+   Your rankings are the queue: take the best player still on your board that
+   the roster can actually use. Other people's seats have no personal board to
+   draft from, and neither does a build with no rankings, so those fall back to
+   the room's own judgement with the noise switched off. */
 function autoChoice(team) {
-  const q = St.queues[team] || [];
-  for (let i = 0; i < q.length; i++) {
-    if (!St.taken[q[i]]) return P[q[i]];
+  if (team === MySeat && HAS_MINE) {
+    const roster = St.rosters[team];
+    const c = counts(roster);
+    const caps = rosterCaps();
+    const n = needs(roster);
+    const mustFill = (S.rounds - roster.length) <= n.open;
+    const rows = myBoardRows(P.length);
+    for (let i = 0; i < rows.length; i++) {
+      const p = rows[i];
+      if ((c[p.pos] || 0) >= caps[p.pos]) continue;
+      // Once there is only room for the starters still missing, your board can
+      // only offer someone who fills one. Kickers and defenses are never on it
+      // at all, so the fall-through below covers the last rounds.
+      if (mustFill && !(n.need[p.pos] > 0)) continue;
+      return p;
+    }
   }
   return botChoice(team, true);
 }
@@ -1310,14 +1287,11 @@ function assignPick(overall, id) {
 /* ── Draft engine ───────────────────────────────────────────────────────── */
 function newState() {
   const st = {
-    picks: [], taken: {}, rosters: [], queues: {}, filled: {},
+    picks: [], taken: {}, rosters: [], filled: {},
     onClock: 0, deadline: 0, paused: false, auto: false,
-    tab: 'queue', filter: 'ALL', q: '', hideTaken: true, landed: -1,
+    tab: 'mine', filter: 'ALL', q: '', hideTaken: true, landed: -1,
     timer: null, botAt: 0, scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
     lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '',
-    myOpen: (function () {
-      try { return localStorage.getItem('otc-myboard') !== 'shut'; } catch (e) { return true; }
-    })(),
   };
   for (let t = 0; t < S.teams; t++) st.rosters.push([]);
   return st;
@@ -1439,10 +1413,6 @@ function applyPick(id) {
   St.rosters[team].push(id);
   St.picks.push({ overall: St.onClock, team: team, id: id });
   St.landed = St.onClock;
-  if (St.queues[team]) {
-    const qi = St.queues[team].indexOf(id);
-    if (qi >= 0) St.queues[team].splice(qi, 1);
-  }
   St.deadline = 0;
   St.botAt = 0;
   St.onClock++;
@@ -1813,12 +1783,10 @@ function onRoomData(data) {
   }
   MySeat = S.seats.indexOf('me');
 
-  const keepQueues = St ? St.queues : {};
   const keepUi = St ? { tab: St.tab, filter: St.filter, q: St.q, hideTaken: St.hideTaken,
                         railTeam: St.railTeam, scrolledTo: St.scrolledTo } : null;
   St = newState();
   if (keepUi) Object.assign(St, keepUi);
-  St.queues = keepQueues || {};
 
   const picks = data.picks || {};
   Object.keys(picks).forEach(function (k) {
@@ -1882,20 +1850,6 @@ function driveRoom() {
 </script>
 
 <script>
-/* ── Queues ─────────────────────────────────────────────────────────────────
-   One queue per seat, so passing the device around doesn't hand your shortlist
-   to the next drafter. */
-function queueFor(t) {
-  if (!St.queues[t]) St.queues[t] = [];
-  return St.queues[t];
-}
-/* Whose queue the rail is showing: on same-screen play it follows whoever is
-   up, otherwise it is always this device's seat. */
-function activeSeat() {
-  if (S.mode !== 'hotseat') return MySeat;
-  if (St.onClock < totalPicks() && !isBot(teamAt(St.onClock))) return teamAt(St.onClock);
-  return St.lastHuman >= 0 ? St.lastHuman : MySeat;
-}
 function canPickNow() {
   if (!St || St.onClock >= totalPicks()) return false;
   if (S.mode === 'online') return teamAt(St.onClock) === MySeat && !St.busy;
@@ -1906,7 +1860,7 @@ function canPickNow() {
 /* ── Rendering ──────────────────────────────────────────────────────────── */
 function renderAll() {
   renderBoard(); renderClockbar(); renderPool(); renderRail();
-  renderMyBoard(); renderRoomBar();
+  renderRoomBar();
 }
 
 function renderRoomBar() {
@@ -2053,8 +2007,6 @@ function renderPool() {
   const list = el('pool-list');
   const top = list.scrollTop;
   const canPick = canPickNow();
-  const qseat = activeSeat();
-  const myq = qseat >= 0 ? queueFor(qseat) : [];
   const rows = poolRows();
   if (!rows.length) {
     list.innerHTML = '<p class="pool-empty">No players match that search.</p>';
@@ -2062,13 +2014,8 @@ function renderPool() {
   }
   list.innerHTML = rows.map(function (p) {
     const taken = !!St.taken[p.id];
-    const queued = myq.indexOf(p.id) >= 0;
-    let act = '';
-    if (!taken) {
-      act = (qseat >= 0 ? '<button class="mini' + (queued ? ' on' : '') + '" data-q="' + p.id + '">' +
-            (queued ? 'Queued' : 'Queue') + '</button>' : '') +
-            (canPick ? '<button class="mini go" data-d="' + p.id + '">Draft</button>' : '');
-    }
+    const act = (!taken && canPick)
+      ? '<button class="mini go" data-d="' + p.id + '">Draft</button>' : '';
     return '<div class="prow p-' + p.pos + (taken ? ' is-taken' : '') + '" data-row="' + p.id + '">' +
       '<div class="rk">' + p.rank + '</div>' +
       '<div><span class="chip">' + POS_LABEL[p.pos] + p.prank + '</span></div>' +
@@ -2096,50 +2043,9 @@ function syncHideButton() {
    later than you do, so he should still be there next time round; negative
    means he goes before you would take him. That comparison is only meaningful
    because the bots draft off the ESPN sheet. */
-function renderMyBoard() {
-  const box = el('myboard');
-  if (!HAS_MINE) { box.hidden = true; return; }
-  box.hidden = false;
-  box.classList.toggle('is-shut', !St.myOpen);
-
-  const scope = St.filter === 'ALL' ? '' : ' · ' + (St.filter === 'DST' ? 'DEF' : St.filter);
-  el('mb-scope').textContent = scope;
-  el('mb-toggle').textContent = St.myOpen ? 'Hide' : 'Show';
-  if (!St.myOpen) { el('mb-note').textContent = ''; el('mb-list').innerHTML = ''; return; }
-
-  const rows = myBoardRows(18);
-  el('mb-note').textContent = rows.length
-    ? 'Best available by your rankings. The badge is where the ESPN sheet has them, which is what the room drafts by.'
-    : '';
-  const seat = activeSeat();
-  const q = seat >= 0 ? queueFor(seat) : [];
-  const canPick = canPickNow();
-
-  el('mb-list').innerHTML = rows.length ? rows.map(function (p) {
-    const edge = p.rank - p.mine;
-    const cls = edge >= 8 ? ' is-value' : edge <= -8 ? ' is-reach' : '';
-    const sign = edge > 0 ? '+' + edge : String(edge);
-    const title = edge > 0
-      ? 'You have him ' + edge + ' spots higher than the ESPN sheet, so the room should let him last.'
-      : edge < 0
-      ? 'The ESPN sheet has him ' + (-edge) + ' spots higher, so the room takes him before you would.'
-      : 'You and the ESPN sheet agree on him.';
-    return '<button type="button" class="mb-card p-' + p.pos + (q.indexOf(p.id) >= 0 ? ' is-queued' : '') +
-      '" data-mb="' + p.id + '" title="' + esc(title) + '">' +
-      '<span class="mb-top"><span class="mb-rk">' + p.mine + '</span>' +
-        '<span class="mb-pos">' + POS_LABEL[p.pos] + '</span></span>' +
-      '<span class="mb-nm">' + esc(p.name) + '</span>' +
-      '<span class="mb-sub">' + esc(p.team) + ' · ESPN ' + p.rank +
-        ' <span class="mb-edge' + cls + '">' + sign + '</span></span>' +
-      (canPick ? '<span class="mini go" data-mbd="' + p.id + '">Draft</span>' : '') +
-      '</button>';
-  }).join('') : '<p class="mb-empty">Nobody left on your board at that filter.</p>';
-}
-
 function renderRail() {
-  const qseat = activeSeat();
-  const myq = qseat >= 0 ? queueFor(qseat) : [];
-  el('q-ct').textContent = myq.length ? '(' + myq.length + ')' : '';
+  const rows = HAS_MINE ? myBoardRows(80, St.filter) : [];
+  el('mb-ct').textContent = rows.length ? '(' + rows.length + ')' : '';
   document.querySelectorAll('.tab').forEach(function (t) {
     t.classList.toggle('is-on', t.dataset.tab === St.tab);
   });
@@ -2155,29 +2061,45 @@ function renderRail() {
     }
     sel.innerHTML = opts;
   }
-  el('rail-body').innerHTML = St.tab === 'queue' ? queueHTML(qseat, myq) : rosterHTML(St.railTeam);
+  el('rail-body').innerHTML = St.tab === 'mine' ? myBoardHTML(rows) : rosterHTML(St.railTeam);
 }
 
-function queueHTML(seat, q) {
-  if (seat < 0) {
-    return '<p class="rail-note">You are watching this room rather than drafting in it.</p>';
+/* ── My board ───────────────────────────────────────────────────────────────
+   Your own rankings, down to whoever is still available, redrawn every pick.
+   The bots draft off the ESPN sheet, so the gap between the two orders is the
+   useful part: the edge is `ESPN rank - your rank`, positive where the room
+   rates a player lower than you do and he should therefore last. */
+function myBoardHTML(rows) {
+  if (!HAS_MINE) {
+    return '<p class="rail-note">This build has no personal rankings.<br>' +
+           'Put NicksRankings.csv beside the cheat sheet and run build.py.</p>';
   }
-  const who = S.mode === 'hotseat' ? teamName(seat) + '’s queue' : 'Your queue';
-  if (!q.length) {
-    return '<p class="rail-note">' + esc(who) + ' is empty.<br>Queue players from the list and the room ' +
-           'takes the top one still on the board if the clock runs out.</p>';
+  if (!rows.length) {
+    return '<p class="rail-note">Nobody left on your board' +
+           (St.filter === 'ALL' ? '.' : ' at that filter.') + '</p>';
   }
-  return (S.mode === 'hotseat' ? '<div class="rail-sub"><span class="eyebrow">' + esc(who) + '</span></div>' : '') +
-    q.map(function (id, i) {
-      const p = P[id], gone = !!St.taken[id];
-      return '<div class="qrow p-' + p.pos + (gone ? ' is-gone' : '') + '">' +
-        '<div class="ord">' + (i + 1) + '</div>' +
-        '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
+  const canPick = canPickNow();
+  const scope = St.filter === 'ALL' ? 'Best available'
+              : (St.filter === 'DST' ? 'DEF' : St.filter) + ' left';
+  return '<div class="rail-sub"><span class="eyebrow">' + scope +
+    ' &middot; your rankings</span></div>' +
+    rows.map(function (p) {
+      const edge = p.rank - p.mine;
+      const cls = edge >= 8 ? ' is-value' : edge <= -8 ? ' is-reach' : '';
+      const sign = edge > 0 ? '+' + edge : String(edge);
+      const title = edge > 0
+        ? 'You have him ' + edge + ' spots higher than ESPN, so the room should let him last.'
+        : edge < 0
+        ? 'ESPN has him ' + (-edge) + ' spots higher, so the room takes him before you would.'
+        : 'You and ESPN agree on him.';
+      return '<div class="mrow p-' + p.pos + '">' +
+        '<div class="mrk">' + p.mine + '</div>' +
         '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
-          '<div class="m">' + esc(p.team) + (gone ? ' · drafted' : ' · #' + p.rank) + '</div></div>' +
-        '<button class="qbtn" data-up="' + id + '" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
-        '<button class="qbtn" data-dn="' + id + '" title="Move down"' + (i === q.length - 1 ? ' disabled' : '') + '>↓</button>' +
-        '<button class="qbtn" data-rm="' + id + '" title="Remove">×</button></div>';
+          '<div class="m">' + POS_LABEL[p.pos] + ' &middot; ' + esc(p.team) +
+          ' &middot; ESPN ' + p.rank + '</div></div>' +
+        '<div class="medge' + cls + '" title="' + esc(title) + '">' + sign + '</div>' +
+        (canPick ? '<button class="mini go" data-mbd="' + p.id + '">Draft</button>' : '') +
+        '</div>';
     }).join('');
 }
 
@@ -2839,61 +2761,11 @@ el('filters').addEventListener('click', function (e) {
 
 el('pool-list').addEventListener('click', function (e) {
   const draft = e.target.closest('[data-d]');
-  if (draft) { if (canPickNow()) makePick(+draft.dataset.d); return; }
-  const queue = e.target.closest('[data-q]');
-  const row = queue || e.target.closest('[data-row]');
-  if (!row) return;
-  const seat = activeSeat();
-  if (seat < 0) return;
-  const id = +(queue ? row.dataset.q : row.dataset.row);
-  if (St.taken[id]) return;
-  const q = queueFor(seat);
-  const i = q.indexOf(id);
-  if (i >= 0) q.splice(i, 1); else q.push(id);
-  renderPool();
-  renderRail();
+  if (draft && canPickNow()) makePick(+draft.dataset.d);
 });
-
 el('rail-body').addEventListener('click', function (e) {
-  const b = e.target.closest('[data-up],[data-dn],[data-rm]');
-  if (!b) return;
-  const seat = activeSeat();
-  if (seat < 0) return;
-  const q = queueFor(seat);
-  const id = +(b.dataset.up || b.dataset.dn || b.dataset.rm);
-  const i = q.indexOf(id);
-  if (i < 0) return;
-  if (b.dataset.rm !== undefined) q.splice(i, 1);
-  else {
-    const j = b.dataset.up !== undefined ? i - 1 : i + 1;
-    if (j < 0 || j >= q.length) return;
-    q[i] = q[j];
-    q[j] = id;
-  }
-  renderRail();
-  renderPool();
-});
-
-el('mb-toggle').addEventListener('click', function () {
-  St.myOpen = !St.myOpen;
-  try { localStorage.setItem('otc-myboard', St.myOpen ? 'open' : 'shut'); } catch (e) { /* no storage */ }
-  renderMyBoard();
-});
-el('mb-list').addEventListener('click', function (e) {
   const draft = e.target.closest('[data-mbd]');
-  if (draft) { if (canPickNow()) makePick(+draft.dataset.mbd); return; }
-  const card = e.target.closest('[data-mb]');
-  if (!card) return;
-  const seat = activeSeat();
-  if (seat < 0) return;
-  const id = +card.dataset.mb;
-  if (St.taken[id]) return;
-  const q = queueFor(seat);
-  const i = q.indexOf(id);
-  if (i >= 0) q.splice(i, 1); else q.push(id);
-  renderMyBoard();
-  renderPool();
-  renderRail();
+  if (draft && canPickNow()) makePick(+draft.dataset.mbd);
 });
 
 el('rail-team').addEventListener('change', function (e) {

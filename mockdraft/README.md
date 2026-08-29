@@ -96,14 +96,23 @@ default and is what the measured shape below describes.
 
 `../NicksRankings.csv` -- the 50/25/25 blend of DraftKings ADP, the Angle redraft
 list and fantasy_rankings -- is matched onto the ESPN pool by name at build time
-and shown as a strip along the bottom of the draft room: best available **by your
-rankings**, redrawn on every pick, following whatever position filter the pool is
-on. Your rank also appears on each row of the main list.
+and **is** the right-hand panel: best available by your rankings, redrawn on
+every pick, filterable by position. Your rank also appears on each row of the
+main list.
 
-It changes nothing about how the bots draft. They value players off the ESPN
-sheet, which is exactly what makes the comparison worth showing.
+It replaced the manual queue outright, because it does that job better. When a
+clock runs out or autopick is on, your seat drafts the best player still on your
+board that the roster can actually use -- respecting the same positional caps the
+bots obey, and only offering someone who fills a starting slot once the roster is
+down to its last spots. Your board holds no kickers or defenses, so the final
+rounds fall through to the room's own judgement.
 
-Each card carries the ESPN rank and an **edge** -- `ESPN rank - your rank`:
+Only your seat drafts off it. Other people's seats, and a build with no rankings
+file, fall back to the bots' judgement with the noise switched off.
+
+It changes nothing about how the bots value players -- they draft off the ESPN
+sheet, which is exactly what makes the comparison worth showing. Each row carries
+the ESPN rank and an **edge**, `ESPN rank - your rank`:
 
 - **positive** (green): the room rates him lower than you do, so he should still
   be there next time round;
@@ -113,13 +122,13 @@ One asymmetry to read around: your list is 1568 deep and the ESPN sheet is 300,
 so a player you have 400th against ESPN's 227th shows a very large negative edge.
 The direction is right -- ESPN really does rate him higher -- but the size of the
 number is inflated by the two lists having different depths. Near the top, where
-the strip is actually used, they are directly comparable.
+the panel is actually used, they are directly comparable.
 
 Kickers and defenses have no personal rank, because the DraftKings universe the
 blend is built from does not include them. Build output reports the match rate
-and names anyone who failed to match, so a spelling drift in either sheet is
-caught rather than silently dropping a player. Drop `NicksRankings.csv` and the
-strip hides itself; nothing else changes.
+and names any skill player that failed to match, so a spelling drift in either
+sheet is caught rather than silently dropping someone. Drop `NicksRankings.csv`
+and the panel says so; nothing else changes.
 
 ## Playing with other people
 

@@ -60,7 +60,7 @@ const api = new Function(stub + engine + persistence + `
            normalizeSeats, isBot, isLocal, teamName, keeperProblems, placeKeepers,
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
            assignPick, pickAt, boardEditable, skipFilled, Net, fbConfigured,
-           onRoomData, clientId, makeCode, myBoardRows, HAS_MINE,
+           onRoomData, clientId, makeCode, myBoardRows, HAS_MINE, rosterCaps,
            configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
@@ -458,28 +458,25 @@ api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
 api.S.rounds = api.rounds();
 api.startDraft();
 const top = api.myBoardRows(10);
-check('the strip is sorted by your rank, not ESPN',
+check('the list is sorted by your rank, not ESPN',
   top.every((p, i) => i === 0 || p.mine > top[i - 1].mine));
-check('the strip is capped at what you asked for', api.myBoardRows(5).length === 5);
+check('the list is capped at what you asked for', api.myBoardRows(5).length === 5);
 
 // It has to drop players the moment they are drafted -- that is the whole
 // "updates as the draft goes on" part.
 const first = api.myBoardRows(1)[0];
 api.makePick(first.id);
-check('a drafted player leaves the strip immediately',
+check('a drafted player leaves the list immediately',
   !api.myBoardRows(30).some(p => p.id === first.id));
 check('the next man up moves to the front', api.myBoardRows(1)[0].mine > first.mine);
 
-api.St.filter = 'RB';
-check('the strip follows the position filter',
-  api.myBoardRows(20).every(p => p.pos === 'RB'));
-api.St.filter = 'FLEX';
-check('FLEX on the strip means RB, WR and TE',
-  api.myBoardRows(20).every(p => ['RB', 'WR', 'TE'].includes(p.pos)));
-api.St.filter = 'K';
+check('the list can be filtered by position',
+  api.myBoardRows(20, 'RB').every(p => p.pos === 'RB'));
+check('FLEX means RB, WR and TE',
+  api.myBoardRows(20, 'FLEX').every(p => ['RB', 'WR', 'TE'].includes(p.pos)));
 check('a filter with nobody on your board comes back empty',
-  api.myBoardRows(20).length === 0);
-api.St.filter = 'ALL';
+  api.myBoardRows(20, 'K').length === 0);
+check('no filter is the whole board', api.myBoardRows(500).length > 200);
 
 /* ── Reading a live room ────────────────────────────────────────────────────
    Every client rebuilds the whole draft from the room snapshot, so this is the
@@ -573,19 +570,59 @@ check('the claimed seat is the only "me" seat',
   api.S.seats.filter(x => x === 'me').length === 1);
 check('other human seats stay friends', api.S.seats[0] === 'friend', api.S.seats.join(','));
 
-/* ── Queue behaviour ────────────────────────────────────────────────────── */
-console.log('\nqueue');
+/* ── Autopick off your own board ────────────────────────────────────────────
+   Your rankings replaced the hand-built queue, so a clock running out should
+   walk down your board rather than fall straight through to the bots -- but
+   only for your own seat, and only where the roster can still use the player. */
+console.log('\nautopick');
 api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
 api.S.rounds = api.rounds();
 api.startDraft();
-api.St.queues[0] = [byName['Brock Bowers'].id, byName['Trey McBride'].id];
-check("autopick takes the top of that seat's queue", api.autoChoice(0).name === 'Brock Bowers');
-api.St.taken[byName['Brock Bowers'].id] = true;
-check('autopick skips a queued player already gone', api.autoChoice(0).name === 'Trey McBride');
-api.St.taken[byName['Trey McBride'].id] = true;
-check('autopick falls back to the board with an exhausted queue', !!api.autoChoice(0));
-check("one seat's queue does not leak into another",
-  !api.St.queues[1] || !api.St.queues[1].length);
+
+check('autopick takes the best player on your board',
+  api.autoChoice(0).id === api.myBoardRows(1)[0].id);
+
+const wanted = api.myBoardRows(1)[0];
+api.St.taken[wanted.id] = true;
+check('autopick skips someone already gone', api.autoChoice(0).id !== wanted.id);
+check('autopick moves to the next man on your board',
+  api.autoChoice(0).id === api.myBoardRows(1)[0].id);
+
+// Another seat has no personal board, so it uses the room's judgement.
+const mineNext = api.myBoardRows(1)[0].id;
+const theirs = api.autoChoice(3);
+check('another seat does not draft off your rankings',
+  theirs && theirs.id !== undefined);
+
+// Roster caps bind your autopick exactly as they bind the bots.
+api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+const caps = api.rosterCaps();
+const qbs = api.P.filter(p => p.pos === 'QB').sort((a, b) => a.mine - b.mine);
+for (let i = 0; i < caps.QB; i++) api.St.rosters[0].push(qbs[i].id);
+qbs.slice(0, caps.QB).forEach(p => { api.St.taken[p.id] = true; });
+check('autopick will not exceed the quarterback cap',
+  api.autoChoice(0).pos !== 'QB', api.autoChoice(0).pos);
+
+// At the very end your board cannot help -- it holds no kickers or defenses --
+// so it has to fall through rather than leaving the slot empty.
+api.S = settings({ teams: 2, seats: seats(2, { 0: 'me' }),
+                   slots: { QB: 0, RB: 0, WR: 0, TE: 0, FLEX: 0, SFLEX: 0, K: 1, DST: 1, BN: 0 } });
+api.S.rounds = api.rounds();
+api.startDraft();
+const endPick = api.autoChoice(0);
+check('autopick falls through to the room when only K and DEF are left to fill',
+  endPick && ['K', 'DST'].includes(endPick.pos), endPick ? endPick.pos : 'nothing');
+
+// A build with no personal rankings must still autopick.
+const savedMine = api.P.map(p => p.mine);
+api.P.forEach(p => { p.mine = 0; });
+api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+check('autopick still works with no personal board at all', !!api.autoChoice(0));
+api.P.forEach((p, i) => { p.mine = savedMine[i]; });
 
 console.log(failures ? '\n' + failures + ' FAILING\n' : '\nall checks passed\n');
 process.exit(failures ? 1 : 0);
