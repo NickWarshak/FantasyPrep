@@ -416,6 +416,107 @@ button { cursor: pointer; border: 0; background: none; }
 }
 </style>
 
+<style>
+/* ── Seats, keepers and the shared room ─────────────────────────────────── */
+.seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 8px; }
+.seat {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line);
+}
+.seat .no { font: 400 11px/1 var(--mono); color: var(--ink-dim); width: 15px; flex: none; }
+.seat select { flex: 1; min-width: 0; padding: 4px 5px; border-radius: 5px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink); font-size: 13px; }
+.seat.is-me { border-color: var(--bone); }
+.seat.is-me .no { color: var(--bone); }
+
+.keeper-add { display: grid; grid-template-columns: 1fr 1.7fr 1fr auto; gap: 8px; align-items: end; }
+.keeper-add .field > span { font-size: 11px; }
+.keeper-add select, .keeper-add input {
+  padding: 8px 9px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line); color: var(--ink); width: 100%;
+}
+.keeper-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.keeper {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 9px 7px 11px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line);
+  border-left: 3px solid var(--pos, var(--line));
+}
+.keeper .kt { font: 600 12px/1 var(--sans); letter-spacing: .04em; color: var(--ink-dim); width: 62px; flex: none; }
+.keeper .kn { flex: 1; min-width: 0; font-weight: 600; font-size: 14px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.keeper .kr { font: 400 11px/1 var(--mono); color: var(--ink-dim); }
+.keeper-none { color: var(--ink-dim); font-size: 13px; margin: 12px 0 0; }
+
+/* Board cells for kept players read as inherited, not drafted. */
+.bd-pick.is-keeper { background: #1B2430; }
+.bd-pick.is-keeper .pn { color: var(--ink-mid); }
+.bd-pick .kept {
+  display: inline-block; margin-left: 4px; padding: 0 3px; border-radius: 3px;
+  font: 700 9px/1.5 var(--sans); letter-spacing: .08em;
+  color: var(--ground); background: var(--ink-dim);
+}
+
+/* ── Hand-off curtain (hot seat) ───────────────────────────────────────── */
+#curtain {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: var(--ground);
+}
+.curtain-in { text-align: center; max-width: 400px; }
+.curtain-in .eyebrow { display: block; margin-bottom: 10px; }
+.curtain-in h2 {
+  margin: 0 0 6px; font: 700 clamp(34px, 9vw, 54px)/1 var(--cond);
+  text-transform: uppercase; color: var(--bone);
+}
+.curtain-in p { margin: 0 0 22px; color: var(--ink-mid); font-size: 14px; }
+.curtain-in .btn-primary { padding: 13px 34px; font-size: 16px; }
+
+/* ── Rail team switcher ────────────────────────────────────────────────── */
+.rail-pick { display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  background: var(--ground); border-bottom: 1px solid var(--line-lo); }
+.rail-pick select {
+  flex: 1; min-width: 0; padding: 5px 7px; border-radius: 5px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink); font-size: 13px;
+}
+
+/* ── Online room banner ────────────────────────────────────────────────── */
+.room-bar {
+  flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 16px;
+  background: #1A2331; border-bottom: 1px solid var(--line);
+  font-size: 13px; color: var(--ink-mid);
+}
+.room-bar .live {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 11px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--bone);
+}
+.room-bar .live::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--bone);
+}
+.room-bar.is-busy .live::before { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .room-bar.is-busy .live::before { animation: none; } }
+.room-bar .warn { color: var(--TE); }
+
+.mode-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+.mode {
+  flex: 1; min-width: 168px; text-align: left;
+  padding: 12px 13px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line);
+}
+.mode:hover { border-color: var(--ink-dim); }
+.mode.is-on { border-color: var(--bone); background: #1B2330; }
+.mode b { display: block; font: 600 15px/1.2 var(--sans); color: var(--ink); margin-bottom: 3px; }
+.mode span { font-size: 12px; line-height: 1.5; color: var(--ink-dim); }
+.mode.is-on b { color: var(--bone); }
+</style>
+
+<!-- Shared state for an online room. Rewritten into the document each time the
+     page republishes itself; null in a solo draft. -->
+<script id="room-state" type="application/json">null</script>
+
 <div id="app">
 
   <!-- ── Lobby ──────────────────────────────────────────────────────────── -->
@@ -424,52 +525,73 @@ button { cursor: pointer; border: 0; background: none; }
       <div class="masthead">
         <span class="eyebrow">Mock draft room &middot; ESPN PPR top 300</span>
         <h1>On the Clock</h1>
-        <p>Set the room, take a slot, and draft against bots that value players off
-           the cheat sheet, chase their own roster needs, and reach the way real
-           drafters do. Nothing here is saved or shared &mdash; run it as many times as you like.</p>
+        <p>Set the room, hand out the seats, name your keepers, and draft. Empty
+           seats are filled by bots that value players off the cheat sheet, chase
+           their own roster needs, and reach the way real drafters do.</p>
         <div class="rule"></div>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Who is drafting</span>
+        <div class="mode-pick" id="f-mode">
+          <button class="mode is-on" data-mode="solo"><b>Just me</b>
+            <span>One seat is yours, bots take the rest.</span></button>
+          <button class="mode" data-mode="hotseat"><b>Same screen</b>
+            <span>Several people draft from this device. The room hides itself
+                  between turns so nobody reads the next drafter's queue.</span></button>
+          <button class="mode" data-mode="online"><b>Online with friends</b>
+            <span>Everyone opens this page. Turn-based &mdash; each pick saves the
+                  room and the other views catch up.</span></button>
+        </div>
+        <p class="hint" id="mode-hint"></p>
       </div>
 
       <div class="card">
         <span class="eyebrow">The room</span>
         <div class="grid2">
-          <label class="field">
-            <span>Teams</span>
-            <select id="f-teams"></select>
-          </label>
-          <label class="field">
-            <span>Draft type</span>
+          <label class="field"><span>Teams</span><select id="f-teams"></select></label>
+          <label class="field"><span>Draft type</span>
             <select id="f-type">
               <option value="snake">Snake</option>
               <option value="3rr">Snake, 3rd round reversal</option>
               <option value="linear">Linear</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>Clock per pick</span>
+            </select></label>
+          <label class="field"><span>Clock per pick</span>
             <select id="f-clock">
               <option value="15">15 seconds</option>
               <option value="30" selected>30 seconds</option>
               <option value="60">60 seconds</option>
               <option value="90">90 seconds</option>
               <option value="0">No clock</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>Bot pace</span>
+            </select></label>
+          <label class="field"><span>Bot pace</span>
             <select id="f-pace">
               <option value="1">Lifelike</option>
               <option value="0.45" selected>Brisk</option>
               <option value="0.12">Instant</option>
-            </select>
-          </label>
+            </select></label>
         </div>
       </div>
 
       <div class="card">
-        <span class="eyebrow">Your draft slot</span>
-        <div class="slotpick" id="f-slot"></div>
-        <p class="hint" id="slot-hint"></p>
+        <span class="eyebrow">Seats</span>
+        <div class="seats" id="f-seats"></div>
+        <p class="hint" id="seat-hint"></p>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Keepers</span>
+        <div class="keeper-add">
+          <label class="field"><span>Team</span><select id="k-team"></select></label>
+          <label class="field"><span>Player</span>
+            <input id="k-player" list="k-players" placeholder="Search the sheet" autocomplete="off">
+            <datalist id="k-players"></datalist></label>
+          <label class="field"><span>Costs round</span><select id="k-round"></select></label>
+          <button class="btn" id="k-add">Add</button>
+        </div>
+        <div class="keeper-list" id="k-list"></div>
+        <p class="keeper-none" id="k-none">No keepers. Every pick is live.</p>
+        <p class="hint" id="k-warn"></p>
       </div>
 
       <div class="card">
@@ -493,6 +615,12 @@ button { cursor: pointer; border: 0; background: none; }
 
   <!-- ── Draft room ─────────────────────────────────────────────────────── -->
   <div id="room" hidden>
+    <div class="room-bar" id="room-bar" hidden>
+      <span class="live" id="room-live">Shared room</span>
+      <span id="room-msg"></span>
+      <span class="warn" id="room-warn"></span>
+    </div>
+
     <header class="clockbar">
       <div class="cb-pick">
         <span class="eyebrow">Round <span id="cb-rd">1</span> &middot; Pick <span id="cb-pk">1</span></span>
@@ -527,10 +655,24 @@ button { cursor: pointer; border: 0; background: none; }
       <aside class="rail">
         <div class="tabs">
           <button class="tab is-on" data-tab="queue">Queue <span class="ct" id="q-ct"></span></button>
-          <button class="tab" data-tab="roster">My team</button>
+          <button class="tab" data-tab="roster">Rosters</button>
+        </div>
+        <div class="rail-pick" id="rail-pick" hidden>
+          <span class="eyebrow">Team</span>
+          <select id="rail-team"></select>
         </div>
         <div class="rail-body" id="rail-body"></div>
       </aside>
+    </div>
+  </div>
+
+  <!-- ── Hand-off curtain ───────────────────────────────────────────────── -->
+  <div id="curtain" hidden>
+    <div class="curtain-in">
+      <span class="eyebrow">Pass the device</span>
+      <h2 id="curtain-name">Team 2</h2>
+      <p id="curtain-sub">You are on the clock. Everything is hidden until you're ready.</p>
+      <button class="btn btn-primary" id="curtain-go">I'm ready</button>
     </div>
   </div>
 
@@ -544,6 +686,7 @@ button { cursor: pointer; border: 0; background: none; }
         </div>
         <div class="cb-tools">
           <button class="btn" id="btn-board">Back to board</button>
+          <button class="btn" id="btn-csv">Download CSV</button>
           <button class="btn btn-primary" id="btn-again">New draft</button>
         </div>
       </div>
@@ -556,12 +699,23 @@ button { cursor: pointer; border: 0; background: none; }
 <script>
 "use strict";
 
+/* Captured before anything renders, so this is the page's own source rather
+   than a snapshot of how it currently looks. Republishing an online room swaps
+   the state blob inside this and sends the whole document back up. */
+const PRISTINE = '<!' + 'doctype html>\n' + document.documentElement.outerHTML;
+const ROOM0 = (function () {
+  try { return JSON.parse(document.getElementById('room-state').textContent || 'null'); }
+  catch (e) { return null; }
+})();
+
 /* ── Player pool ────────────────────────────────────────────────────────────
    Baked in at build time from espn_ppr300_cheatsheet.csv by build.py, already
    in rank order, so `P` doubles as the board's value ordering. */
 const P = ([[1,"Jahmyr Gibbs","RB",1,"DET",57,6],[2,"Bijan Robinson","RB",2,"ATL",56,11],[3,"Ja'Marr Chase","WR",1,"CIN",56,6],[4,"Puka Nacua","WR",2,"LAR",55,11],[5,"Jaxon Smith-Njigba","WR",3,"SEA",54,11],[6,"Christian McCaffrey","RB",3,"SF",53,8],[7,"Jonathan Taylor","RB",4,"IND",52,13],[8,"Amon-Ra St. Brown","WR",4,"DET",52,6],[9,"CeeDee Lamb","WR",5,"DAL",51,14],[10,"Justin Jefferson","WR",6,"MIN",50,6],[11,"De'Von Achane","RB",5,"MIA",48,6],[12,"James Cook III","RB",6,"BUF",46,7],[13,"Jeremiyah Love","RB",7,"ARI",45,14],[14,"Drake London","WR",7,"ATL",43,11],[15,"Saquon Barkley","RB",8,"PHI",42,10],[16,"Derrick Henry","RB",9,"BAL",40,13],[17,"Ashton Jeanty","RB",10,"LV",38,13],[18,"Kenneth Walker III","RB",11,"KC",37,5],[19,"Chase Brown","RB",12,"CIN",36,6],[20,"Trey McBride","TE",1,"ARI",35,14],[21,"Brock Bowers","TE",2,"LV",34,13],[22,"Omarion Hampton","RB",13,"LAC",33,7],[23,"Breece Hall","RB",14,"NYJ",32,13],[24,"Rashee Rice","WR",8,"KC",32,5],[25,"Nico Collins","WR",9,"HOU",31,8],[26,"A.J. Brown","WR",10,"NE",30,11],[27,"Chris Olave","WR",11,"NO",30,8],[28,"Malik Nabers","WR",12,"NYG",29,8],[29,"Garrett Wilson","WR",13,"NYJ",28,13],[30,"Josh Jacobs","RB",15,"GB",27,11],[31,"George Pickens","WR",14,"DAL",26,14],[32,"Javonte Williams","RB",16,"DAL",25,14],[33,"Tetairoa McMillan","WR",15,"CAR",24,5],[34,"Zay Flowers","WR",16,"BAL",23,13],[35,"DeVonta Smith","WR",17,"PHI",22,10],[36,"Josh Allen","QB",1,"BUF",22,7],[37,"Travis Etienne Jr.","RB",17,"NO",22,8],[38,"Kyren Williams","RB",18,"LAR",21,11],[39,"Quinshon Judkins","RB",19,"CLE",21,11],[40,"Cam Skattebo","RB",20,"NYG",20,8],[41,"Bucky Irving","RB",21,"TB",19,10],[42,"Emeka Egbuka","WR",18,"TB",19,10],[43,"Davante Adams","WR",19,"LAR",18,11],[44,"Ladd McConkey","WR",20,"LAC",17,7],[45,"Terry McLaurin","WR",21,"WAS",17,7],[46,"Tee Higgins","WR",22,"CIN",15,6],[47,"Jaylen Waddle","WR",23,"DEN",15,10],[48,"Rome Odunze","WR",24,"CHI",14,10],[49,"Colston Loveland","TE",3,"CHI",13,10],[50,"Tyler Warren","TE",4,"IND",13,13],[51,"Jameson Williams","WR",25,"DET",12,6],[52,"DJ Moore","WR",26,"BUF",11,7],[53,"Luther Burden III","WR",27,"CHI",11,10],[54,"Carnell Tate","WR",28,"TEN",10,9],[55,"Jayden Daniels","QB",2,"WAS",10,7],[56,"Lamar Jackson","QB",3,"BAL",10,13],[57,"Drake Maye","QB",4,"NE",10,11],[58,"Jalen Hurts","QB",5,"PHI",9,10],[59,"D'Andre Swift","RB",22,"CHI",9,10],[60,"Bhayshul Tuten","RB",23,"JAC",9,7],[61,"David Montgomery","RB",24,"HOU",8,8],[62,"Jadarian Price","RB",25,"SEA",8,11],[63,"Rhamondre Stevenson","RB",26,"NE",8,11],[64,"Jaylen Warren","RB",27,"PIT",7,9],[65,"Courtland Sutton","WR",29,"DEN",7,10],[66,"Michael Pittman Jr.","WR",30,"PIT",7,9],[67,"Marvin Harrison Jr.","WR",31,"ARI",7,14],[68,"DK Metcalf","WR",32,"PIT",6,9],[69,"Parker Washington","WR",33,"JAC",6,7],[70,"Alec Pierce","WR",34,"IND",6,13],[71,"Kyle Pitts Sr.","TE",5,"ATL",6,11],[72,"Harold Fannin Jr.","TE",6,"CLE",6,11],[73,"Sam LaPorta","TE",7,"DET",6,6],[74,"Joe Burrow","QB",6,"CIN",5,6],[75,"Jaxson Dart","QB",7,"NYG",5,8],[76,"Christian Watson","WR",35,"GB",5,11],[77,"Mike Evans","WR",36,"SF",5,8],[78,"Matthew Golden","WR",37,"GB",4,11],[79,"Brian Thomas Jr.","WR",38,"JAC",4,7],[80,"Michael Wilson","WR",39,"ARI",4,14],[81,"Jakobi Meyers","WR",40,"JAC",4,7],[82,"Trevor Lawrence","QB",8,"JAC",4,7],[83,"Dak Prescott","QB",9,"DAL",4,14],[84,"Bo Nix","QB",10,"DEN",4,10],[85,"Brock Purdy","QB",11,"SF",4,8],[86,"Matthew Stafford","QB",12,"LAR",4,11],[87,"Caleb Williams","QB",13,"CHI",3,10],[88,"Wan'Dale Robinson","WR",41,"TEN",3,9],[89,"Jordan Addison","WR",42,"MIN",3,6],[90,"De'Zhaun Stribling","WR",43,"SF",3,8],[91,"Khalil Shakir","WR",44,"BUF",3,7],[92,"Jayden Reed","WR",45,"GB",3,11],[93,"Justin Herbert","QB",14,"LAC",3,7],[94,"Patrick Mahomes","QB",15,"KC",3,5],[95,"Rico Dowdle","RB",28,"PIT",3,9],[96,"Jonathon Brooks","RB",29,"CAR",2,5],[97,"TreVeyon Henderson","RB",30,"NE",2,11],[98,"Tony Pollard","RB",31,"TEN",2,9],[99,"Kenny Gainwell","RB",32,"TB",2,10],[100,"Chuba Hubbard","RB",33,"CAR",2,5],[101,"George Kittle","TE",8,"SF",2,8],[102,"Tucker Kraft","TE",9,"GB",2,11],[103,"Dallas Goedert","TE",10,"PHI",2,10],[104,"Travis Kelce","TE",11,"KC",2,5],[105,"J.K. Dobbins","RB",34,"DEN",2,10],[106,"Kyle Monangai","RB",35,"CHI",2,10],[107,"Jacory Croskey-Merritt","RB",36,"WAS",2,7],[108,"Aaron Jones Sr.","RB",37,"MIN",2,6],[109,"Jake Ferguson","TE",12,"DAL",2,14],[110,"Mark Andrews","TE",13,"BAL",2,13],[111,"Isaiah Likely","TE",14,"NYG",2,8],[112,"Xavier Worthy","WR",46,"KC",2,5],[113,"Quentin Johnston","WR",47,"LAC",2,7],[114,"Stefon Diggs","WR",48,"WAS",2,7],[115,"Rachaad White","RB",38,"WAS",2,7],[116,"Dalton Kincaid","TE",15,"BUF",2,7],[117,"T.J. Hockenson","TE",16,"MIN",2,6],[118,"Hunter Henry","TE",17,"NE",2,11],[119,"Terrance Ferguson","TE",18,"LAR",2,11],[120,"Jordan Mason","RB",39,"MIN",2,6],[121,"Blake Corum","RB",40,"LAR",1,11],[122,"RJ Harvey","RB",41,"DEN",1,10],[123,"Woody Marks","RB",42,"HOU",1,8],[124,"Josh Downs","WR",49,"IND",1,13],[125,"KC Concepcion","WR",50,"CLE",1,11],[126,"Makai Lemon","WR",51,"PHI",1,10],[127,"Chris Godwin Jr.","WR",52,"TB",1,10],[128,"Deebo Samuel Sr.","WR",53,"SF",1,8],[129,"Romeo Doubs","WR",54,"NE",1,11],[130,"Jalen Coker","WR",55,"CAR",1,5],[131,"Rashid Shaheed","WR",56,"SEA",1,11],[132,"Jalen McMillan","WR",57,"TB",1,10],[133,"Kyler Murray","QB",16,"MIN",1,6],[134,"Tyler Shough","QB",17,"NO",1,8],[135,"Jared Goff","QB",18,"DET",1,6],[136,"Daniel Jones","QB",19,"IND",1,13],[137,"Zach Charbonnet","RB",43,"SEA",1,11],[138,"Tyjae Spears","RB",44,"TEN",1,9],[139,"Chris Rodriguez Jr.","RB",45,"JAC",1,7],[140,"Brian Robinson Jr.","RB",46,"ATL",1,11],[141,"Tyler Allgeier","RB",47,"ARI",0,14],[142,"MarShawn Lloyd","RB",48,"GB",0,11],[143,"Denzel Boston","WR",58,"CLE",0,11],[144,"Jerry Jeudy","WR",59,"CLE",0,11],[145,"Calvin Ridley","WR",60,"TEN",0,9],[146,"Adonai Mitchell","WR",61,"NYJ",0,13],[147,"Travis Hunter","WR",62,"JAC",0,7],[148,"Caleb Douglas","WR",63,"MIA",0,6],[149,"Baker Mayfield","QB",20,"TB",0,10],[150,"Malik Willis","QB",21,"MIA",0,6],[151,"Jordyn Tyson","WR",64,"NO",0,8],[152,"Tre Tucker","WR",65,"LV",0,13],[153,"Jalen Nailor","WR",66,"LV",0,13],[154,"Keaton Mitchell","RB",49,"LAC",0,7],[155,"Isiah Pacheco","RB",50,"DET",0,6],[156,"Jonah Coleman","RB",51,"DEN",0,10],[157,"Mike Washington Jr.","RB",52,"LV",0,13],[158,"Braelon Allen","RB",53,"NYJ",0,13],[159,"Kenyon Sadiq","TE",19,"NYJ",0,13],[160,"Juwan Johnson","TE",20,"NO",0,8],[161,"Keenan Allen","WR",67,"IND",0,13],[162,"Rashod Bateman","WR",68,"BAL",0,13],[163,"Dontayvion Wicks","WR",69,"PHI",0,10],[164,"Devaughn Vele","WR",70,"NO",0,8],[165,"Jaylin Noel","WR",71,"HOU",0,8],[166,"Tank Bigsby","RB",54,"PHI",0,10],[167,"Ray Davis","RB",55,"BUF",0,7],[168,"Dylan Sampson","RB",56,"CLE",0,11],[169,"Texans D/ST","DST",1,"HOU",1,8],[170,"Broncos D/ST","DST",2,"DEN",1,10],[171,"Steelers D/ST","DST",3,"PIT",1,9],[172,"Seahawks D/ST","DST",4,"SEA",1,11],[173,"Rams D/ST","DST",5,"LAR",1,11],[174,"Ravens D/ST","DST",6,"BAL",1,13],[175,"Eagles D/ST","DST",7,"PHI",1,10],[176,"Browns D/ST","DST",8,"CLE",1,11],[177,"Patriots D/ST","DST",9,"NE",1,11],[178,"Lions D/ST","DST",10,"DET",1,6],[179,"Chiefs D/ST","DST",11,"KC",0,5],[180,"Chargers D/ST","DST",12,"LAC",0,7],[181,"Brandon Aubrey","K",1,"DAL",1,14],[182,"Cameron Dicker","K",2,"LAC",1,7],[183,"Jason Myers","K",3,"SEA",1,11],[184,"Harrison Mevis","K",4,"LAR",1,11],[185,"Ka'imi Fairbairn","K",5,"HOU",1,8],[186,"Eddy Pineiro","K",6,"SF",1,8],[187,"Harrison Butker","K",7,"KC",1,5],[188,"Cam Little","K",8,"JAC",1,7],[189,"Jake Bates","K",9,"DET",1,6],[190,"Tyler Loop","K",10,"BAL",1,13],[191,"Cairo Santos","K",11,"CHI",0,10],[192,"Will Reichard","K",12,"MIN",0,6],[193,"Najee Harris","RB",57,"NYG",0,8],[194,"Brenton Strange","TE",21,"JAC",0,7],[195,"Alvin Kamara","RB",58,"NO",0,8],[196,"Justice Hill","RB",59,"BAL",0,13],[197,"Ja'Kobi Lane","WR",72,"BAL",0,13],[198,"Jordan Love","QB",22,"GB",0,11],[199,"C.J. Stroud","QB",23,"HOU",0,8],[200,"Sam Darnold","QB",24,"SEA",0,11],[201,"Jauan Jennings","WR",73,"MIN",0,6],[202,"Tank Dell","WR",74,"HOU",0,8],[203,"Germie Bernard","WR",75,"PIT",0,9],[204,"Tre Harris","WR",76,"LAC",0,7],[205,"Ryan Flournoy","WR",77,"DAL",0,14],[206,"Pat Freiermuth","TE",22,"PIT",0,9],[207,"Dalton Schultz","TE",23,"HOU",0,8],[208,"Zachariah Branch","WR",78,"ATL",0,11],[209,"Omar Cooper Jr.","WR",79,"NYJ",0,13],[210,"Kayshon Boutte","WR",80,"HOU",0,8],[211,"Malik Washington","WR",81,"MIA",0,6],[212,"Jordan James","RB",60,"SF",0,8],[213,"Kaelon Black","RB",61,"SF",0,8],[214,"Kimani Vidal","RB",62,"LAC",0,7],[215,"Gunnar Helm","TE",24,"TEN",0,9],[216,"Chig Okonkwo","TE",25,"WAS",0,7],[217,"AJ Barner","TE",26,"SEA",0,11],[218,"Bryce Young","QB",25,"CAR",0,5],[219,"Cam Ward","QB",26,"TEN",0,9],[220,"Jacoby Brissett","QB",27,"ARI",0,14],[221,"Jaylen Wright","RB",63,"MIA",0,6],[222,"Ollie Gordon II","RB",64,"MIA",0,6],[223,"Samaje Perine","RB",65,"CIN",0,6],[224,"Cooper Kupp","WR",82,"SEA",0,11],[225,"Ty Johnson","RB",66,"BUF",0,7],[226,"Isaiah Davis","RB",67,"NYJ",0,13],[227,"Xavier Legette","WR",83,"CAR",0,5],[228,"Jahan Dotson","WR",84,"ATL",0,11],[229,"Darius Slayton","WR",85,"NYG",0,8],[230,"Jalen Tolbert","WR",86,"MIA",0,6],[231,"DeMario Douglas","WR",87,"NE",0,11],[232,"Chris Bell","WR",88,"MIA",0,6],[233,"Antonio Williams","WR",89,"WAS",0,7],[234,"Tyquan Thornton","WR",90,"KC",0,5],[235,"Buccaneers D/ST","DST",13,"TB",0,10],[236,"Packers D/ST","DST",14,"GB",0,11],[237,"Chris Boswell","K",13,"PIT",0,9],[238,"Chase McLaughlin","K",14,"TB",0,10],[239,"Jaydon Blue","RB",68,"DAL",0,14],[240,"Kaytron Allen","RB",69,"WAS",0,7],[241,"Tyrone Tracy Jr.","RB",70,"NYG",0,8],[242,"Nicholas Singleton","RB",71,"TEN",0,9],[243,"Demond Claiborne","RB",72,"MIN",0,6],[244,"Adam Randall","RB",73,"BAL",0,13],[245,"Emmett Johnson","RB",74,"KC",0,5],[246,"LeQuint Allen","RB",75,"JAC",0,7],[247,"George Holani","RB",76,"SEA",0,11],[248,"Sean Tucker","RB",77,"TB",0,10],[249,"James Conner","RB",78,"ARI",0,14],[250,"Emari Demercado","RB",79,"KC",0,5],[251,"Seth McGowan","RB",80,"IND",0,13],[252,"Keon Coleman","WR",91,"BUF",0,7],[253,"Isaac TeSlaa","WR",92,"DET",0,6],[254,"Jaguars D/ST","DST",15,"JAC",0,7],[255,"Saints D/ST","DST",16,"NO",0,8],[256,"Evan McPherson","K",15,"CIN",0,6],[257,"Nick Folk","K",16,"ATL",0,11],[258,"Greg Dulcich","TE",27,"MIA",0,6],[259,"Darren Waller","TE",28,"CAR",0,5],[260,"Cade Otton","TE",29,"TB",0,10],[261,"Pat Bryant","WR",93,"DEN",0,10],[262,"Darnell Mooney","WR",94,"NYG",0,8],[263,"Marvin Mims Jr.","WR",95,"DEN",0,10],[264,"Malachi Fields","WR",96,"NYG",0,8],[265,"Chris Brooks","RB",81,"GB",0,11],[266,"Emanuel Wilson","RB",82,"SEA",0,11],[267,"Geno Smith","QB",28,"NYJ",0,13],[268,"Fernando Mendoza","QB",29,"LV",0,13],[269,"Aaron Rodgers","QB",30,"PIT",0,9],[270,"Deshaun Watson","QB",31,"CLE",0,11],[271,"KaVontae Turpin","WR",97,"DAL",0,14],[272,"Jack Bech","WR",98,"LV",0,13],[273,"Tory Horton","WR",99,"SEA",0,11],[274,"Ted Hurst","WR",100,"TB",0,10],[275,"Andrei Iosivas","WR",101,"CIN",0,6],[276,"Will Shipley","RB",83,"PHI",0,10],[277,"Malik Davis","RB",84,"DAL",0,14],[278,"Kendre Miller","RB",85,"NO",0,8],[279,"Tahj Brooks","RB",86,"CIN",0,6],[280,"Trevor Etienne","RB",87,"CAR",0,5],[281,"DJ Giddens","RB",88,"IND",0,13],[282,"Jawhar Jordan","RB",89,"HOU",0,8],[283,"Kaleb Johnson","RB",90,"PIT",0,9],[284,"Mack Hollins","WR",102,"NE",0,11],[285,"Bears D/ST","DST",17,"CHI",0,10],[286,"Jets D/ST","DST",18,"NYJ",0,13],[287,"Trey Smack","K",17,"GB",0,11],[288,"Jake Elliott","K",18,"PHI",0,10],[289,"Evan Engram","TE",30,"DEN",0,10],[290,"David Njoku","TE",31,"LAC",0,7],[291,"Oronde Gadsden","TE",32,"LAC",0,7],[292,"Mike Gesicki","TE",33,"CIN",0,6],[293,"Michael Mayer","TE",34,"LV",0,13],[294,"Tutu Atwell","WR",103,"MIA",0,6],[295,"Cyrus Allen","WR",104,"KC",0,5],[296,"Tua Tagovailoa","QB",32,"ATL",0,11],[297,"49ers D/ST","DST",19,"SF",0,8],[298,"Cowboys D/ST","DST",20,"DAL",0,14],[299,"Colts D/ST","DST",21,"IND",0,13],[300,"Vikings D/ST","DST",22,"MIN",0,6]]).map(function (r, i) {
   return { id: i, rank: r[0], name: r[1], pos: r[2], prank: r[3], team: r[4], av: r[5], bye: r[6] };
 });
+const BY_NAME = {};
+P.forEach(function (p) { BY_NAME[p.name.toLowerCase()] = p; });
 
 const SLOTS = [
   { k: 'QB',    lb: 'QB',   takes: ['QB'] },
@@ -578,25 +732,82 @@ const STANDARD = { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1, SFLEX: 0, K: 1, DST: 1, 
 const POS_LABEL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
 const FLEX_POS = ['RB', 'WR', 'TE'];
 
-/* Settings, then live draft state. */
-let S  = { teams: 12, type: 'snake', clock: 30, pace: 0.45, slot: 5, slots: Object.assign({}, STANDARD), rounds: 16 };
+function freshSettings() {
+  return {
+    mode: 'solo', teams: 12, type: 'snake', clock: 30, pace: 0.45, rounds: 16,
+    slots: Object.assign({}, STANDARD),
+    seats: null,      // per team: 'me' | 'friend' | 'bot'
+    keepers: [],      // { team, id, round }  round is 1-based and costs that pick
+  };
+}
+let S = freshSettings();
 let St = null;
+let MySeat = -1;      // which seat this device is playing (online / solo)
 
-const $  = function (s) { return document.querySelector(s); };
-const el = function (id) { return document.getElementById(id); };
+function el(id) { return document.getElementById(id); }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-function rounds() {
-  return SLOTS.reduce(function (n, s) { return n + (S.slots[s.k] || 0); }, 0);
+/* `window.claude` exists only inside the artifact viewer; opened as a local
+   file there is no such global, so every capability lookup goes through here. */
+function useCap(name) {
+  try {
+    if (typeof claude === 'undefined' || !claude || typeof claude.use !== 'function') {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(claude.use(name)).catch(function () { return null; });
+  } catch (e) { return Promise.resolve(null); }
 }
+function rounds() { return SLOTS.reduce(function (n, s) { return n + (S.slots[s.k] || 0); }, 0); }
 function gauss() {
   let u = 0, v = 0;
   while (u === 0) u = Math.random();
   while (v === 0) v = Math.random();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+/* ── Seats ──────────────────────────────────────────────────────────────────
+   Every team is a seat held by this device ('me'), another person ('friend'),
+   or a bot. Solo has one 'me'; same-screen adds 'friend' seats this device also
+   plays; online has 'friend' seats other people play from their own copy. */
+function defaultSeats(teams, mode) {
+  const seats = [];
+  for (let i = 0; i < teams; i++) seats.push('bot');
+  seats[Math.min(4, teams - 1)] = 'me';
+  if (mode === 'hotseat' || mode === 'online') {
+    for (let i = 0; i < teams; i++) if (seats[i] === 'bot') { seats[i] = 'friend'; break; }
+  }
+  return seats;
+}
+function normalizeSeats() {
+  if (!S.seats || S.seats.length !== S.teams) S.seats = defaultSeats(S.teams, S.mode);
+  if (S.mode === 'solo') {
+    S.seats = S.seats.map(function (s) { return s === 'friend' ? 'bot' : s; });
+  }
+  // Exactly one seat belongs to this device.
+  const mine = S.seats.filter(function (s) { return s === 'me'; }).length;
+  if (mine === 0) S.seats[0] = 'me';
+  else if (mine > 1) {
+    let kept = false;
+    S.seats = S.seats.map(function (s) {
+      if (s !== 'me') return s;
+      if (kept) return S.mode === 'solo' ? 'bot' : 'friend';
+      kept = true; return 'me';
+    });
+  }
+  MySeat = S.seats.indexOf('me');
+}
+function isBot(t) { return S.seats[t] === 'bot'; }
+/* Whether this device makes the pick for a seat. Same-screen plays every human
+   seat; solo and online play only their own. */
+function isLocal(t) {
+  return S.mode === 'hotseat' ? !isBot(t) : S.seats[t] === 'me';
+}
+function teamName(t) {
+  if (S.seats && S.seats[t] === 'me') return S.mode === 'solo' ? 'You' : 'You (' + (t + 1) + ')';
+  return 'Team ' + (t + 1);
 }
 
 /* ── Draft order ────────────────────────────────────────────────────────────
@@ -610,7 +821,12 @@ function teamAt(overall) {
   return flip ? t - 1 - i : i;
 }
 function totalPicks() { return S.teams * S.rounds; }
-function teamName(t) { return t === S.slot - 1 ? 'You' : 'Team ' + (t + 1); }
+/* Which overall pick a given team owns in a given round (1-based round). */
+function overallFor(team, round) {
+  const base = (round - 1) * S.teams;
+  for (let i = 0; i < S.teams; i++) if (teamAt(base + i) === team) return base + i;
+  return -1;
+}
 
 /* ── Roster shape ───────────────────────────────────────────────────────────
    Fill the most restrictive slots first (SLOTS is ordered dedicated → flex →
@@ -631,9 +847,6 @@ function lineup(roster) {
   });
   return { slots: slots, extra: pool.filter(function (p) { return !used[p.id]; }) };
 }
-
-/* Which positions would fill an empty *starting* slot, and how many starting
-   slots are still open. Bench slots don't count as need. */
 function needs(roster) {
   const open = lineup(roster).slots.filter(function (s) { return !s.p && s.k !== 'BN'; });
   const need = {};
@@ -650,24 +863,11 @@ function counts(roster) {
 function available() {
   return P.filter(function (p) { return !St.taken[p.id]; });
 }
-</script>
 
-<script>
 /* ── Bot drafters ───────────────────────────────────────────────────────────
    Every bot scores the board in rank space: start at the cheat sheet rank, then
    push players up or down for roster fit, and add noise so the room doesn't
-   draft a single deterministic line.
-
-     · roster caps stop a team hoarding a position
-     · kickers and defenses stay on the board until the last couple of rounds,
-       the way drafters actually treat them
-     · a player who fills an open starting slot gets a bonus that grows as the
-       draft runs out of room, and once there are exactly as many picks left as
-       open starting slots, nothing else is considered
-     · noise widens by round: early picks track the sheet closely, later ones
-       reach, which is where mock boards get their texture
-
-   Lower score wins, so bonuses subtract and penalties add. */
+   draft a single deterministic line. Lower score wins, so bonuses subtract. */
 function botChoice(team, tight) {
   const roster = St.rosters[team];
   const left   = S.rounds - roster.length;
@@ -683,6 +883,7 @@ function botChoice(team, tight) {
   // the extra room to running back and receiver, where real rosters go deep.
   let room = caps.QB + caps.TE + caps.RB + caps.WR + caps.K + caps.DST;
   while (room < S.rounds + 2) { caps.RB++; caps.WR++; room += 2; }
+
   const reserve = (S.slots.K || 0) + (S.slots.DST || 0);
   const mustFill = left <= n.open;
   const spread = tight ? 0 : 3.5 + 1.1 * rd;
@@ -692,9 +893,9 @@ function botChoice(team, tight) {
 
   // Look at the top of the board, plus the best player left at every position
   // that still has an open starting slot. That second part matters: the best
-  // defense on the sheet is ranked 169th and the best kicker 181st, so a
-  // rank-window alone would never surface them in a shallow room, and teams
-  // would field lineups with holes they could not fill.
+  // defense on the sheet is ranked 169th and the best kicker 181st, so a rank
+  // window alone would never surface them in a shallow room, and teams would
+  // field lineups with holes they could not fill.
   const cands = pool.slice(0, 70);
   const seen = {};
   cands.forEach(function (p) { seen[p.id] = 1; });
@@ -715,8 +916,7 @@ function botChoice(team, tight) {
     if (fills) s -= 8 + 26 * (1 - left / S.rounds);
     if (mustFill && !fills) s += 800;
     s += gauss() * spread;
-    // Roster caps are hard, not a penalty to be outweighed late on: a capped
-    // player is only taken if literally nothing else is worth considering.
+    // Roster caps are hard, not a penalty to be outweighed late on.
     if ((c[p.pos] || 0) >= caps[p.pos]) {
       if (s < cappedScore) { cappedScore = s; capped = p; }
       return;
@@ -726,61 +926,145 @@ function botChoice(team, tight) {
   return best || capped || pool[0];
 }
 
-/* The user's pick when the clock runs out or autopick is on: honour the queue
-   first, and only fall back to the bot's judgement (noise off) if the queue is
-   empty or everything in it is gone. */
+/* A human seat's pick when the clock runs out or autopick is on: honour the
+   queue first, then fall back to the bot's judgement with the noise off. */
 function autoChoice(team) {
-  for (let i = 0; i < St.queue.length; i++) {
-    if (!St.taken[St.queue[i]]) return P[St.queue[i]];
+  const q = St.queues[team] || [];
+  for (let i = 0; i < q.length; i++) {
+    if (!St.taken[q[i]]) return P[q[i]];
   }
   return botChoice(team, true);
 }
 
+/* ── Keepers ────────────────────────────────────────────────────────────────
+   A keeper costs the team its pick in the round it is kept at, exactly as a
+   real keeper league works. They are placed on rosters before the first live
+   pick, so they leave the board immediately and the bots draft around them. */
+function keeperProblems(list, teams, nRounds) {
+  const bad = [];
+  const seenPick = {}, seenPlayer = {};
+  list.forEach(function (k) {
+    if (k.round > nRounds) bad.push(P[k.id].name + ' is kept in round ' + k.round + ', past the end of the draft.');
+    const pk = k.team + ':' + k.round;
+    if (seenPick[pk]) bad.push('Team ' + (k.team + 1) + ' has two keepers costing round ' + k.round + '.');
+    seenPick[pk] = 1;
+    if (seenPlayer[k.id]) bad.push(P[k.id].name + ' is kept by two teams.');
+    seenPlayer[k.id] = 1;
+  });
+  const perTeam = {};
+  list.forEach(function (k) { perTeam[k.team] = (perTeam[k.team] || 0) + 1; });
+  Object.keys(perTeam).forEach(function (t) {
+    if (perTeam[t] > nRounds) bad.push('Team ' + (+t + 1) + ' keeps more players than the draft has rounds.');
+  });
+  return bad;
+}
+</script>
+
+<script>
 /* ── Draft engine ───────────────────────────────────────────────────────── */
-function startDraft() {
-  S.rounds = rounds();
-  St = {
-    picks: [], taken: {}, rosters: [], queue: [],
+function newState() {
+  const st = {
+    picks: [], taken: {}, rosters: [], queues: {}, keeperAt: {},
     onClock: 0, deadline: 0, paused: false, auto: false,
-    tab: 'queue', filter: 'ALL', q: '', hideTaken: false, landed: -1, timer: null, botAt: 0,
-    scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
+    tab: 'queue', filter: 'ALL', q: '', hideTaken: false, landed: -1,
+    timer: null, botAt: 0, scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
+    lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '',
   };
-  for (let t = 0; t < S.teams; t++) St.rosters.push([]);
+  for (let t = 0; t < S.teams; t++) st.rosters.push([]);
+  return st;
+}
 
-  el('lobby').hidden = true;
-  el('recap').hidden = true;
-  el('room').hidden = false;
-  el('btn-auto').classList.remove('is-on');
-  el('btn-pause').textContent = 'Pause';
-  el('q').value = '';
+/* Keepers land on their rosters before the draft opens and their picks are
+   marked spent, so the board shows them in the round they cost. */
+function placeKeepers() {
+  S.keepers.forEach(function (k) {
+    const overall = overallFor(k.team, k.round);
+    if (overall < 0 || St.taken[k.id]) return;
+    St.taken[k.id] = true;
+    St.rosters[k.team].push(k.id);
+    St.picks.push({ overall: overall, team: k.team, id: k.id, keeper: true });
+    St.keeperAt[overall] = k.id;
+  });
+}
 
+function startDraft() {
+  normalizeSeats();
+  S.rounds = rounds();
+  if (S.mode === 'online') S.clock = 0;   // no shared countdown between devices
+  St = newState();
+  placeKeepers();
+  showRoom();
   buildFilters();
   renderAll();
-  St.timer = setInterval(tick, 100);
+  if (S.mode === 'online') {
+    // One client resolves any bots that open the draft, then saves the room.
+    if (runBotsUntilHuman()) { renderAll(); }
+    pushRoom(true);
+  } else {
+    St.timer = setInterval(tick, 100);
+  }
   advance();
 }
 
+function showRoom() {
+  el('lobby').hidden = true;
+  el('recap').hidden = true;
+  el('curtain').hidden = true;
+  el('room').hidden = false;
+  el('room-bar').hidden = S.mode !== 'online';
+  el('btn-auto').classList.remove('is-on');
+  el('btn-auto').textContent = 'Autopick';
+  el('btn-pause').textContent = 'Pause';
+  el('btn-pause').hidden = S.mode === 'online';
+  el('q').value = '';
+}
+
+/* Skip past picks already spent on keepers. */
+function skipKeepers() {
+  while (St.onClock < totalPicks() && St.keeperAt[St.onClock] !== undefined) St.onClock++;
+}
+
 function advance() {
+  skipKeepers();
   if (St.onClock >= totalPicks()) return finish();
   const team = teamAt(St.onClock);
-  const mine = team === S.slot - 1;
-  if (mine && !St.auto) {
+
+  if (S.mode === 'online') {
+    St.deadline = 0; St.botAt = 0;
+    renderAll();
+    return;
+  }
+  if (isLocal(team) && !St.auto) {
+    // Same-screen play hides the room when the device changes hands.
+    if (S.mode === 'hotseat' && St.lastHuman !== -1 && St.lastHuman !== team) {
+      St.deadline = 0; St.botAt = 0;
+      renderClockbar();
+      return showCurtain(team);
+    }
+    St.lastHuman = team;
     St.deadline = S.clock > 0 ? Date.now() + S.clock * 1000 : 0;
     St.botAt = 0;
   } else {
     St.deadline = 0;
-    // Bots take a beat so the board fills in at a readable pace.
-    St.botAt = Date.now() + (mine ? 400 : (280 + Math.random() * 900) * S.pace);
+    St.botAt = Date.now() + (isBot(team) ? (280 + Math.random() * 900) * S.pace : 400);
   }
   renderClockbar();
 }
 
+function showCurtain(team) {
+  el('curtain-name').textContent = teamName(team);
+  el('curtain-sub').textContent = 'You are on the clock in round ' +
+    (Math.floor(St.onClock / S.teams) + 1) + '. The board and the queue stay hidden until you are ready.';
+  el('curtain').hidden = false;
+}
+
 function tick() {
-  if (!St || St.paused) return;
+  if (!St || St.paused || S.mode === 'online') return;
+  if (!el('curtain').hidden) return;
   const team = teamAt(St.onClock);
   if (St.botAt && Date.now() >= St.botAt) {
     St.botAt = 0;
-    const pick = team === S.slot - 1 ? autoChoice(team) : botChoice(team, false);
+    const pick = isBot(team) ? botChoice(team, false) : autoChoice(team);
     if (pick) return makePick(pick.id);
   }
   if (St.deadline) {
@@ -793,29 +1077,62 @@ function tick() {
   }
 }
 
-function makePick(id) {
-  if (!St || St.taken[id] || St.onClock >= totalPicks()) return;
+function applyPick(id) {
   const team = teamAt(St.onClock);
   St.taken[id] = true;
   St.rosters[team].push(id);
   St.picks.push({ overall: St.onClock, team: team, id: id });
   St.landed = St.onClock;
-  const qi = St.queue.indexOf(id);
-  if (qi >= 0) St.queue.splice(qi, 1);
+  if (St.queues[team]) {
+    const qi = St.queues[team].indexOf(id);
+    if (qi >= 0) St.queues[team].splice(qi, 1);
+  }
   St.deadline = 0;
   St.botAt = 0;
   St.onClock++;
+  skipKeepers();
+}
+
+function makePick(id) {
+  if (!St || St.taken[id] || St.onClock >= totalPicks()) return;
+  const wasLocal = isLocal(teamAt(St.onClock));
+  if (S.mode !== 'hotseat' && wasLocal) St.lastHuman = teamAt(St.onClock);
+  applyPick(id);
+
+  if (S.mode === 'online') {
+    // Carry the draft forward through every bot up to the next person, then
+    // save once: one publish per human turn instead of one per pick.
+    runBotsUntilHuman();
+    renderAll();
+    if (St.onClock >= totalPicks()) { pushRoom(false, true); return finish(); }
+    pushRoom();
+    return;
+  }
   renderAll();
   advance();
 }
 
+/* Resolve consecutive bot seats. Returns true if it made any pick. */
+function runBotsUntilHuman() {
+  let made = false, guard = 0;
+  skipKeepers();
+  while (St.onClock < totalPicks() && isBot(teamAt(St.onClock))) {
+    if (++guard > 1000) break;
+    const p = botChoice(teamAt(St.onClock), false);
+    if (!p) break;
+    applyPick(p.id);
+    made = true;
+  }
+  return made;
+}
+
 function finish() {
-  clearInterval(St.timer);
-  St.timer = null;
+  if (St.timer) { clearInterval(St.timer); St.timer = null; }
   St.deadline = 0;
   St.botAt = 0;
   renderClockbar();
   renderRecap();
+  el('curtain').hidden = true;
   el('recap').hidden = false;
   el('room').hidden = true;
 }
@@ -825,18 +1142,148 @@ function quitDraft() {
   St = null;
   el('room').hidden = true;
   el('recap').hidden = true;
+  el('curtain').hidden = true;
   el('lobby').hidden = false;
+  renderLobby();
+}
+
+/* ── Online room ────────────────────────────────────────────────────────────
+   There is no shared database here. The page IS the record: each human turn
+   rewrites this document with the draft embedded and republishes it, and every
+   open view reloads to that new version. That makes play turn-based rather
+   than live, and it needs write access — a view-only viewer cannot pick. */
+function roomState() {
+  return {
+    v: 1,
+    s: {
+      mode: 'online', teams: S.teams, type: S.type, pace: S.pace, clock: 0,
+      rounds: S.rounds, slots: S.slots, seats: S.seats,
+      keepers: S.keepers.map(function (k) { return [k.team, k.id, k.round]; }),
+    },
+    picks: St.picks.map(function (p) { return [p.overall, p.team, p.id, p.keeper ? 1 : 0]; }),
+  };
+}
+
+function docWithState(state) {
+  const json = JSON.stringify(state).replace(/</g, '\\u003c');
+  return PRISTINE.replace(
+    /(<script id="room-state"[^>]*>)[\s\S]*?(<\/script>)/i,
+    function (m, open, close) { return open + json + close; });
+}
+
+async function pushRoom(first, silent) {
+  St.busy = true;
+  St.warn = '';
+  renderRoomBar();
+  const art = await useCap('artifact');
+  if (!art) {
+    St.busy = false;
+    St.warn = 'This view cannot save the room, so your pick stays on this device only. Open the artifact link directly.';
+    return renderRoomBar();
+  }
+  try {
+    await art.publish(docWithState(roomState()));
+    // A successful publish reloads every view, this one included.
+  } catch (e) {
+    St.busy = false;
+    const code = e && e.code;
+    if (code === 'conflict') {
+      St.warn = 'Someone else picked first. Reloading to their board…';
+    } else if (code === 'not_writer' || code === 'not_granted') {
+      St.warn = 'You have view-only access to this room, so you cannot pick. Ask whoever shared it for edit access.';
+    } else if (code === 'rate_limited') {
+      St.warn = 'Saving too fast — wait a moment and pick again.';
+    } else {
+      St.warn = 'Could not save the pick' + (e && e.message ? ': ' + e.message : '.') +
+                (first ? ' The room was not created.' : '');
+    }
+    if (silent) St.warn = '';
+    renderRoomBar();
+  }
+}
+
+/* Rebuild a live draft out of a published room. */
+function restoreRoom(state) {
+  const s = state.s;
+  S = Object.assign(freshSettings(), {
+    mode: 'online', teams: s.teams, type: s.type, pace: s.pace, clock: 0,
+    rounds: s.rounds, slots: s.slots, seats: s.seats.slice(),
+    keepers: (s.keepers || []).map(function (k) { return { team: k[0], id: k[1], round: k[2] }; }),
+  });
+  // Seat ownership is per device: everyone loads the same document, so this
+  // view claims whichever seat was chosen on this device.
+  const saved = +(localStorage.getItem('otc-seat') || -1);
+  S.seats = S.seats.map(function (x) { return x === 'me' ? 'friend' : x; });
+  if (saved >= 0 && saved < S.teams && S.seats[saved] === 'friend') S.seats[saved] = 'me';
+  MySeat = S.seats.indexOf('me');
+
+  St = newState();
+  St.keeperAt = {};
+  state.picks.forEach(function (p) {
+    const overall = p[0], team = p[1], id = p[2], keep = p[3];
+    St.taken[id] = true;
+    St.rosters[team].push(id);
+    St.picks.push({ overall: overall, team: team, id: id, keeper: !!keep });
+    if (keep) St.keeperAt[overall] = id;
+  });
+  const live = St.picks.filter(function (p) { return !p.keeper; }).length;
+  St.onClock = 0;
+  for (let i = 0, seen = 0; i < totalPicks() && seen < live; i++) {
+    if (St.keeperAt[i] === undefined) seen++;
+    St.onClock = i + 1;
+  }
+  skipKeepers();
+  St.railTeam = Math.max(0, MySeat);
+  showRoom();
+  buildFilters();
+  renderAll();
+  if (St.onClock >= totalPicks()) finish();
 }
 </script>
 
 <script>
+/* ── Queues ─────────────────────────────────────────────────────────────────
+   One queue per seat, so passing the device around doesn't hand your shortlist
+   to the next drafter. */
+function queueFor(t) {
+  if (!St.queues[t]) St.queues[t] = [];
+  return St.queues[t];
+}
+/* Whose queue the rail is showing: on same-screen play it follows whoever is
+   up, otherwise it is always this device's seat. */
+function activeSeat() {
+  if (S.mode !== 'hotseat') return MySeat;
+  if (St.onClock < totalPicks() && !isBot(teamAt(St.onClock))) return teamAt(St.onClock);
+  return St.lastHuman >= 0 ? St.lastHuman : MySeat;
+}
+function canPickNow() {
+  if (!St || St.onClock >= totalPicks()) return false;
+  if (S.mode === 'online') return teamAt(St.onClock) === MySeat && !St.busy;
+  if (!el('curtain').hidden) return false;
+  return isLocal(teamAt(St.onClock)) && !St.auto;
+}
+
 /* ── Rendering ──────────────────────────────────────────────────────────── */
-function renderAll() { renderBoard(); renderClockbar(); renderPool(); renderRail(); }
+function renderAll() { renderBoard(); renderClockbar(); renderPool(); renderRail(); renderRoomBar(); }
+
+function renderRoomBar() {
+  if (S.mode !== 'online') return;
+  const bar = el('room-bar');
+  bar.hidden = false;
+  bar.classList.toggle('is-busy', !!St.busy);
+  const done = St.onClock >= totalPicks();
+  el('room-live').textContent = St.busy ? 'Saving' : 'Shared room';
+  el('room-msg').textContent = done ? 'Draft complete.'
+    : MySeat < 0 ? 'Pick your seat in the Rosters tab to join.'
+    : teamAt(St.onClock) === MySeat ? 'Your pick — the room saves when you draft.'
+    : 'Waiting on ' + teamName(teamAt(St.onClock)) + '. This page updates when they pick.';
+  el('room-warn').textContent = St.warn || '';
+}
 
 function renderClock() {
   const c = el('cb-clock');
   if (!St.deadline) {
-    c.textContent = St.paused ? 'PAUSED' : '——';
+    c.textContent = St.paused ? 'PAUSED' : S.mode === 'online' ? 'UNTIMED' : '——';
     c.classList.remove('is-low');
     return;
   }
@@ -851,7 +1298,7 @@ function renderClockbar() {
   el('cb-rd').textContent = done ? S.rounds : Math.floor(St.onClock / S.teams) + 1;
   el('cb-pk').textContent = done ? S.teams : (St.onClock % S.teams) + 1;
   el('cb-ov').textContent = done ? 'Complete' : 'Overall ' + (St.onClock + 1);
-  el('cb-who').classList.toggle('is-you', team === S.slot - 1);
+  el('cb-who').classList.toggle('is-you', team >= 0 && isLocal(team));
   el('cb-name').textContent = done ? 'Draft complete' : teamName(team) + ' on the clock';
   renderClock();
 }
@@ -868,7 +1315,7 @@ function renderBoard() {
 
   let h = '<div class="bd-corner bd-cell"></div>';
   for (let t = 0; t < S.teams; t++) {
-    h += '<div class="bd-head bd-cell' + (t === S.slot - 1 ? ' is-you' : '') +
+    h += '<div class="bd-head bd-cell' + (S.seats[t] === 'me' ? ' is-you' : '') +
          (t === onTeam ? ' is-onclock' : '') + '"><div class="tn">' + esc(teamName(t)) + '</div></div>';
   }
   for (let r = 0; r < S.rounds; r++) {
@@ -878,15 +1325,16 @@ function renderBoard() {
       const t = teamAt(overall);
       const pk = byOverall[overall];
       const cls = ['bd-pick', 'bd-cell'];
-      if (t === S.slot - 1) cls.push('is-yours');
+      if (S.seats[t] === 'me') cls.push('is-yours');
       if (overall === St.landed) cls.push('just-landed');
       if (pk) {
         const p = P[pk.id];
         cls.push('p-' + p.pos);
+        if (pk.keeper) cls.push('is-keeper');
         h += '<div class="' + cls.join(' ') + '">' +
-             '<div class="pn">' + esc(p.name) + '</div>' +
+             '<div class="pn">' + esc(p.name) + (pk.keeper ? '<span class="kept">KEPT</span>' : '') + '</div>' +
              '<div class="pm"><b>' + POS_LABEL[p.pos] + '</b> ' + esc(p.team) +
-             ' · ' + (overall + 1) + '</div></div>';
+             ' · ' + (pk.keeper ? 'R' + (r + 1) : overall + 1) + '</div></div>';
       } else if (overall === St.onClock) {
         cls.push('is-onclock');
         h += '<div class="' + cls.join(' ') + '"><div class="waiting">On the clock</div>' +
@@ -935,7 +1383,9 @@ function poolRows() {
 function renderPool() {
   const list = el('pool-list');
   const top = list.scrollTop;
-  const mine = St.onClock < totalPicks() && teamAt(St.onClock) === S.slot - 1 && !St.auto;
+  const canPick = canPickNow();
+  const qseat = activeSeat();
+  const myq = qseat >= 0 ? queueFor(qseat) : [];
   const rows = poolRows();
   if (!rows.length) {
     list.innerHTML = '<p class="pool-empty">No players match that search.</p>';
@@ -943,12 +1393,12 @@ function renderPool() {
   }
   list.innerHTML = rows.map(function (p) {
     const taken = !!St.taken[p.id];
-    const queued = St.queue.indexOf(p.id) >= 0;
+    const queued = myq.indexOf(p.id) >= 0;
     let act = '';
     if (!taken) {
-      act = '<button class="mini' + (queued ? ' on' : '') + '" data-q="' + p.id + '">' +
-            (queued ? 'Queued' : 'Queue') + '</button>' +
-            (mine ? '<button class="mini go" data-d="' + p.id + '">Draft</button>' : '');
+      act = (qseat >= 0 ? '<button class="mini' + (queued ? ' on' : '') + '" data-q="' + p.id + '">' +
+            (queued ? 'Queued' : 'Queue') + '</button>' : '') +
+            (canPick ? '<button class="mini go" data-d="' + p.id + '">Draft</button>' : '');
     }
     return '<div class="prow p-' + p.pos + (taken ? ' is-taken' : '') + '" data-row="' + p.id + '">' +
       '<div class="rk">' + p.rank + '</div>' +
@@ -962,139 +1412,261 @@ function renderPool() {
 }
 
 function renderRail() {
-  el('q-ct').textContent = St.queue.length ? '(' + St.queue.length + ')' : '';
+  const qseat = activeSeat();
+  const myq = qseat >= 0 ? queueFor(qseat) : [];
+  el('q-ct').textContent = myq.length ? '(' + myq.length + ')' : '';
   document.querySelectorAll('.tab').forEach(function (t) {
     t.classList.toggle('is-on', t.dataset.tab === St.tab);
   });
-  el('rail-body').innerHTML = St.tab === 'queue' ? queueHTML() : rosterHTML(S.slot - 1);
-}
 
-function queueHTML() {
-  if (!St.queue.length) {
-    return '<p class="rail-note">Your queue is empty.<br>Queue players from the list and the room ' +
-           'takes the top one still on the board if your clock runs out.</p>';
+  const picker = el('rail-pick');
+  picker.hidden = St.tab !== 'roster';
+  if (St.tab === 'roster') {
+    const sel = el('rail-team');
+    let opts = '';
+    for (let t = 0; t < S.teams; t++) {
+      opts += '<option value="' + t + '"' + (t === St.railTeam ? ' selected' : '') + '>' +
+              esc(teamName(t)) + (isBot(t) ? ' · bot' : '') + '</option>';
+    }
+    sel.innerHTML = opts;
   }
-  return St.queue.map(function (id, i) {
-    const p = P[id], gone = !!St.taken[id];
-    return '<div class="qrow p-' + p.pos + (gone ? ' is-gone' : '') + '">' +
-      '<div class="ord">' + (i + 1) + '</div>' +
-      '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
-      '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
-        '<div class="m">' + esc(p.team) + (gone ? ' · drafted' : ' · #' + p.rank) + '</div></div>' +
-      '<button class="qbtn" data-up="' + id + '" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
-      '<button class="qbtn" data-dn="' + id + '" title="Move down"' + (i === St.queue.length - 1 ? ' disabled' : '') + '>↓</button>' +
-      '<button class="qbtn" data-rm="' + id + '" title="Remove">×</button></div>';
-  }).join('');
+  el('rail-body').innerHTML = St.tab === 'queue' ? queueHTML(qseat, myq) : rosterHTML(St.railTeam);
 }
 
-function slotRow(s, showRank) {
+function queueHTML(seat, q) {
+  if (seat < 0) {
+    return '<p class="rail-note">You are watching this room rather than drafting in it.</p>';
+  }
+  const who = S.mode === 'hotseat' ? teamName(seat) + '’s queue' : 'Your queue';
+  if (!q.length) {
+    return '<p class="rail-note">' + esc(who) + ' is empty.<br>Queue players from the list and the room ' +
+           'takes the top one still on the board if the clock runs out.</p>';
+  }
+  return (S.mode === 'hotseat' ? '<div class="rail-sub"><span class="eyebrow">' + esc(who) + '</span></div>' : '') +
+    q.map(function (id, i) {
+      const p = P[id], gone = !!St.taken[id];
+      return '<div class="qrow p-' + p.pos + (gone ? ' is-gone' : '') + '">' +
+        '<div class="ord">' + (i + 1) + '</div>' +
+        '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
+        '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
+          '<div class="m">' + esc(p.team) + (gone ? ' · drafted' : ' · #' + p.rank) + '</div></div>' +
+        '<button class="qbtn" data-up="' + id + '" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button class="qbtn" data-dn="' + id + '" title="Move down"' + (i === q.length - 1 ? ' disabled' : '') + '>↓</button>' +
+        '<button class="qbtn" data-rm="' + id + '" title="Remove">×</button></div>';
+    }).join('');
+}
+
+function slotRow(s, showRank, keeperIds) {
   if (!s.p) {
     return '<div class="rrow is-open"><div class="slot">' + s.lb + '</div>' +
            '<div class="who"><div class="n">Empty</div></div></div>';
   }
-  const meta = showRank
-    ? POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · #' + s.p.rank
-    : POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · bye ' + s.p.bye;
+  const kept = keeperIds && keeperIds[s.p.id] ? ' · kept' : '';
+  const meta = (showRank ? POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · #' + s.p.rank
+                         : POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · bye ' + s.p.bye) + kept;
   return '<div class="rrow p-' + s.p.pos + '"><div class="slot">' + s.lb + '</div>' +
          '<div class="who"><div class="n">' + esc(s.p.name) + '</div>' +
          '<div class="m">' + meta + '</div></div></div>';
 }
 
+function keeperIdSet() {
+  const m = {};
+  St.picks.forEach(function (p) { if (p.keeper) m[p.id] = 1; });
+  return m;
+}
+
 function rosterHTML(team) {
   const lu = lineup(St.rosters[team]);
+  const kept = keeperIdSet();
   let starters = '', bench = '';
   lu.slots.forEach(function (s) {
-    if (s.k === 'BN') bench += slotRow(s, false); else starters += slotRow(s, false);
+    const row = slotRow(s, false, kept);
+    if (s.k === 'BN') bench += row; else starters += row;
   });
   return '<div class="rail-sub"><span class="eyebrow">Starters</span></div>' + starters +
          (bench ? '<div class="rail-sub"><span class="eyebrow">Bench</span></div>' + bench : '');
 }
 
 function renderRecap() {
+  const kept = keeperIdSet();
   let h = '';
   for (let t = 0; t < S.teams; t++) {
     const lu = lineup(St.rosters[t]);
-    h += '<div class="tcard' + (t === S.slot - 1 ? ' is-you' : '') + '">' +
-         '<h3>' + esc(teamName(t)) + '<span>slot ' + (t + 1) + '</span></h3>' +
-         lu.slots.map(function (s) { return slotRow(s, true); }).join('') + '</div>';
+    h += '<div class="tcard' + (S.seats[t] === 'me' ? ' is-you' : '') + '">' +
+         '<h3>' + esc(teamName(t)) + '<span>slot ' + (t + 1) + (isBot(t) ? ' · bot' : '') + '</span></h3>' +
+         lu.slots.map(function (s) { return slotRow(s, true, kept); }).join('') + '</div>';
   }
   el('teams-grid').innerHTML = h;
+}
+
+function recapCSV() {
+  const kept = keeperIdSet();
+  const rows = [['Team', 'Slot', 'Player', 'Position', 'NFLTeam', 'Rank', 'Bye', 'Keeper']];
+  for (let t = 0; t < S.teams; t++) {
+    lineup(St.rosters[t]).slots.forEach(function (s) {
+      if (!s.p) return;
+      rows.push([teamName(t), s.lb, s.p.name, s.p.pos, s.p.team, s.p.rank, s.p.bye, kept[s.p.id] ? 'yes' : '']);
+    });
+  }
+  return rows.map(function (r) {
+    return r.map(function (c) {
+      c = String(c);
+      return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c;
+    }).join(',');
+  }).join('\n');
 }
 </script>
 
 <script>
 /* ── Lobby ──────────────────────────────────────────────────────────────── */
+const MODE_HINT = {
+  solo: 'One seat is yours. Bots fill the rest and pick straight away.',
+  hotseat: 'Give a seat to each person here. The room covers itself when the ' +
+           'device changes hands, and every seat keeps its own queue.',
+  online: 'Everyone opens this same page and claims a seat on their own device. ' +
+          'Each pick saves the room and the other views catch up, so play is ' +
+          'turn-based and untimed. Friends need edit access, not just the link — ' +
+          'a view-only viewer cannot pick.',
+};
+
 function renderLobby() {
   const teamsSel = el('f-teams');
   if (!teamsSel.options.length) {
     for (let n = 4; n <= 16; n += 2) {
-      teamsSel.insertAdjacentHTML('beforeend',
-        '<option value="' + n + '"' + (n === S.teams ? ' selected' : '') + '>' + n + ' teams</option>');
+      teamsSel.insertAdjacentHTML('beforeend', '<option value="' + n + '">' + n + ' teams</option>');
     }
   }
   teamsSel.value = S.teams;
   el('f-type').value = S.type;
   el('f-clock').value = S.clock;
   el('f-pace').value = S.pace;
+  el('f-clock').disabled = S.mode === 'online';
 
-  // Draft slot: one button per seat, plus a random draw like a real mock lobby.
-  if (S.slot > S.teams) S.slot = S.teams;
-  let sp = '';
-  for (let i = 1; i <= S.teams; i++) {
-    sp += '<button class="sp' + (i === S.slot ? ' is-on' : '') + '" data-slot="' + i + '">' + i + '</button>';
-  }
-  sp += '<button class="sp" data-slot="random" style="min-width:78px">Random</button>';
-  el('f-slot').innerHTML = sp;
+  document.querySelectorAll('#f-mode .mode').forEach(function (b) {
+    b.classList.toggle('is-on', b.dataset.mode === S.mode);
+  });
+  el('mode-hint').textContent = MODE_HINT[S.mode];
 
-  const first = S.slot;
-  const last = S.type === 'linear' ? S.slot : S.teams * 2 - S.slot + 1;
-  el('slot-hint').textContent =
-    'Picking ' + first + ' overall' +
-    (S.type === 'linear'
-      ? ', then every ' + S.teams + ' picks.'
-      : ', then ' + last + '. ' + (S.slot === 1 ? 'The turn: best player on the board, longest wait between picks.'
-        : S.slot === S.teams ? 'The wheel: back-to-back picks at every turn.' : ''));
+  normalizeSeats();
+  const opts = S.mode === 'solo'
+    ? [['me', 'Me'], ['bot', 'Bot']]
+    : [['me', 'Me'], ['friend', S.mode === 'online' ? 'Friend (remote)' : 'Friend'], ['bot', 'Bot']];
+  el('f-seats').innerHTML = S.seats.map(function (kind, i) {
+    return '<div class="seat' + (kind === 'me' ? ' is-me' : '') + '"><span class="no">' + (i + 1) + '</span>' +
+      '<select data-seat="' + i + '">' + opts.map(function (o) {
+        return '<option value="' + o[0] + '"' + (o[0] === kind ? ' selected' : '') + '>' + o[1] + '</option>';
+      }).join('') + '</select></div>';
+  }).join('');
+  const humans = S.seats.filter(function (s) { return s !== 'bot'; }).length;
+  el('seat-hint').textContent = S.mode === 'solo'
+    ? 'You pick at ' + (MySeat + 1) + '. Set any seat to Me to move.'
+    : humans + ' human ' + (humans === 1 ? 'seat' : 'seats') + ', ' + (S.teams - humans) + ' drafted by bots. ' +
+      (S.mode === 'online' ? 'Each person claims their own seat when they open the room.' : '');
 
-  el('f-slots').innerHTML = SLOTS.map(function (s) {
-    const hue = s.k === 'FLEX' || s.k === 'SFLEX' || s.k === 'BN' ? '' : ' p-' + s.k;
-    return '<div class="slot-ct' + hue + '">' +
-      '<span class="lb">' + (s.k === 'SFLEX' ? 'SUPERFLEX' : s.k === 'DST' ? 'DEF' : s.k === 'BN' ? 'BENCH' : s.k) + '</span>' +
-      '<button class="step" data-slotk="' + s.k + '" data-dir="-1" aria-label="One fewer ' + s.k + '">−</button>' +
-      '<span class="nv mono">' + (S.slots[s.k] || 0) + '</span>' +
-      '<button class="step" data-slotk="' + s.k + '" data-dir="1" aria-label="One more ' + s.k + '">+</button>' +
-      '</div>';
+  // Keepers
+  const nRounds = rounds();
+  let tOpts = '';
+  for (let t = 0; t < S.teams; t++) tOpts += '<option value="' + t + '">' + esc(teamName(t)) + '</option>';
+  const keepTeam = el('k-team').value;
+  el('k-team').innerHTML = tOpts;
+  if (keepTeam !== '' && +keepTeam < S.teams) el('k-team').value = keepTeam;
+  let rOpts = '';
+  for (let r = 1; r <= nRounds; r++) rOpts += '<option value="' + r + '">Round ' + r + '</option>';
+  const keepRound = el('k-round').value;
+  el('k-round').innerHTML = rOpts;
+  if (keepRound !== '' && +keepRound <= nRounds) el('k-round').value = keepRound;
+
+  el('k-players').innerHTML = P.map(function (p) {
+    return '<option value="' + esc(p.name) + '">' + POS_LABEL[p.pos] + ' · ' + esc(p.team) + ' · #' + p.rank + '</option>';
   }).join('');
 
-  const total = rounds();
-  const bench = S.slots.BN || 0;
-  el('t-start').textContent = total - bench;
-  el('t-bench').textContent = bench;
-  el('t-rounds').textContent = total;
-  el('t-total').textContent = total * S.teams;
+  el('k-none').hidden = S.keepers.length > 0;
+  el('k-list').innerHTML = S.keepers.map(function (k, i) {
+    const p = P[k.id];
+    return '<div class="keeper p-' + p.pos + '">' +
+      '<span class="kt">' + esc(teamName(k.team)) + '</span>' +
+      '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
+      '<span class="kn">' + esc(p.name) + '</span>' +
+      '<span class="kr">costs R' + k.round + '</span>' +
+      '<button class="qbtn" data-kdel="' + i + '" title="Remove">×</button></div>';
+  }).join('');
+  const kbad = keeperProblems(S.keepers, S.teams, nRounds);
+  el('k-warn').textContent = kbad.join(' ');
 
-  // The pool is exactly 300 deep, and only 18 kickers and 22 defenses exist in
-  // it, so a big room with deep benches can run the board dry. Say so up front.
-  const kNeed = (S.slots.K || 0) * S.teams, dNeed = (S.slots.DST || 0) * S.teams;
+  // Roster
+  el('f-slots').innerHTML = SLOTS.map(function (s) {
+    const hue = s.k === 'FLEX' || s.k === 'SFLEX' || s.k === 'BN' ? '' : ' p-' + s.k;
+    const label = s.k === 'SFLEX' ? 'SUPERFLEX' : s.k === 'DST' ? 'DEF' : s.k === 'BN' ? 'BENCH' : s.k;
+    return '<div class="slot-ct' + hue + '"><span class="lb">' + label + '</span>' +
+      '<button class="step" data-slotk="' + s.k + '" data-dir="-1" aria-label="One fewer ' + s.k + '">−</button>' +
+      '<span class="nv mono">' + (S.slots[s.k] || 0) + '</span>' +
+      '<button class="step" data-slotk="' + s.k + '" data-dir="1" aria-label="One more ' + s.k + '">+</button></div>';
+  }).join('');
+
+  const bench = S.slots.BN || 0;
+  el('t-start').textContent = nRounds - bench;
+  el('t-bench').textContent = bench;
+  el('t-rounds').textContent = nRounds;
+  el('t-total').textContent = nRounds * S.teams;
+
+  // The sheet is exactly 300 deep and holds only 18 kickers and 22 defenses, so
+  // a large field with a deep bench can run the board dry. Say so up front.
   const warn = [];
-  if (total * S.teams > P.length) warn.push('This room drafts ' + (total * S.teams) + ' players but the sheet only has ' + P.length + '. Trim the bench or the field.');
-  if (kNeed > 18) warn.push('Only 18 kickers are ranked; ' + kNeed + ' would be needed.');
-  if (dNeed > 22) warn.push('Only 22 defenses are ranked; ' + dNeed + ' would be needed.');
-  if (total === 0) warn.push('Add at least one roster slot.');
+  if (nRounds === 0) warn.push('Add at least one roster slot.');
+  if (nRounds * S.teams > P.length) warn.push('This room drafts ' + (nRounds * S.teams) +
+    ' players but the sheet has ' + P.length + '. Trim the bench or the field.');
+  if ((S.slots.K || 0) * S.teams > 18) warn.push('Only 18 kickers are ranked; ' + (S.slots.K * S.teams) + ' would be needed.');
+  if ((S.slots.DST || 0) * S.teams > 22) warn.push('Only 22 defenses are ranked; ' + (S.slots.DST * S.teams) + ' would be needed.');
   el('pool-warn').textContent = warn.join(' ');
   el('f-totals').classList.toggle('is-bad', warn.length > 0);
-  el('go').disabled = warn.length > 0;
+  el('go').disabled = warn.length > 0 || kbad.length > 0;
+  el('go').textContent = S.mode === 'online' ? 'Create the room' : 'Start draft';
 }
 
 /* ── Events ─────────────────────────────────────────────────────────────── */
-el('f-teams').addEventListener('change', function (e) { S.teams = +e.target.value; renderLobby(); });
+el('f-mode').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-mode]');
+  if (!b) return;
+  S.mode = b.dataset.mode;
+  S.seats = null;
+  if (S.mode === 'online') S.clock = 0;
+  else if (!S.clock) S.clock = 30;
+  renderLobby();
+});
+el('f-teams').addEventListener('change', function (e) {
+  S.teams = +e.target.value;
+  S.seats = null;
+  S.keepers = S.keepers.filter(function (k) { return k.team < S.teams; });
+  renderLobby();
+});
 el('f-type').addEventListener('change', function (e) { S.type = e.target.value; renderLobby(); });
 el('f-clock').addEventListener('change', function (e) { S.clock = +e.target.value; });
 el('f-pace').addEventListener('change', function (e) { S.pace = +e.target.value; });
 
-el('f-slot').addEventListener('click', function (e) {
-  const b = e.target.closest('[data-slot]');
+el('f-seats').addEventListener('change', function (e) {
+  const sel = e.target.closest('[data-seat]');
+  if (!sel) return;
+  const i = +sel.dataset.seat;
+  if (sel.value === 'me') S.seats = S.seats.map(function (s, j) {
+    return j === i ? 'me' : (s === 'me' ? (S.mode === 'solo' ? 'bot' : 'friend') : s);
+  });
+  else S.seats[i] = sel.value;
+  renderLobby();
+});
+
+el('k-add').addEventListener('click', function () {
+  const name = el('k-player').value.trim().toLowerCase();
+  const p = BY_NAME[name];
+  if (!p) { el('k-warn').textContent = 'No player on the sheet called “' + el('k-player').value.trim() + '”.'; return; }
+  S.keepers.push({ team: +el('k-team').value, id: p.id, round: +el('k-round').value });
+  el('k-player').value = '';
+  renderLobby();
+});
+el('k-player').addEventListener('keydown', function (e) { if (e.key === 'Enter') el('k-add').click(); });
+el('k-list').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-kdel]');
   if (!b) return;
-  S.slot = b.dataset.slot === 'random' ? 1 + Math.floor(Math.random() * S.teams) : +b.dataset.slot;
+  S.keepers.splice(+b.dataset.kdel, 1);
   renderLobby();
 });
 
@@ -1102,24 +1674,39 @@ el('f-slots').addEventListener('click', function (e) {
   const b = e.target.closest('[data-slotk]');
   if (!b) return;
   const k = b.dataset.slotk;
-  const max = k === 'BN' ? 12 : k === 'WR' || k === 'RB' ? 5 : 3;
+  const max = k === 'BN' ? 12 : (k === 'WR' || k === 'RB') ? 5 : 3;
   S.slots[k] = Math.max(0, Math.min(max, (S.slots[k] || 0) + (+b.dataset.dir)));
   renderLobby();
 });
 
 el('reset-cfg').addEventListener('click', function () {
-  S = { teams: 12, type: 'snake', clock: 30, pace: 0.45, slot: 5, slots: Object.assign({}, STANDARD), rounds: 16 };
-  el('f-clock').value = 30;
-  el('f-pace').value = 0.45;
+  const mode = S.mode;
+  S = freshSettings();
+  S.mode = mode;
+  if (mode === 'online') S.clock = 0;
   renderLobby();
 });
 
-el('go').addEventListener('click', startDraft);
+el('go').addEventListener('click', function () {
+  if (S.mode === 'online' && MySeat >= 0) {
+    try { localStorage.setItem('otc-seat', String(MySeat)); } catch (err) { /* private mode */ }
+  }
+  startDraft();
+});
 el('btn-again').addEventListener('click', quitDraft);
-el('btn-quit').addEventListener('click', quitDraft);
+el('btn-quit').addEventListener('click', function () {
+  if (S.mode === 'online' && !confirm('Leave this room? The draft stays saved for everyone else.')) return;
+  quitDraft();
+});
 el('btn-board').addEventListener('click', function () {
   el('recap').hidden = true;
   el('room').hidden = false;
+});
+el('curtain-go').addEventListener('click', function () {
+  el('curtain').hidden = true;
+  St.lastHuman = teamAt(St.onClock);
+  St.deadline = S.clock > 0 ? Date.now() + S.clock * 1000 : 0;
+  renderAll();
 });
 
 el('btn-pause').addEventListener('click', function () {
@@ -1143,12 +1730,11 @@ el('btn-pause').addEventListener('click', function () {
 });
 
 el('btn-auto').addEventListener('click', function () {
-  if (!St) return;
+  if (!St || S.mode === 'online') return;
   St.auto = !St.auto;
   this.classList.toggle('is-on', St.auto);
   this.textContent = St.auto ? 'Autopick on' : 'Autopick';
-  // If it just became your pick under autopick, hand the clock straight over.
-  if (St.auto && St.deadline && teamAt(St.onClock) === S.slot - 1) {
+  if (St.auto && St.deadline && isLocal(teamAt(St.onClock))) {
     St.deadline = 0;
     St.botAt = Date.now() + 300;
   }
@@ -1174,17 +1760,17 @@ el('filters').addEventListener('click', function (e) {
 
 el('pool-list').addEventListener('click', function (e) {
   const draft = e.target.closest('[data-d]');
-  if (draft) {
-    if (teamAt(St.onClock) === S.slot - 1) makePick(+draft.dataset.d);
-    return;
-  }
+  if (draft) { if (canPickNow()) makePick(+draft.dataset.d); return; }
   const queue = e.target.closest('[data-q]');
   const row = queue || e.target.closest('[data-row]');
   if (!row) return;
+  const seat = activeSeat();
+  if (seat < 0) return;
   const id = +(queue ? row.dataset.q : row.dataset.row);
   if (St.taken[id]) return;
-  const i = St.queue.indexOf(id);
-  if (i >= 0) St.queue.splice(i, 1); else St.queue.push(id);
+  const q = queueFor(seat);
+  const i = q.indexOf(id);
+  if (i >= 0) q.splice(i, 1); else q.push(id);
   renderPool();
   renderRail();
 });
@@ -1192,18 +1778,26 @@ el('pool-list').addEventListener('click', function (e) {
 el('rail-body').addEventListener('click', function (e) {
   const b = e.target.closest('[data-up],[data-dn],[data-rm]');
   if (!b) return;
+  const seat = activeSeat();
+  if (seat < 0) return;
+  const q = queueFor(seat);
   const id = +(b.dataset.up || b.dataset.dn || b.dataset.rm);
-  const i = St.queue.indexOf(id);
+  const i = q.indexOf(id);
   if (i < 0) return;
-  if (b.dataset.rm !== undefined) St.queue.splice(i, 1);
+  if (b.dataset.rm !== undefined) q.splice(i, 1);
   else {
     const j = b.dataset.up !== undefined ? i - 1 : i + 1;
-    if (j < 0 || j >= St.queue.length) return;
-    St.queue[i] = St.queue[j];
-    St.queue[j] = id;
+    if (j < 0 || j >= q.length) return;
+    q[i] = q[j];
+    q[j] = id;
   }
   renderRail();
   renderPool();
+});
+
+el('rail-team').addEventListener('change', function (e) {
+  St.railTeam = +e.target.value;
+  renderRail();
 });
 
 document.querySelector('.tabs').addEventListener('click', function (e) {
@@ -1213,5 +1807,23 @@ document.querySelector('.tabs').addEventListener('click', function (e) {
   renderRail();
 });
 
-renderLobby();
+/* Offer the finished draft as a file only where the viewer can actually be
+   handed one; hide the button otherwise rather than showing a dead control. */
+el('btn-csv').hidden = true;
+useCap('downloads').then(function (dl) {
+  if (!dl) return;
+  el('btn-csv').hidden = false;
+  el('btn-csv').addEventListener('click', async function () {
+    try { await dl.save({ filename: 'draft-results.csv', data: recapCSV() }); }
+    catch (err) { /* the viewer declined, or saving is unavailable */ }
+  });
+}).catch(function () { /* no downloads in this view */ });
+
+/* ── Boot ───────────────────────────────────────────────────────────────── */
+if (ROOM0 && ROOM0.picks) {
+  try { restoreRoom(ROOM0); }
+  catch (e) { renderLobby(); }
+} else {
+  renderLobby();
+}
 </script>

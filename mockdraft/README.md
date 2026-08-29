@@ -30,12 +30,49 @@ published Artifact where runtime fetches are blocked.
 
 ## Room settings
 
-4–16 teams · snake, 3rd-round reversal, or linear · 15/30/60/90s or no clock ·
-any draft slot (or random) · per-slot roster builder including SUPERFLEX ·
-three bot speeds.
+4-16 teams - snake, 3rd-round reversal, or linear - 15/30/60/90s or no clock -
+per-slot roster builder including SUPERFLEX - three bot speeds - keepers.
 
-The lobby blocks a start it cannot honour — the sheet is only 300 deep and holds
+The lobby blocks a start it cannot honour - the sheet is only 300 deep and holds
 just 18 kickers and 22 defenses, so a large field with a deep bench can outrun it.
+
+## Keepers
+
+Assign any player on the sheet to any team at a **cost round**, the way a real
+keeper league works: the keeper takes that team's pick in that round. Keepers go
+onto rosters before the first live pick, so they leave the board immediately and
+the bots draft around them, and the board shows them in the round they cost.
+
+The lobby rejects a list it cannot draft: two keepers on one team in the same
+round, one player kept by two teams, or a keeper past the last round.
+
+## Playing with other people
+
+Three modes, chosen in the lobby.
+
+**Just me** - one seat is yours, bots take the rest.
+
+**Same screen** - give a seat to each person in the room. Every human seat keeps
+its own queue, and when the device changes hands the board and queue are covered
+by a hand-off screen until the next drafter says they're ready. Fully reliable,
+and it keeps the pick clock.
+
+**Online with friends** - everyone opens the artifact link and claims a seat on
+their own device. Read the constraints before relying on it:
+
+- There is **no shared database available to this page**. The page itself is the
+  record: each human turn rewrites this document with the draft embedded and
+  republishes it, and every open view reloads to that new version.
+- So play is **turn-based, not live**, and **untimed** - there is no way to run a
+  trustworthy shared countdown across devices, so the clock is switched off.
+- Friends need **edit access, not just the link**. A view-only viewer gets
+  `not_writer` and cannot pick; the room tells them so rather than failing quietly.
+- Seat ownership is per device and on the honour system (there is no viewer
+  identity here). Each person picks their seat once; it is remembered locally.
+- Bots between two people are resolved by whoever picked last and saved with the
+  same write, so the draft is one save per human turn rather than one per pick.
+- If two people somehow pick at once, one save wins and the other view reloads to
+  the winner's board. Only one seat is ever on the clock, so this should be rare.
 
 ## How the bots draft
 
