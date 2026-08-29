@@ -1,0 +1,1217 @@
+<title>On the Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+/* ── Tokens ────────────────────────────────────────────────────────────────
+   A draft board is a lit screen on a dark wall, so this commits to one dark
+   world rather than shipping two themes. Every colour is painted explicitly
+   so the page holds on either host ground.
+   The six position hues carry all the data; the chrome stays neutral, and the
+   only other saturated colour is the clock going red in its last seconds. */
+:root {
+  --ground:  #0E1219;
+  --panel:   #161C26;
+  --raise:   #1E2734;
+  --raise-2: #26313F;
+  --line:    #2A3543;
+  --line-lo: #1F2833;
+  --ink:     #E8EDF4;
+  --ink-mid: #A8B4C4;
+  --ink-dim: #74808F;
+  --bone:    #F2E9D8;
+  --danger:  #FF4D4D;
+  --good:    #34D3A6;
+
+  --QB:  #FF5C8A;
+  --RB:  #34D3A6;
+  --WR:  #5AA9FF;
+  --TE:  #FFA24B;
+  --K:   #A98BFF;
+  --DST: #86A2BA;
+
+  --sans: "Barlow", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cond: "Barlow Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --r: 7px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 15px/1.45 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; border-radius: 3px; }
+[hidden] { display: none !important; }
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font: 600 11px/1 var(--sans);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* Position colour is one token, set per element, so chips, rails, stripes and
+   text all pull the same hue from whatever carries .p-XX. */
+.p-QB  { --pos: var(--QB); }
+.p-RB  { --pos: var(--RB); }
+.p-WR  { --pos: var(--WR); }
+.p-TE  { --pos: var(--TE); }
+.p-K   { --pos: var(--K); }
+.p-DST { --pos: var(--DST); }
+
+.chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; padding: 2px 6px;
+  border-radius: 4px;
+  font: 700 11px/1.35 var(--sans);
+  letter-spacing: .04em;
+  color: var(--pos, var(--ink-mid));
+  background: color-mix(in srgb, var(--pos, var(--ink-dim)) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pos, var(--ink-dim)) 34%, transparent);
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────── */
+#app { height: 100dvh; display: flex; flex-direction: column; }
+#room { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* ── Clock bar ─────────────────────────────────────────────────────────── */
+.clockbar {
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 16px; height: 62px; flex: none;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.cb-pick { display: flex; flex-direction: column; gap: 3px; min-width: 104px; }
+.cb-pick b { font: 600 19px/1 var(--cond); letter-spacing: .02em; }
+
+.cb-who { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.cb-who .dot {
+  width: 9px; height: 9px; border-radius: 50%; flex: none;
+  background: var(--ink-dim);
+}
+.cb-who.is-you .dot { background: var(--bone); box-shadow: 0 0 0 4px rgba(242,233,216,.16); }
+.cb-who .name {
+  font: 600 21px/1.1 var(--cond); letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cb-who.is-you .name { color: var(--bone); }
+
+.cb-clock {
+  font: 700 30px/1 var(--mono); font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em; min-width: 92px; text-align: right;
+  color: var(--ink);
+}
+.cb-clock.is-low { color: var(--danger); animation: tick 1s steps(2) infinite; }
+@keyframes tick { 50% { opacity: .42; } }
+@media (prefers-reduced-motion: reduce) { .cb-clock.is-low { animation: none; } }
+
+.cb-tools { display: flex; gap: 7px; flex: none; }
+
+.btn {
+  padding: 7px 13px; border-radius: var(--r);
+  background: var(--raise); color: var(--ink-mid);
+  border: 1px solid var(--line);
+  font: 600 13px/1 var(--sans);
+  transition: background .12s, color .12s, border-color .12s;
+}
+.btn:hover { background: var(--raise-2); color: var(--ink); }
+.btn.is-on { background: var(--bone); color: #14181F; border-color: var(--bone); }
+.btn-primary {
+  background: var(--bone); color: #14181F; border-color: var(--bone);
+  font-weight: 700;
+}
+.btn-primary:hover { background: #fff; color: #14181F; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+
+<style>
+/* ── Draft board ───────────────────────────────────────────────────────────
+   Sticky team headers across the top, sticky round numbers down the left.
+   Your column keeps a faint permanent tint so you can always find yourself,
+   and the team on the clock gets a bone rail. */
+.board-wrap {
+  flex: none; overflow: auto;
+  max-height: min(46vh, 420px);
+  background: var(--ground);
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
+}
+.board { display: grid; min-width: max-content; }
+
+.bd-cell { border-right: 1px solid var(--line-lo); border-bottom: 1px solid var(--line-lo); }
+
+.bd-head {
+  position: sticky; top: 0; z-index: 3;
+  background: var(--panel);
+  padding: 7px 8px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.bd-head .tn {
+  font: 600 13px/1.2 var(--cond); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bd-head.is-you .tn { color: var(--bone); }
+.bd-head.is-onclock { box-shadow: inset 0 -2px 0 var(--bone); }
+
+.bd-rd {
+  position: sticky; left: 0; z-index: 2;
+  background: var(--panel);
+  display: flex; align-items: center; justify-content: center;
+  font: 400 11px/1 var(--mono); color: var(--ink-dim);
+  border-right: 1px solid var(--line);
+}
+.bd-corner { position: sticky; left: 0; top: 0; z-index: 4; background: var(--panel);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+.bd-pick {
+  position: relative; min-height: 46px; padding: 6px 7px 6px 9px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.bd-pick.is-yours  { background: #1A2230; }
+.bd-pick.is-empty  { background: var(--ground); }
+.bd-pick::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
+  background: var(--pos, transparent);
+}
+.bd-pick .pn {
+  font: 600 13px/1.25 var(--cond); letter-spacing: .01em;
+  color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bd-pick .pm {
+  font: 400 10px/1.3 var(--mono); color: var(--ink-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bd-pick .pm b { color: var(--pos); font-weight: 700; }
+.bd-pick.is-onclock {
+  background: #202A3A;
+  box-shadow: inset 0 0 0 1px var(--bone);
+}
+.bd-pick.is-onclock .waiting {
+  font: 600 11px/1.3 var(--cond); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--bone);
+}
+@keyframes land { from { background: #33415A; } }
+.bd-pick.just-landed { animation: land .55s ease-out; }
+@media (prefers-reduced-motion: reduce) { .bd-pick.just-landed { animation: none; } }
+
+/* ── Work area ─────────────────────────────────────────────────────────── */
+.work { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 330px; }
+.pool { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.rail { min-width: 0; display: flex; flex-direction: column; background: var(--panel); }
+
+/* ── Player pool ───────────────────────────────────────────────────────── */
+.pool-top { flex: none; padding: 11px 14px 9px; display: flex; flex-direction: column; gap: 9px;
+  border-bottom: 1px solid var(--line); background: var(--panel); }
+.pool-row { display: flex; gap: 9px; align-items: center; }
+
+.search {
+  flex: 1; min-width: 0;
+  padding: 8px 11px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line);
+  color: var(--ink);
+}
+.search::placeholder { color: var(--ink-dim); }
+.search:focus { border-color: var(--ink-dim); outline: none; }
+
+.filters { display: flex; gap: 5px; flex-wrap: wrap; }
+.filt {
+  padding: 5px 11px; border-radius: 999px;
+  background: transparent; border: 1px solid var(--line);
+  font: 600 12px/1 var(--sans); letter-spacing: .03em;
+  color: var(--ink-dim);
+}
+.filt:hover { color: var(--ink); border-color: var(--ink-dim); }
+.filt.is-on {
+  color: var(--pos, var(--bone));
+  border-color: color-mix(in srgb, var(--pos, var(--bone)) 55%, transparent);
+  background: color-mix(in srgb, var(--pos, var(--bone)) 13%, transparent);
+}
+
+.pool-list { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.pool-empty { padding: 34px 16px; text-align: center; color: var(--ink-dim); font-size: 14px; }
+
+.prow {
+  display: grid;
+  grid-template-columns: 40px 46px 1fr auto auto;
+  align-items: center; gap: 11px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line-lo);
+  cursor: pointer;
+  transition: background .1s;
+}
+.prow:hover { background: var(--panel); }
+.prow.is-taken { opacity: .3; cursor: default; }
+.prow.is-taken:hover { background: none; }
+.prow .rk { font: 400 12px/1 var(--mono); color: var(--ink-dim); text-align: right; }
+.prow .nm { min-width: 0; }
+.prow .nm .n { font: 600 15px/1.25 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow.is-taken .nm .n { text-decoration: line-through; }
+.prow .nm .m { font: 400 11px/1.3 var(--mono); color: var(--ink-dim); }
+.prow .av { font: 400 12px/1 var(--mono); color: var(--ink-mid); }
+.prow .act { display: flex; gap: 5px; }
+.mini {
+  padding: 4px 9px; border-radius: 5px;
+  background: var(--raise); border: 1px solid var(--line);
+  font: 600 11px/1.35 var(--sans); color: var(--ink-mid);
+}
+.mini:hover { background: var(--raise-2); color: var(--ink); }
+.mini.go { background: var(--bone); color: #14181F; border-color: var(--bone); }
+.mini.on { color: var(--bone); border-color: color-mix(in srgb, var(--bone) 45%, transparent); }
+
+/* ── Right rail ────────────────────────────────────────────────────────── */
+.tabs { flex: none; display: flex; border-bottom: 1px solid var(--line); }
+.tab {
+  flex: 1; padding: 12px 6px;
+  font: 600 12px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-dim);
+  border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--ink-mid); }
+.tab.is-on { color: var(--ink); border-bottom-color: var(--bone); }
+.tab .ct { color: var(--ink-dim); font-family: var(--mono); font-size: 11px; }
+
+.rail-body { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.rail-note { padding: 26px 18px; text-align: center; color: var(--ink-dim); font-size: 13px; line-height: 1.6; }
+
+.qrow, .rrow {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 12px; border-bottom: 1px solid var(--line-lo);
+}
+.qrow .ord { font: 400 11px/1 var(--mono); color: var(--ink-dim); width: 16px; }
+.qrow .who, .rrow .who { flex: 1; min-width: 0; }
+.qrow .who .n, .rrow .who .n { font: 600 14px/1.25 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow .who .m, .rrow .who .m { font: 400 10px/1.3 var(--mono); color: var(--ink-dim); }
+.qrow.is-gone .who .n { text-decoration: line-through; color: var(--ink-dim); }
+.qbtn { padding: 2px 6px; border-radius: 4px; color: var(--ink-dim); font-size: 13px; line-height: 1.2; }
+.qbtn:hover { background: var(--raise); color: var(--ink); }
+
+.rrow { border-left: 3px solid var(--pos, var(--line)); }
+.rrow.is-open { border-left-color: var(--line); }
+.rrow .slot {
+  width: 44px; flex: none;
+  font: 600 11px/1 var(--sans); letter-spacing: .07em;
+  color: var(--ink-dim);
+}
+.rrow.is-open .who .n { color: var(--ink-dim); font-weight: 400; font-style: italic; }
+.rail-sub {
+  padding: 9px 12px 5px; background: var(--ground);
+  border-bottom: 1px solid var(--line-lo); border-top: 1px solid var(--line-lo);
+}
+</style>
+
+<style>
+/* ── Lobby ─────────────────────────────────────────────────────────────── */
+#lobby { flex: 1; min-height: 0; overflow: auto; display: flex; justify-content: center; padding: 34px 20px 48px; }
+.lobby-in { width: 100%; max-width: 720px; }
+
+.masthead { margin-bottom: 26px; }
+.masthead h1 {
+  margin: 6px 0 7px;
+  font: 700 clamp(40px, 8vw, 62px)/.92 var(--cond);
+  letter-spacing: -.005em; text-transform: uppercase;
+  text-wrap: balance;
+}
+.masthead p { margin: 0; max-width: 56ch; color: var(--ink-mid); font-size: 14.5px; }
+.masthead .rule { height: 2px; background: var(--bone); width: 62px; margin-top: 15px; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 18px 18px 20px; margin-bottom: 14px;
+}
+.card > .eyebrow { display: block; margin-bottom: 14px; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font: 600 12px/1 var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-dim); }
+.field select, .field input[type=number] {
+  padding: 9px 10px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line); color: var(--ink);
+}
+.field select:focus, .field input:focus { border-color: var(--ink-dim); outline: none; }
+.hint { font-size: 12px; color: var(--ink-dim); margin: 10px 0 0; line-height: 1.55; }
+
+/* Roster builder: a stepper per slot type, plus a live round count. */
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 9px; }
+.slot-ct {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px 7px 11px; border-radius: var(--r);
+  background: var(--ground); border: 1px solid var(--line);
+  border-left: 3px solid var(--pos, var(--line));
+}
+.slot-ct .lb { flex: 1; font: 600 12.5px/1 var(--sans); letter-spacing: .05em; color: var(--ink-mid); }
+.slot-ct .nv { font: 700 15px/1 var(--mono); width: 18px; text-align: center; }
+.step {
+  width: 23px; height: 23px; border-radius: 5px;
+  background: var(--raise); border: 1px solid var(--line);
+  color: var(--ink-mid); font: 600 14px/1 var(--sans);
+  display: grid; place-items: center;
+}
+.step:hover { background: var(--raise-2); color: var(--ink); }
+
+.totals {
+  display: flex; gap: 22px; align-items: baseline;
+  margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--line-lo);
+}
+.totals div { display: flex; flex-direction: column; gap: 3px; }
+.totals b { font: 700 21px/1 var(--mono); }
+.totals.is-bad b { color: var(--danger); }
+
+.slotpick { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp {
+  min-width: 36px; padding: 7px 4px; border-radius: 5px;
+  background: var(--ground); border: 1px solid var(--line);
+  font: 400 13px/1 var(--mono); color: var(--ink-mid); text-align: center;
+}
+.sp:hover { border-color: var(--ink-dim); color: var(--ink); }
+.sp.is-on { background: var(--bone); color: #14181F; border-color: var(--bone); font-weight: 700; }
+
+.go-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+.go-row .btn-primary { padding: 12px 26px; font-size: 15px; }
+
+/* ── Recap ─────────────────────────────────────────────────────────────── */
+#recap { flex: 1; min-height: 0; overflow: auto; padding: 30px 20px 50px; }
+.recap-in { max-width: 1160px; margin: 0 auto; }
+.recap-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; }
+.recap-head h2 { margin: 5px 0 0; font: 700 40px/1 var(--cond); text-transform: uppercase; }
+.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 13px; }
+.tcard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.tcard.is-you { border-color: var(--bone); }
+.tcard h3 {
+  margin: 0; padding: 10px 12px;
+  font: 600 15px/1.2 var(--cond); letter-spacing: .06em; text-transform: uppercase;
+  background: var(--raise); border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.tcard.is-you h3 { color: var(--bone); }
+.tcard h3 span { font: 400 11px/1.4 var(--mono); color: var(--ink-dim); }
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  #app { height: auto; min-height: 100dvh; }
+  .work { grid-template-columns: 1fr; }
+  .pool { border-right: 0; border-bottom: 1px solid var(--line); }
+  .pool-list { max-height: 58vh; }
+  .rail-body { max-height: 52vh; }
+  .board-wrap { max-height: 300px; }
+  .clockbar { height: auto; padding: 10px 12px; gap: 12px; flex-wrap: wrap; }
+  .cb-clock { font-size: 25px; min-width: 74px; }
+  .prow { grid-template-columns: 34px 42px 1fr auto; gap: 9px; padding: 9px 12px; }
+  .prow .av { display: none; }
+}
+</style>
+
+<div id="app">
+
+  <!-- ── Lobby ──────────────────────────────────────────────────────────── -->
+  <section id="lobby">
+    <div class="lobby-in">
+      <div class="masthead">
+        <span class="eyebrow">Mock draft room &middot; ESPN PPR top 300</span>
+        <h1>On the Clock</h1>
+        <p>Set the room, take a slot, and draft against bots that value players off
+           the cheat sheet, chase their own roster needs, and reach the way real
+           drafters do. Nothing here is saved or shared &mdash; run it as many times as you like.</p>
+        <div class="rule"></div>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">The room</span>
+        <div class="grid2">
+          <label class="field">
+            <span>Teams</span>
+            <select id="f-teams"></select>
+          </label>
+          <label class="field">
+            <span>Draft type</span>
+            <select id="f-type">
+              <option value="snake">Snake</option>
+              <option value="3rr">Snake, 3rd round reversal</option>
+              <option value="linear">Linear</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Clock per pick</span>
+            <select id="f-clock">
+              <option value="15">15 seconds</option>
+              <option value="30" selected>30 seconds</option>
+              <option value="60">60 seconds</option>
+              <option value="90">90 seconds</option>
+              <option value="0">No clock</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Bot pace</span>
+            <select id="f-pace">
+              <option value="1">Lifelike</option>
+              <option value="0.45" selected>Brisk</option>
+              <option value="0.12">Instant</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Your draft slot</span>
+        <div class="slotpick" id="f-slot"></div>
+        <p class="hint" id="slot-hint"></p>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Roster</span>
+        <div class="slots" id="f-slots"></div>
+        <div class="totals" id="f-totals">
+          <div><span class="eyebrow">Starters</span><b id="t-start">0</b></div>
+          <div><span class="eyebrow">Bench</span><b id="t-bench">0</b></div>
+          <div><span class="eyebrow">Rounds</span><b id="t-rounds">0</b></div>
+          <div><span class="eyebrow">Players drafted</span><b id="t-total">0</b></div>
+        </div>
+        <p class="hint" id="pool-warn"></p>
+      </div>
+
+      <div class="go-row">
+        <button class="btn-primary btn" id="go">Start draft</button>
+        <button class="btn" id="reset-cfg">Reset to standard</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Draft room ─────────────────────────────────────────────────────── -->
+  <div id="room" hidden>
+    <header class="clockbar">
+      <div class="cb-pick">
+        <span class="eyebrow">Round <span id="cb-rd">1</span> &middot; Pick <span id="cb-pk">1</span></span>
+        <b id="cb-ov">Overall 1</b>
+      </div>
+      <div class="cb-who" id="cb-who">
+        <span class="dot"></span>
+        <span class="name" id="cb-name">&mdash;</span>
+      </div>
+      <div class="cb-clock mono" id="cb-clock">&mdash;&mdash;</div>
+      <div class="cb-tools">
+        <button class="btn" id="btn-auto" title="Let the room draft for you">Autopick</button>
+        <button class="btn" id="btn-pause">Pause</button>
+        <button class="btn" id="btn-quit">Exit</button>
+      </div>
+    </header>
+
+    <div class="board-wrap" id="board-wrap"><div class="board" id="board"></div></div>
+
+    <div class="work">
+      <section class="pool">
+        <div class="pool-top">
+          <div class="pool-row">
+            <input class="search" id="q" type="search" placeholder="Search players" autocomplete="off">
+            <button class="btn" id="btn-hide">Hide drafted</button>
+          </div>
+          <div class="filters" id="filters"></div>
+        </div>
+        <div class="pool-list" id="pool-list"></div>
+      </section>
+
+      <aside class="rail">
+        <div class="tabs">
+          <button class="tab is-on" data-tab="queue">Queue <span class="ct" id="q-ct"></span></button>
+          <button class="tab" data-tab="roster">My team</button>
+        </div>
+        <div class="rail-body" id="rail-body"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ── Recap ──────────────────────────────────────────────────────────── -->
+  <div id="recap" hidden>
+    <div class="recap-in">
+      <div class="recap-head">
+        <div>
+          <span class="eyebrow">Draft complete</span>
+          <h2>Final rosters</h2>
+        </div>
+        <div class="cb-tools">
+          <button class="btn" id="btn-board">Back to board</button>
+          <button class="btn btn-primary" id="btn-again">New draft</button>
+        </div>
+      </div>
+      <div class="teams-grid" id="teams-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ── Player pool ────────────────────────────────────────────────────────────
+   Baked in at build time from espn_ppr300_cheatsheet.csv by build.py, already
+   in rank order, so `P` doubles as the board's value ordering. */
+const P = (/*PLAYERS*/[]).map(function (r, i) {
+  return { id: i, rank: r[0], name: r[1], pos: r[2], prank: r[3], team: r[4], av: r[5], bye: r[6] };
+});
+
+const SLOTS = [
+  { k: 'QB',    lb: 'QB',   takes: ['QB'] },
+  { k: 'RB',    lb: 'RB',   takes: ['RB'] },
+  { k: 'WR',    lb: 'WR',   takes: ['WR'] },
+  { k: 'TE',    lb: 'TE',   takes: ['TE'] },
+  { k: 'FLEX',  lb: 'FLEX', takes: ['RB', 'WR', 'TE'] },
+  { k: 'SFLEX', lb: 'SFLX', takes: ['QB', 'RB', 'WR', 'TE'] },
+  { k: 'K',     lb: 'K',    takes: ['K'] },
+  { k: 'DST',   lb: 'DEF',  takes: ['DST'] },
+  { k: 'BN',    lb: 'BN',   takes: ['QB', 'RB', 'WR', 'TE', 'K', 'DST'] },
+];
+const STANDARD = { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1, SFLEX: 0, K: 1, DST: 1, BN: 6 };
+const POS_LABEL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
+const FLEX_POS = ['RB', 'WR', 'TE'];
+
+/* Settings, then live draft state. */
+let S  = { teams: 12, type: 'snake', clock: 30, pace: 0.45, slot: 5, slots: Object.assign({}, STANDARD), rounds: 16 };
+let St = null;
+
+const $  = function (s) { return document.querySelector(s); };
+const el = function (id) { return document.getElementById(id); };
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function rounds() {
+  return SLOTS.reduce(function (n, s) { return n + (S.slots[s.k] || 0); }, 0);
+}
+function gauss() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+/* ── Draft order ────────────────────────────────────────────────────────────
+   Linear repeats the same order every round. Snake reverses odd rounds. Third
+   round reversal runs a normal snake for two rounds, then flips the pattern so
+   the wheel picks back-to-back again from round three on. */
+function teamAt(overall) {
+  const t = S.teams, rd = Math.floor(overall / t), i = overall % t;
+  if (S.type === 'linear') return i;
+  const flip = S.type === '3rr' ? (rd >= 2 ? rd % 2 === 0 : rd % 2 === 1) : rd % 2 === 1;
+  return flip ? t - 1 - i : i;
+}
+function totalPicks() { return S.teams * S.rounds; }
+function teamName(t) { return t === S.slot - 1 ? 'You' : 'Team ' + (t + 1); }
+
+/* ── Roster shape ───────────────────────────────────────────────────────────
+   Fill the most restrictive slots first (SLOTS is ordered dedicated → flex →
+   bench) taking the best available player for each, so a roster always shows
+   its strongest legal lineup rather than whatever order the picks came in. */
+function lineup(roster) {
+  const slots = [];
+  SLOTS.forEach(function (s) {
+    for (let i = 0; i < (S.slots[s.k] || 0); i++) slots.push({ k: s.k, lb: s.lb, takes: s.takes, p: null });
+  });
+  const pool = roster.map(function (id) { return P[id]; }).sort(function (a, b) { return a.rank - b.rank; });
+  const used = {};
+  slots.forEach(function (slot) {
+    for (let i = 0; i < pool.length; i++) {
+      const p = pool[i];
+      if (!used[p.id] && slot.takes.indexOf(p.pos) >= 0) { slot.p = p; used[p.id] = 1; return; }
+    }
+  });
+  return { slots: slots, extra: pool.filter(function (p) { return !used[p.id]; }) };
+}
+
+/* Which positions would fill an empty *starting* slot, and how many starting
+   slots are still open. Bench slots don't count as need. */
+function needs(roster) {
+  const open = lineup(roster).slots.filter(function (s) { return !s.p && s.k !== 'BN'; });
+  const need = {};
+  open.forEach(function (s) {
+    s.takes.forEach(function (pos) { need[pos] = (need[pos] || 0) + 1; });
+  });
+  return { need: need, open: open.length };
+}
+function counts(roster) {
+  const c = {};
+  roster.forEach(function (id) { c[P[id].pos] = (c[P[id].pos] || 0) + 1; });
+  return c;
+}
+function available() {
+  return P.filter(function (p) { return !St.taken[p.id]; });
+}
+</script>
+
+<script>
+/* ── Bot drafters ───────────────────────────────────────────────────────────
+   Every bot scores the board in rank space: start at the cheat sheet rank, then
+   push players up or down for roster fit, and add noise so the room doesn't
+   draft a single deterministic line.
+
+     · roster caps stop a team hoarding a position
+     · kickers and defenses stay on the board until the last couple of rounds,
+       the way drafters actually treat them
+     · a player who fills an open starting slot gets a bonus that grows as the
+       draft runs out of room, and once there are exactly as many picks left as
+       open starting slots, nothing else is considered
+     · noise widens by round: early picks track the sheet closely, later ones
+       reach, which is where mock boards get their texture
+
+   Lower score wins, so bonuses subtract and penalties add. */
+function botChoice(team, tight) {
+  const roster = St.rosters[team];
+  const left   = S.rounds - roster.length;
+  const n      = needs(roster);
+  const c      = counts(roster);
+  const rd     = Math.floor(St.onClock / S.teams);
+  const caps   = {
+    QB: S.slots.SFLEX > 0 ? 3 : 2, TE: 2, RB: 7, WR: 7,
+    K: Math.max(1, S.slots.K || 0), DST: Math.max(1, S.slots.DST || 0),
+  };
+  // A deep enough bench can demand more players than these caps allow, which
+  // would force teams into a third quarterback just to fill out a roster. Give
+  // the extra room to running back and receiver, where real rosters go deep.
+  let room = caps.QB + caps.TE + caps.RB + caps.WR + caps.K + caps.DST;
+  while (room < S.rounds + 2) { caps.RB++; caps.WR++; room += 2; }
+  const reserve = (S.slots.K || 0) + (S.slots.DST || 0);
+  const mustFill = left <= n.open;
+  const spread = tight ? 0 : 3.5 + 1.1 * rd;
+
+  const pool = available();
+  if (!pool.length) return null;
+
+  // Look at the top of the board, plus the best player left at every position
+  // that still has an open starting slot. That second part matters: the best
+  // defense on the sheet is ranked 169th and the best kicker 181st, so a
+  // rank-window alone would never surface them in a shallow room, and teams
+  // would field lineups with holes they could not fill.
+  const cands = pool.slice(0, 70);
+  const seen = {};
+  cands.forEach(function (p) { seen[p.id] = 1; });
+  Object.keys(n.need).forEach(function (pos) {
+    for (let i = 0; i < pool.length; i++) {
+      if (pool[i].pos !== pos) continue;
+      if (!seen[pool[i].id]) { seen[pool[i].id] = 1; cands.push(pool[i]); }
+      return;
+    }
+  });
+
+  let best = null, bestScore = Infinity;
+  let capped = null, cappedScore = Infinity;
+  cands.forEach(function (p) {
+    let s = p.rank;
+    if ((p.pos === 'K' || p.pos === 'DST') && left > reserve + 1) s += 500;
+    const fills = (n.need[p.pos] || 0) > 0;
+    if (fills) s -= 8 + 26 * (1 - left / S.rounds);
+    if (mustFill && !fills) s += 800;
+    s += gauss() * spread;
+    // Roster caps are hard, not a penalty to be outweighed late on: a capped
+    // player is only taken if literally nothing else is worth considering.
+    if ((c[p.pos] || 0) >= caps[p.pos]) {
+      if (s < cappedScore) { cappedScore = s; capped = p; }
+      return;
+    }
+    if (s < bestScore) { bestScore = s; best = p; }
+  });
+  return best || capped || pool[0];
+}
+
+/* The user's pick when the clock runs out or autopick is on: honour the queue
+   first, and only fall back to the bot's judgement (noise off) if the queue is
+   empty or everything in it is gone. */
+function autoChoice(team) {
+  for (let i = 0; i < St.queue.length; i++) {
+    if (!St.taken[St.queue[i]]) return P[St.queue[i]];
+  }
+  return botChoice(team, true);
+}
+
+/* ── Draft engine ───────────────────────────────────────────────────────── */
+function startDraft() {
+  S.rounds = rounds();
+  St = {
+    picks: [], taken: {}, rosters: [], queue: [],
+    onClock: 0, deadline: 0, paused: false, auto: false,
+    tab: 'queue', filter: 'ALL', q: '', hideTaken: false, landed: -1, timer: null, botAt: 0,
+    scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
+  };
+  for (let t = 0; t < S.teams; t++) St.rosters.push([]);
+
+  el('lobby').hidden = true;
+  el('recap').hidden = true;
+  el('room').hidden = false;
+  el('btn-auto').classList.remove('is-on');
+  el('btn-pause').textContent = 'Pause';
+  el('q').value = '';
+
+  buildFilters();
+  renderAll();
+  St.timer = setInterval(tick, 100);
+  advance();
+}
+
+function advance() {
+  if (St.onClock >= totalPicks()) return finish();
+  const team = teamAt(St.onClock);
+  const mine = team === S.slot - 1;
+  if (mine && !St.auto) {
+    St.deadline = S.clock > 0 ? Date.now() + S.clock * 1000 : 0;
+    St.botAt = 0;
+  } else {
+    St.deadline = 0;
+    // Bots take a beat so the board fills in at a readable pace.
+    St.botAt = Date.now() + (mine ? 400 : (280 + Math.random() * 900) * S.pace);
+  }
+  renderClockbar();
+}
+
+function tick() {
+  if (!St || St.paused) return;
+  const team = teamAt(St.onClock);
+  if (St.botAt && Date.now() >= St.botAt) {
+    St.botAt = 0;
+    const pick = team === S.slot - 1 ? autoChoice(team) : botChoice(team, false);
+    if (pick) return makePick(pick.id);
+  }
+  if (St.deadline) {
+    if (Date.now() >= St.deadline) {
+      St.deadline = 0;
+      const pick = autoChoice(team);
+      if (pick) return makePick(pick.id);
+    }
+    renderClock();
+  }
+}
+
+function makePick(id) {
+  if (!St || St.taken[id] || St.onClock >= totalPicks()) return;
+  const team = teamAt(St.onClock);
+  St.taken[id] = true;
+  St.rosters[team].push(id);
+  St.picks.push({ overall: St.onClock, team: team, id: id });
+  St.landed = St.onClock;
+  const qi = St.queue.indexOf(id);
+  if (qi >= 0) St.queue.splice(qi, 1);
+  St.deadline = 0;
+  St.botAt = 0;
+  St.onClock++;
+  renderAll();
+  advance();
+}
+
+function finish() {
+  clearInterval(St.timer);
+  St.timer = null;
+  St.deadline = 0;
+  St.botAt = 0;
+  renderClockbar();
+  renderRecap();
+  el('recap').hidden = false;
+  el('room').hidden = true;
+}
+
+function quitDraft() {
+  if (St && St.timer) clearInterval(St.timer);
+  St = null;
+  el('room').hidden = true;
+  el('recap').hidden = true;
+  el('lobby').hidden = false;
+}
+</script>
+
+<script>
+/* ── Rendering ──────────────────────────────────────────────────────────── */
+function renderAll() { renderBoard(); renderClockbar(); renderPool(); renderRail(); }
+
+function renderClock() {
+  const c = el('cb-clock');
+  if (!St.deadline) {
+    c.textContent = St.paused ? 'PAUSED' : '——';
+    c.classList.remove('is-low');
+    return;
+  }
+  const s = Math.ceil(Math.max(0, St.deadline - Date.now()) / 1000);
+  c.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  c.classList.toggle('is-low', s <= 10);
+}
+
+function renderClockbar() {
+  const done = St.onClock >= totalPicks();
+  const team = done ? -1 : teamAt(St.onClock);
+  el('cb-rd').textContent = done ? S.rounds : Math.floor(St.onClock / S.teams) + 1;
+  el('cb-pk').textContent = done ? S.teams : (St.onClock % S.teams) + 1;
+  el('cb-ov').textContent = done ? 'Complete' : 'Overall ' + (St.onClock + 1);
+  el('cb-who').classList.toggle('is-you', team === S.slot - 1);
+  el('cb-name').textContent = done ? 'Draft complete' : teamName(team) + ' on the clock';
+  renderClock();
+}
+
+function renderBoard() {
+  const board = el('board');
+  const cols = ['46px'];
+  for (let t = 0; t < S.teams; t++) cols.push('minmax(104px, 1fr)');
+  board.style.gridTemplateColumns = cols.join(' ');
+
+  const byOverall = {};
+  St.picks.forEach(function (pk) { byOverall[pk.overall] = pk; });
+  const onTeam = St.onClock < totalPicks() ? teamAt(St.onClock) : -1;
+
+  let h = '<div class="bd-corner bd-cell"></div>';
+  for (let t = 0; t < S.teams; t++) {
+    h += '<div class="bd-head bd-cell' + (t === S.slot - 1 ? ' is-you' : '') +
+         (t === onTeam ? ' is-onclock' : '') + '"><div class="tn">' + esc(teamName(t)) + '</div></div>';
+  }
+  for (let r = 0; r < S.rounds; r++) {
+    h += '<div class="bd-rd bd-cell">' + (r + 1) + '</div>';
+    for (let i = 0; i < S.teams; i++) {
+      const overall = r * S.teams + i;
+      const t = teamAt(overall);
+      const pk = byOverall[overall];
+      const cls = ['bd-pick', 'bd-cell'];
+      if (t === S.slot - 1) cls.push('is-yours');
+      if (overall === St.landed) cls.push('just-landed');
+      if (pk) {
+        const p = P[pk.id];
+        cls.push('p-' + p.pos);
+        h += '<div class="' + cls.join(' ') + '">' +
+             '<div class="pn">' + esc(p.name) + '</div>' +
+             '<div class="pm"><b>' + POS_LABEL[p.pos] + '</b> ' + esc(p.team) +
+             ' · ' + (overall + 1) + '</div></div>';
+      } else if (overall === St.onClock) {
+        cls.push('is-onclock');
+        h += '<div class="' + cls.join(' ') + '"><div class="waiting">On the clock</div>' +
+             '<div class="pm">Pick ' + (overall + 1) + '</div></div>';
+      } else {
+        cls.push('is-empty');
+        h += '<div class="' + cls.join(' ') + '"><div class="pm">' + (overall + 1) + '</div></div>';
+      }
+    }
+  }
+  board.innerHTML = h;
+
+  // Follow the draft down the board, but only when it crosses into a new round.
+  // Scrolling on every pick would yank the view back while you were reading it.
+  const rd = Math.floor(St.onClock / S.teams);
+  if (rd !== St.scrolledTo) {
+    St.scrolledTo = rd;
+    const wrap = el('board-wrap');
+    const cell = wrap.querySelector('.bd-pick');
+    const rowH = cell ? cell.offsetHeight + 1 : 47;
+    wrap.scrollTop = Math.max(0, rd * rowH - rowH);
+  }
+}
+
+function buildFilters() {
+  const opts = [['ALL', 'All'], ['QB', 'QB'], ['RB', 'RB'], ['WR', 'WR'], ['TE', 'TE'],
+                ['FLEX', 'FLEX'], ['K', 'K'], ['DST', 'DEF']];
+  el('filters').innerHTML = opts.map(function (o) {
+    const hue = (o[0] !== 'ALL' && o[0] !== 'FLEX') ? ' p-' + o[0] : '';
+    const on = St && St.filter === o[0] ? ' is-on' : '';
+    return '<button class="filt' + on + hue + '" data-f="' + o[0] + '">' + o[1] + '</button>';
+  }).join('');
+}
+
+function poolRows() {
+  const q = St.q.trim().toLowerCase();
+  return P.filter(function (p) {
+    if (St.hideTaken && St.taken[p.id]) return false;
+    if (St.filter === 'FLEX') { if (FLEX_POS.indexOf(p.pos) < 0) return false; }
+    else if (St.filter !== 'ALL' && p.pos !== St.filter) return false;
+    if (q && p.name.toLowerCase().indexOf(q) < 0 && p.team.toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+}
+
+function renderPool() {
+  const list = el('pool-list');
+  const top = list.scrollTop;
+  const mine = St.onClock < totalPicks() && teamAt(St.onClock) === S.slot - 1 && !St.auto;
+  const rows = poolRows();
+  if (!rows.length) {
+    list.innerHTML = '<p class="pool-empty">No players match that search.</p>';
+    return;
+  }
+  list.innerHTML = rows.map(function (p) {
+    const taken = !!St.taken[p.id];
+    const queued = St.queue.indexOf(p.id) >= 0;
+    let act = '';
+    if (!taken) {
+      act = '<button class="mini' + (queued ? ' on' : '') + '" data-q="' + p.id + '">' +
+            (queued ? 'Queued' : 'Queue') + '</button>' +
+            (mine ? '<button class="mini go" data-d="' + p.id + '">Draft</button>' : '');
+    }
+    return '<div class="prow p-' + p.pos + (taken ? ' is-taken' : '') + '" data-row="' + p.id + '">' +
+      '<div class="rk">' + p.rank + '</div>' +
+      '<div><span class="chip">' + POS_LABEL[p.pos] + p.prank + '</span></div>' +
+      '<div class="nm"><div class="n">' + esc(p.name) + '</div>' +
+        '<div class="m">' + esc(p.team) + ' · bye ' + p.bye + '</div></div>' +
+      '<div class="av">' + (p.av > 0 ? '$' + p.av : '') + '</div>' +
+      '<div class="act">' + act + '</div></div>';
+  }).join('');
+  list.scrollTop = top;
+}
+
+function renderRail() {
+  el('q-ct').textContent = St.queue.length ? '(' + St.queue.length + ')' : '';
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.classList.toggle('is-on', t.dataset.tab === St.tab);
+  });
+  el('rail-body').innerHTML = St.tab === 'queue' ? queueHTML() : rosterHTML(S.slot - 1);
+}
+
+function queueHTML() {
+  if (!St.queue.length) {
+    return '<p class="rail-note">Your queue is empty.<br>Queue players from the list and the room ' +
+           'takes the top one still on the board if your clock runs out.</p>';
+  }
+  return St.queue.map(function (id, i) {
+    const p = P[id], gone = !!St.taken[id];
+    return '<div class="qrow p-' + p.pos + (gone ? ' is-gone' : '') + '">' +
+      '<div class="ord">' + (i + 1) + '</div>' +
+      '<span class="chip">' + POS_LABEL[p.pos] + '</span>' +
+      '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
+        '<div class="m">' + esc(p.team) + (gone ? ' · drafted' : ' · #' + p.rank) + '</div></div>' +
+      '<button class="qbtn" data-up="' + id + '" title="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+      '<button class="qbtn" data-dn="' + id + '" title="Move down"' + (i === St.queue.length - 1 ? ' disabled' : '') + '>↓</button>' +
+      '<button class="qbtn" data-rm="' + id + '" title="Remove">×</button></div>';
+  }).join('');
+}
+
+function slotRow(s, showRank) {
+  if (!s.p) {
+    return '<div class="rrow is-open"><div class="slot">' + s.lb + '</div>' +
+           '<div class="who"><div class="n">Empty</div></div></div>';
+  }
+  const meta = showRank
+    ? POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · #' + s.p.rank
+    : POS_LABEL[s.p.pos] + ' · ' + esc(s.p.team) + ' · bye ' + s.p.bye;
+  return '<div class="rrow p-' + s.p.pos + '"><div class="slot">' + s.lb + '</div>' +
+         '<div class="who"><div class="n">' + esc(s.p.name) + '</div>' +
+         '<div class="m">' + meta + '</div></div></div>';
+}
+
+function rosterHTML(team) {
+  const lu = lineup(St.rosters[team]);
+  let starters = '', bench = '';
+  lu.slots.forEach(function (s) {
+    if (s.k === 'BN') bench += slotRow(s, false); else starters += slotRow(s, false);
+  });
+  return '<div class="rail-sub"><span class="eyebrow">Starters</span></div>' + starters +
+         (bench ? '<div class="rail-sub"><span class="eyebrow">Bench</span></div>' + bench : '');
+}
+
+function renderRecap() {
+  let h = '';
+  for (let t = 0; t < S.teams; t++) {
+    const lu = lineup(St.rosters[t]);
+    h += '<div class="tcard' + (t === S.slot - 1 ? ' is-you' : '') + '">' +
+         '<h3>' + esc(teamName(t)) + '<span>slot ' + (t + 1) + '</span></h3>' +
+         lu.slots.map(function (s) { return slotRow(s, true); }).join('') + '</div>';
+  }
+  el('teams-grid').innerHTML = h;
+}
+</script>
+
+<script>
+/* ── Lobby ──────────────────────────────────────────────────────────────── */
+function renderLobby() {
+  const teamsSel = el('f-teams');
+  if (!teamsSel.options.length) {
+    for (let n = 4; n <= 16; n += 2) {
+      teamsSel.insertAdjacentHTML('beforeend',
+        '<option value="' + n + '"' + (n === S.teams ? ' selected' : '') + '>' + n + ' teams</option>');
+    }
+  }
+  teamsSel.value = S.teams;
+  el('f-type').value = S.type;
+  el('f-clock').value = S.clock;
+  el('f-pace').value = S.pace;
+
+  // Draft slot: one button per seat, plus a random draw like a real mock lobby.
+  if (S.slot > S.teams) S.slot = S.teams;
+  let sp = '';
+  for (let i = 1; i <= S.teams; i++) {
+    sp += '<button class="sp' + (i === S.slot ? ' is-on' : '') + '" data-slot="' + i + '">' + i + '</button>';
+  }
+  sp += '<button class="sp" data-slot="random" style="min-width:78px">Random</button>';
+  el('f-slot').innerHTML = sp;
+
+  const first = S.slot;
+  const last = S.type === 'linear' ? S.slot : S.teams * 2 - S.slot + 1;
+  el('slot-hint').textContent =
+    'Picking ' + first + ' overall' +
+    (S.type === 'linear'
+      ? ', then every ' + S.teams + ' picks.'
+      : ', then ' + last + '. ' + (S.slot === 1 ? 'The turn: best player on the board, longest wait between picks.'
+        : S.slot === S.teams ? 'The wheel: back-to-back picks at every turn.' : ''));
+
+  el('f-slots').innerHTML = SLOTS.map(function (s) {
+    const hue = s.k === 'FLEX' || s.k === 'SFLEX' || s.k === 'BN' ? '' : ' p-' + s.k;
+    return '<div class="slot-ct' + hue + '">' +
+      '<span class="lb">' + (s.k === 'SFLEX' ? 'SUPERFLEX' : s.k === 'DST' ? 'DEF' : s.k === 'BN' ? 'BENCH' : s.k) + '</span>' +
+      '<button class="step" data-slotk="' + s.k + '" data-dir="-1" aria-label="One fewer ' + s.k + '">−</button>' +
+      '<span class="nv mono">' + (S.slots[s.k] || 0) + '</span>' +
+      '<button class="step" data-slotk="' + s.k + '" data-dir="1" aria-label="One more ' + s.k + '">+</button>' +
+      '</div>';
+  }).join('');
+
+  const total = rounds();
+  const bench = S.slots.BN || 0;
+  el('t-start').textContent = total - bench;
+  el('t-bench').textContent = bench;
+  el('t-rounds').textContent = total;
+  el('t-total').textContent = total * S.teams;
+
+  // The pool is exactly 300 deep, and only 18 kickers and 22 defenses exist in
+  // it, so a big room with deep benches can run the board dry. Say so up front.
+  const kNeed = (S.slots.K || 0) * S.teams, dNeed = (S.slots.DST || 0) * S.teams;
+  const warn = [];
+  if (total * S.teams > P.length) warn.push('This room drafts ' + (total * S.teams) + ' players but the sheet only has ' + P.length + '. Trim the bench or the field.');
+  if (kNeed > 18) warn.push('Only 18 kickers are ranked; ' + kNeed + ' would be needed.');
+  if (dNeed > 22) warn.push('Only 22 defenses are ranked; ' + dNeed + ' would be needed.');
+  if (total === 0) warn.push('Add at least one roster slot.');
+  el('pool-warn').textContent = warn.join(' ');
+  el('f-totals').classList.toggle('is-bad', warn.length > 0);
+  el('go').disabled = warn.length > 0;
+}
+
+/* ── Events ─────────────────────────────────────────────────────────────── */
+el('f-teams').addEventListener('change', function (e) { S.teams = +e.target.value; renderLobby(); });
+el('f-type').addEventListener('change', function (e) { S.type = e.target.value; renderLobby(); });
+el('f-clock').addEventListener('change', function (e) { S.clock = +e.target.value; });
+el('f-pace').addEventListener('change', function (e) { S.pace = +e.target.value; });
+
+el('f-slot').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-slot]');
+  if (!b) return;
+  S.slot = b.dataset.slot === 'random' ? 1 + Math.floor(Math.random() * S.teams) : +b.dataset.slot;
+  renderLobby();
+});
+
+el('f-slots').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-slotk]');
+  if (!b) return;
+  const k = b.dataset.slotk;
+  const max = k === 'BN' ? 12 : k === 'WR' || k === 'RB' ? 5 : 3;
+  S.slots[k] = Math.max(0, Math.min(max, (S.slots[k] || 0) + (+b.dataset.dir)));
+  renderLobby();
+});
+
+el('reset-cfg').addEventListener('click', function () {
+  S = { teams: 12, type: 'snake', clock: 30, pace: 0.45, slot: 5, slots: Object.assign({}, STANDARD), rounds: 16 };
+  el('f-clock').value = 30;
+  el('f-pace').value = 0.45;
+  renderLobby();
+});
+
+el('go').addEventListener('click', startDraft);
+el('btn-again').addEventListener('click', quitDraft);
+el('btn-quit').addEventListener('click', quitDraft);
+el('btn-board').addEventListener('click', function () {
+  el('recap').hidden = true;
+  el('room').hidden = false;
+});
+
+el('btn-pause').addEventListener('click', function () {
+  if (!St) return;
+  St.paused = !St.paused;
+  this.textContent = St.paused ? 'Resume' : 'Pause';
+  this.classList.toggle('is-on', St.paused);
+  if (St.paused) {
+    // Bank the time left rather than letting a paused clock expire on resume.
+    St.pausedLeft = St.deadline ? St.deadline - Date.now() : 0;
+    St.pausedBot = St.botAt ? St.botAt - Date.now() : 0;
+    St.deadline = 0;
+    St.botAt = 0;
+  } else {
+    if (St.pausedLeft) St.deadline = Date.now() + St.pausedLeft;
+    if (St.pausedBot) St.botAt = Date.now() + Math.max(200, St.pausedBot);
+    St.pausedLeft = 0;
+    St.pausedBot = 0;
+  }
+  renderClockbar();
+});
+
+el('btn-auto').addEventListener('click', function () {
+  if (!St) return;
+  St.auto = !St.auto;
+  this.classList.toggle('is-on', St.auto);
+  this.textContent = St.auto ? 'Autopick on' : 'Autopick';
+  // If it just became your pick under autopick, hand the clock straight over.
+  if (St.auto && St.deadline && teamAt(St.onClock) === S.slot - 1) {
+    St.deadline = 0;
+    St.botAt = Date.now() + 300;
+  }
+  renderPool();
+  renderClockbar();
+});
+
+el('q').addEventListener('input', function (e) { St.q = e.target.value; renderPool(); });
+el('btn-hide').addEventListener('click', function () {
+  St.hideTaken = !St.hideTaken;
+  this.classList.toggle('is-on', St.hideTaken);
+  this.textContent = St.hideTaken ? 'Showing available' : 'Hide drafted';
+  renderPool();
+});
+
+el('filters').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-f]');
+  if (!b) return;
+  St.filter = b.dataset.f;
+  buildFilters();
+  renderPool();
+});
+
+el('pool-list').addEventListener('click', function (e) {
+  const draft = e.target.closest('[data-d]');
+  if (draft) {
+    if (teamAt(St.onClock) === S.slot - 1) makePick(+draft.dataset.d);
+    return;
+  }
+  const queue = e.target.closest('[data-q]');
+  const row = queue || e.target.closest('[data-row]');
+  if (!row) return;
+  const id = +(queue ? row.dataset.q : row.dataset.row);
+  if (St.taken[id]) return;
+  const i = St.queue.indexOf(id);
+  if (i >= 0) St.queue.splice(i, 1); else St.queue.push(id);
+  renderPool();
+  renderRail();
+});
+
+el('rail-body').addEventListener('click', function (e) {
+  const b = e.target.closest('[data-up],[data-dn],[data-rm]');
+  if (!b) return;
+  const id = +(b.dataset.up || b.dataset.dn || b.dataset.rm);
+  const i = St.queue.indexOf(id);
+  if (i < 0) return;
+  if (b.dataset.rm !== undefined) St.queue.splice(i, 1);
+  else {
+    const j = b.dataset.up !== undefined ? i - 1 : i + 1;
+    if (j < 0 || j >= St.queue.length) return;
+    St.queue[i] = St.queue[j];
+    St.queue[j] = id;
+  }
+  renderRail();
+  renderPool();
+});
+
+document.querySelector('.tabs').addEventListener('click', function (e) {
+  const t = e.target.closest('[data-tab]');
+  if (!t) return;
+  St.tab = t.dataset.tab;
+  renderRail();
+});
+
+renderLobby();
+</script>
