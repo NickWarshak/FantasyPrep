@@ -60,7 +60,7 @@ const api = new Function(stub + engine + persistence + `
            normalizeSeats, isBot, isLocal, teamName, keeperProblems, placeKeepers,
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
            assignPick, pickAt, boardEditable, skipFilled, Net, fbConfigured,
-           onRoomData, clientId, makeCode,
+           onRoomData, clientId, makeCode, myBoardRows, HAS_MINE,
            configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
@@ -437,6 +437,49 @@ check("online: someone else’s pick is not", !api.boardEditable(api.overallFor(
 check('online: a future square of your own is not', !api.boardEditable(api.overallFor(2, 3)));
 api.S.mode = 'solo';
 check('offline: any square is editable', api.boardEditable(api.overallFor(5, 1)));
+
+/* ── The personal board ─────────────────────────────────────────────────────
+   NicksRankings.csv is matched onto the ESPN pool by name at build time. It
+   never touches what the bots do; it only drives the strip along the bottom. */
+console.log('\npersonal board');
+check('the personal board came through the build', api.HAS_MINE);
+const ranked = api.P.filter(p => p.mine > 0);
+check('every skill player carries a personal rank',
+  api.P.filter(p => !p.mine && !['K', 'DST'].includes(p.pos)).length === 0,
+  api.P.filter(p => !p.mine && !['K', 'DST'].includes(p.pos)).map(p => p.name).join(', '));
+check('kickers and defenses carry none, as intended',
+  api.P.filter(p => p.mine && ['K', 'DST'].includes(p.pos)).length === 0);
+check('personal ranks are unique', new Set(ranked.map(p => p.mine)).size === ranked.length);
+check('the personal board actually disagrees with ESPN',
+  ranked.some(p => Math.abs(p.rank - p.mine) >= 10),
+  'largest gap ' + Math.max(...ranked.map(p => Math.abs(p.rank - p.mine))));
+
+api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+const top = api.myBoardRows(10);
+check('the strip is sorted by your rank, not ESPN',
+  top.every((p, i) => i === 0 || p.mine > top[i - 1].mine));
+check('the strip is capped at what you asked for', api.myBoardRows(5).length === 5);
+
+// It has to drop players the moment they are drafted -- that is the whole
+// "updates as the draft goes on" part.
+const first = api.myBoardRows(1)[0];
+api.makePick(first.id);
+check('a drafted player leaves the strip immediately',
+  !api.myBoardRows(30).some(p => p.id === first.id));
+check('the next man up moves to the front', api.myBoardRows(1)[0].mine > first.mine);
+
+api.St.filter = 'RB';
+check('the strip follows the position filter',
+  api.myBoardRows(20).every(p => p.pos === 'RB'));
+api.St.filter = 'FLEX';
+check('FLEX on the strip means RB, WR and TE',
+  api.myBoardRows(20).every(p => ['RB', 'WR', 'TE'].includes(p.pos)));
+api.St.filter = 'K';
+check('a filter with nobody on your board comes back empty',
+  api.myBoardRows(20).length === 0);
+api.St.filter = 'ALL';
 
 /* ── Reading a live room ────────────────────────────────────────────────────
    Every client rebuilds the whole draft from the room snapshot, so this is the

@@ -21,7 +21,7 @@ cheat sheet.
 | File | |
 |---|---|
 | `template.html` | the app — edit this |
-| `build.py` | inlines the cheat sheet into `index.html` |
+| `build.py` | inlines the cheat sheet and your rankings into `index.html` |
 | `index.html` | **generated** — do not edit by hand |
 | `firebase-config.js` | your Firebase details, for online play; carries the setup steps |
 | `firebase-rules.json` | database rules — paste into Firebase, not optional |
@@ -91,6 +91,35 @@ default and is what the measured shape below describes.
 
   A player already on someone's roster is never offered, and `assignPick` refuses
   one anyway so no caller can put one man on two rosters.
+
+## My board
+
+`../NicksRankings.csv` -- the 50/25/25 blend of DraftKings ADP, the Angle redraft
+list and fantasy_rankings -- is matched onto the ESPN pool by name at build time
+and shown as a strip along the bottom of the draft room: best available **by your
+rankings**, redrawn on every pick, following whatever position filter the pool is
+on. Your rank also appears on each row of the main list.
+
+It changes nothing about how the bots draft. They value players off the ESPN
+sheet, which is exactly what makes the comparison worth showing.
+
+Each card carries the ESPN rank and an **edge** -- `ESPN rank - your rank`:
+
+- **positive** (green): the room rates him lower than you do, so he should still
+  be there next time round;
+- **negative** (amber): the room takes him before you would.
+
+One asymmetry to read around: your list is 1568 deep and the ESPN sheet is 300,
+so a player you have 400th against ESPN's 227th shows a very large negative edge.
+The direction is right -- ESPN really does rate him higher -- but the size of the
+number is inflated by the two lists having different depths. Near the top, where
+the strip is actually used, they are directly comparable.
+
+Kickers and defenses have no personal rank, because the DraftKings universe the
+blend is built from does not include them. Build output reports the match rate
+and names anyone who failed to match, so a spelling drift in either sheet is
+caught rather than silently dropping a player. Drop `NicksRankings.csv` and the
+strip hides itself; nothing else changes.
 
 ## Playing with other people
 

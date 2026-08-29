@@ -429,6 +429,67 @@ button { cursor: pointer; border: 0; background: none; }
 .tcard.is-you h3 { color: var(--bone); }
 .tcard h3 span { font: 400 11px/1.4 var(--mono); color: var(--ink-dim); }
 
+/* ── My board ───────────────────────────────────────────────────────────────
+   Your own rankings, filtered to who is still on the board, sitting under the
+   pool so it is readable without taking the room over. The ESPN sheet is what
+   the bots draft by; this is what you draft by, and the gap between the two is
+   the whole point of showing it. */
+.myboard {
+  flex: none; display: flex; flex-direction: column;
+  background: var(--panel); border-top: 1px solid var(--line);
+}
+.mb-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px;
+}
+.mb-head .eyebrow { flex: none; }
+.mb-head .eyebrow em {
+  font-style: normal; color: var(--ink-mid); margin-left: 7px; letter-spacing: .06em;
+}
+.mb-note { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mb-head .btn { flex: none; padding: 5px 11px; font-size: 12px; }
+
+.mb-list {
+  display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden;
+  padding: 0 14px 12px; scrollbar-width: thin;
+}
+.myboard.is-shut .mb-list { display: none; }
+.myboard.is-shut { border-top-color: var(--line-lo); }
+
+.mb-card {
+  flex: none; width: 156px; text-align: left;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 10px 9px; border-radius: var(--r);
+  background: var(--ground);
+  border: 1px solid var(--line); border-left: 3px solid var(--pos, var(--line));
+  transition: border-color .12s, background .12s;
+}
+.mb-card:hover { background: var(--raise); border-color: var(--ink-dim); }
+.mb-card.is-queued { border-color: color-mix(in srgb, var(--bone) 55%, transparent); }
+.mb-card .mb-top { display: flex; align-items: baseline; gap: 7px; }
+.mb-card .mb-rk {
+  font: 700 17px/1 var(--mono); color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mb-card .mb-pos { font: 700 10px/1 var(--sans); letter-spacing: .06em; color: var(--pos); }
+.mb-card .mb-nm {
+  font: 600 13.5px/1.25 var(--sans); color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mb-card .mb-sub {
+  display: flex; align-items: center; gap: 6px;
+  font: 400 10px/1.4 var(--mono); color: var(--ink-dim);
+}
+.mb-edge {
+  padding: 1px 4px; border-radius: 3px; font-weight: 700;
+  background: rgba(134,162,186,.16); color: var(--ink-mid);
+}
+.mb-edge.is-value { background: rgba(52,211,166,.15); color: var(--RB); }
+.mb-edge.is-reach { background: rgba(255,162,75,.15); color: var(--TE); }
+.mb-card .mini { margin-top: 4px; align-self: flex-start; }
+.mb-empty { padding: 4px 14px 14px; color: var(--ink-dim); font-size: 13px; }
+
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   #app { height: auto; min-height: 100dvh; }
@@ -437,6 +498,7 @@ button { cursor: pointer; border: 0; background: none; }
   .pool-list { max-height: 58vh; }
   .rail-body { max-height: 52vh; }
   .board-wrap { max-height: 300px; }
+  .mb-card { width: 138px; }
   .clockbar { height: auto; padding: 10px 12px; gap: 12px; flex-wrap: wrap; }
   .cb-clock { font-size: 25px; min-width: 74px; }
   .prow { grid-template-columns: 34px 42px 1fr auto; gap: 9px; padding: 9px 12px; }
@@ -836,6 +898,15 @@ button { cursor: pointer; border: 0; background: none; }
         <div class="rail-body" id="rail-body"></div>
       </aside>
     </div>
+
+    <section class="myboard" id="myboard" hidden>
+      <div class="mb-head">
+        <span class="eyebrow">My board<em id="mb-scope"></em></span>
+        <span class="mb-note" id="mb-note"></span>
+        <button class="btn" id="mb-toggle">Hide</button>
+      </div>
+      <div class="mb-list" id="mb-list"></div>
+    </section>
   </div>
 
   <!-- ── Hand-off curtain ───────────────────────────────────────────────── -->
@@ -903,7 +974,8 @@ const ROOM0 = (function () {
    Baked in at build time from espn_ppr300_cheatsheet.csv by build.py, already
    in rank order, so `P` doubles as the board's value ordering. */
 const P = (/*PLAYERS*/[]).map(function (r, i) {
-  return { id: i, rank: r[0], name: r[1], pos: r[2], prank: r[3], team: r[4], av: r[5], bye: r[6] };
+  return { id: i, rank: r[0], name: r[1], pos: r[2], prank: r[3], team: r[4],
+           av: r[5], bye: r[6], mine: r[7] || 0 };
 });
 const BY_NAME = {};
 P.forEach(function (p) { BY_NAME[p.name.toLowerCase()] = p; });
@@ -922,6 +994,9 @@ const SLOTS = [
 const STANDARD = { QB: 1, RB: 2, WR: 3, TE: 1, FLEX: 1, SFLEX: 0, K: 1, DST: 1, BN: 6 };
 const POS_LABEL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
 const FLEX_POS = ['RB', 'WR', 'TE'];
+/* A personal board is optional: build.py leaves every rank at 0 when there is
+   no NicksRankings.csv, and the strip hides itself rather than showing nothing. */
+const HAS_MINE = P.some(function (p) { return p.mine > 0; });
 
 function freshSettings() {
   return {
@@ -1055,6 +1130,14 @@ function counts(roster) {
   roster.forEach(function (id) { c[P[id].pos] = (c[P[id].pos] || 0) + 1; });
   return c;
 }
+function myBoardRows(limit) {
+  return P.filter(function (p) {
+    if (!p.mine || St.taken[p.id]) return false;
+    if (St.filter === 'FLEX') return FLEX_POS.indexOf(p.pos) >= 0;
+    return St.filter === 'ALL' || p.pos === St.filter;
+  }).sort(function (a, b) { return a.mine - b.mine; }).slice(0, limit);
+}
+
 function available() {
   return P.filter(function (p) { return !St.taken[p.id]; });
 }
@@ -1232,6 +1315,9 @@ function newState() {
     tab: 'queue', filter: 'ALL', q: '', hideTaken: true, landed: -1,
     timer: null, botAt: 0, scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
     lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '',
+    myOpen: (function () {
+      try { return localStorage.getItem('otc-myboard') !== 'shut'; } catch (e) { return true; }
+    })(),
   };
   for (let t = 0; t < S.teams; t++) st.rosters.push([]);
   return st;
@@ -1818,7 +1904,10 @@ function canPickNow() {
 }
 
 /* ── Rendering ──────────────────────────────────────────────────────────── */
-function renderAll() { renderBoard(); renderClockbar(); renderPool(); renderRail(); renderRoomBar(); }
+function renderAll() {
+  renderBoard(); renderClockbar(); renderPool(); renderRail();
+  renderMyBoard(); renderRoomBar();
+}
 
 function renderRoomBar() {
   if (S.mode !== 'online') return;
@@ -1984,7 +2073,8 @@ function renderPool() {
       '<div class="rk">' + p.rank + '</div>' +
       '<div><span class="chip">' + POS_LABEL[p.pos] + p.prank + '</span></div>' +
       '<div class="nm"><div class="n">' + esc(p.name) + '</div>' +
-        '<div class="m">' + esc(p.team) + ' · bye ' + p.bye + '</div></div>' +
+        '<div class="m">' + esc(p.team) + ' · bye ' + p.bye +
+          (p.mine ? ' · <b>my ' + p.mine + '</b>' : '') + '</div></div>' +
       '<div class="av">' + (p.av > 0 ? '$' + p.av : '') + '</div>' +
       '<div class="act">' + act + '</div></div>';
   }).join('');
@@ -1995,6 +2085,55 @@ function syncHideButton() {
   const b = el('btn-hide');
   b.classList.toggle('is-on', !St.hideTaken);
   b.textContent = St.hideTaken ? 'Show drafted' : 'Hide drafted';
+}
+
+/* ── My board ───────────────────────────────────────────────────────────────
+   Best available by your own rankings, redrawn on every pick. It follows the
+   pool's position filter so the two views never disagree about what you are
+   looking at.
+
+   The edge is `ESPN rank - your rank`. Positive means the room values a player
+   later than you do, so he should still be there next time round; negative
+   means he goes before you would take him. That comparison is only meaningful
+   because the bots draft off the ESPN sheet. */
+function renderMyBoard() {
+  const box = el('myboard');
+  if (!HAS_MINE) { box.hidden = true; return; }
+  box.hidden = false;
+  box.classList.toggle('is-shut', !St.myOpen);
+
+  const scope = St.filter === 'ALL' ? '' : ' · ' + (St.filter === 'DST' ? 'DEF' : St.filter);
+  el('mb-scope').textContent = scope;
+  el('mb-toggle').textContent = St.myOpen ? 'Hide' : 'Show';
+  if (!St.myOpen) { el('mb-note').textContent = ''; el('mb-list').innerHTML = ''; return; }
+
+  const rows = myBoardRows(18);
+  el('mb-note').textContent = rows.length
+    ? 'Best available by your rankings. The badge is where the ESPN sheet has them, which is what the room drafts by.'
+    : '';
+  const seat = activeSeat();
+  const q = seat >= 0 ? queueFor(seat) : [];
+  const canPick = canPickNow();
+
+  el('mb-list').innerHTML = rows.length ? rows.map(function (p) {
+    const edge = p.rank - p.mine;
+    const cls = edge >= 8 ? ' is-value' : edge <= -8 ? ' is-reach' : '';
+    const sign = edge > 0 ? '+' + edge : String(edge);
+    const title = edge > 0
+      ? 'You have him ' + edge + ' spots higher than the ESPN sheet, so the room should let him last.'
+      : edge < 0
+      ? 'The ESPN sheet has him ' + (-edge) + ' spots higher, so the room takes him before you would.'
+      : 'You and the ESPN sheet agree on him.';
+    return '<button type="button" class="mb-card p-' + p.pos + (q.indexOf(p.id) >= 0 ? ' is-queued' : '') +
+      '" data-mb="' + p.id + '" title="' + esc(title) + '">' +
+      '<span class="mb-top"><span class="mb-rk">' + p.mine + '</span>' +
+        '<span class="mb-pos">' + POS_LABEL[p.pos] + '</span></span>' +
+      '<span class="mb-nm">' + esc(p.name) + '</span>' +
+      '<span class="mb-sub">' + esc(p.team) + ' · ESPN ' + p.rank +
+        ' <span class="mb-edge' + cls + '">' + sign + '</span></span>' +
+      (canPick ? '<span class="mini go" data-mbd="' + p.id + '">Draft</span>' : '') +
+      '</button>';
+  }).join('') : '<p class="mb-empty">Nobody left on your board at that filter.</p>';
 }
 
 function renderRail() {
@@ -2733,6 +2872,28 @@ el('rail-body').addEventListener('click', function (e) {
   }
   renderRail();
   renderPool();
+});
+
+el('mb-toggle').addEventListener('click', function () {
+  St.myOpen = !St.myOpen;
+  try { localStorage.setItem('otc-myboard', St.myOpen ? 'open' : 'shut'); } catch (e) { /* no storage */ }
+  renderMyBoard();
+});
+el('mb-list').addEventListener('click', function (e) {
+  const draft = e.target.closest('[data-mbd]');
+  if (draft) { if (canPickNow()) makePick(+draft.dataset.mbd); return; }
+  const card = e.target.closest('[data-mb]');
+  if (!card) return;
+  const seat = activeSeat();
+  if (seat < 0) return;
+  const id = +card.dataset.mb;
+  if (St.taken[id]) return;
+  const q = queueFor(seat);
+  const i = q.indexOf(id);
+  if (i >= 0) q.splice(i, 1); else q.push(id);
+  renderMyBoard();
+  renderPool();
+  renderRail();
 });
 
 el('rail-team').addEventListener('change', function (e) {
