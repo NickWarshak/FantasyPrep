@@ -7,9 +7,10 @@ Two inputs:
 
   espn_ppr300_cheatsheet.csv   the draft pool -- what everyone drafts from, and
                                what the bots value players by
-  NicksRankings.csv            optional personal board, matched on by name; it
-                               drives the "my board" strip and never changes
-                               what the bots do
+  NicksRankings_detail.csv     optional personal board, matched on by name. It
+                               carries the blended rank plus the three source
+                               ranks behind it, and never changes what the bots
+                               do -- it only drives the "my board" panel.
 
 Kickers and defenses only exist in the ESPN sheet, so they simply carry no
 personal rank. If the personal file is missing the strip hides itself and the
@@ -22,7 +23,7 @@ from collections import Counter
 
 ROOT  = pathlib.Path(__file__).resolve().parent
 CSV   = ROOT.parent / 'espn_ppr300_cheatsheet.csv'
-MINE  = ROOT.parent / 'NicksRankings.csv'
+MINE  = ROOT.parent / 'NicksRankings_detail.csv'
 TPL   = ROOT / 'template.html'
 OUT   = ROOT / 'index.html'
 TOKEN = '/*PLAYERS*/[]'
@@ -42,11 +43,22 @@ def norm(name):
 
 
 def load_personal():
-    """name -> personal rank, or {} when there is no personal board."""
+    """name -> (blend rank, DraftKings, Yapper, Jacob Gibbs).
+
+    A source that does not rank a player at all stores 0: Yapper's list stops at
+    150 and Jacob Gibbs's at 199, so most of the pool is off both.
+    """
     if not MINE.exists():
         return {}
-    rows = list(csv.DictReader(MINE.open()))
-    return {norm(r['Name']): i + 1 for i, r in enumerate(rows)}
+    out = {}
+    for r in csv.DictReader(MINE.open()):
+        out[norm(r['Name'])] = (
+            int(r['NickRank']),
+            int(r['DK_rank'] or 0),
+            int(r['Angle_rank'] or 0),
+            int(r['Fantasy_rank'] or 0),
+        )
+    return out
 
 
 mine = load_personal()
@@ -64,8 +76,7 @@ for r in csv.DictReader(CSV.open()):
         r['Team'].strip(),
         int(r['AuctionValue'] or 0),
         int(r['Bye'] or 0),
-        mine.get(norm(r['Player']), 0),      # 0 = not on the personal board
-    ])
+    ] + list(mine.get(norm(r['Player']), (0, 0, 0, 0))))   # 0 = not ranked there
 
 players.sort(key=lambda p: p[0])
 if [p[0] for p in players] != list(range(1, len(players) + 1)):
@@ -84,6 +95,8 @@ if mine:
     unmatched = [p for p in players if not p[7] and p[2] not in ('K', 'DST')]
     print(f'  personal board: {sum(1 for p in players if p[7])}/{len(players)} matched'
           f' (K and DEF are not on it by design)')
+    for i, label in ((8, 'DraftKings'), (9, 'Yapper'), (10, 'Jacob Gibbs')):
+        print(f'    {label:<12} {sum(1 for p in players if p[i])} of the pool ranked')
     if unmatched:
         print('  NOT MATCHED: ' + ', '.join(f'{p[1]} ({p[2]}, #{p[0]})' for p in unmatched))
 else:

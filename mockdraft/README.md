@@ -94,41 +94,53 @@ default and is what the measured shape below describes.
 
 ## My board
 
-`../NicksRankings.csv` -- the 50/25/25 blend of DraftKings ADP, the Angle redraft
-list and fantasy_rankings -- is matched onto the ESPN pool by name at build time
-and **is** the right-hand panel: best available by your rankings, redrawn on
-every pick, filterable by position. Your rank also appears on each row of the
-main list.
+`../NicksRankings_detail.csv` -- the 50/25/25 blend of DraftKings ADP, Yapper's
+redraft list and Jacob Gibbs's rankings -- is matched onto the ESPN pool by name
+at build time and **is** the right-hand panel: best available by your rankings,
+redrawn on every pick, filterable by position. Your rank also appears on each row
+of the main list.
 
 It replaced the manual queue outright, because it does that job better. When a
 clock runs out or autopick is on, your seat drafts the best player still on your
 board that the roster can actually use -- respecting the same positional caps the
 bots obey, and only offering someone who fills a starting slot once the roster is
 down to its last spots. Your board holds no kickers or defenses, so the final
-rounds fall through to the room's own judgement.
+rounds fall through to the room's own judgement. Only your seat drafts off it;
+other seats, and a build with no rankings file, use the bots' judgement.
 
-Only your seat drafts off it. Other people's seats, and a build with no rankings
-file, fall back to the bots' judgement with the noise switched off.
+### The number beside each player
 
-It changes nothing about how the bots value players -- they draft off the ESPN
-sheet, which is exactly what makes the comparison worth showing. Each row carries
-the ESPN rank and an **edge**, `ESPN rank - your rank`:
+How many still-available players the **ESPN sheet** ranks ahead of him -- so
+roughly how many picks until the room reaches him, since that is the sheet the
+bots draft from. It falls as the board empties. Zero means he is the best player
+left by ESPN and goes next.
 
-- **positive** (green): the room rates him lower than you do, so he should still
-  be there next time round;
-- **negative** (amber): the room takes him before you would.
+It is coloured against your own wait: green where more of the board sits ahead of
+him than there are picks before your next turn, meaning he should still be there;
+amber where he will not last. On your own clock the wait is measured to your
+*next* pick, which is the question that colour is answering.
 
-One asymmetry to read around: your list is 1568 deep and the ESPN sheet is 300,
-so a player you have 400th against ESPN's 227th shows a very large negative edge.
-The direction is right -- ESPN really does rate him higher -- but the size of the
-number is inflated by the two lists having different depths. Near the top, where
-the panel is actually used, they are directly comparable.
+### Tapping a player
 
-Kickers and defenses have no personal rank, because the DraftKings universe the
-blend is built from does not include them. Build output reports the match rate
-and names any skill player that failed to match, so a spelling drift in either
-sheet is caught rather than silently dropping someone. Drop `NicksRankings.csv`
-and the panel says so; nothing else changes.
+Opens where every list has him:
+
+| | |
+|---|---|
+| **My blend** | the 50/25/25 combination, and the order this panel is in |
+| **DraftKings** | `DkPreDraftRankings.csv` -- ADP, 1568 deep |
+| **Yapper** | `angle_ranks_redraft_top150.csv` -- top 150 only |
+| **Jacob Gibbs** | `fantasy_rankings.csv` -- top 199 only |
+| **ESPN** | the draft pool itself, 300 deep |
+
+A player past a short list's end reads "outside top 150" rather than a bare dash,
+because being unranked by Yapper is a statement about depth, not about the player.
+
+Of the ESPN 300: DraftKings ranks 260, Yapper 150, Jacob Gibbs 195. Kickers and
+defenses have no personal rank at all -- the DraftKings universe the blend is
+built from does not include them. Build output reports each source's coverage and
+names any skill player that failed to match, so a spelling drift in either sheet
+is caught rather than silently dropping someone. Remove the file and the panel
+says so; nothing else changes.
 
 ## Playing with other people
 

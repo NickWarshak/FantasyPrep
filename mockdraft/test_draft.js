@@ -61,6 +61,7 @@ const api = new Function(stub + engine + persistence + `
            newState, roomState, restoreRoom, runBotsUntilHuman, freshSettings,
            assignPick, pickAt, boardEditable, skipFilled, Net, fbConfigured,
            onRoomData, clientId, makeCode, myBoardRows, HAS_MINE, rosterCaps,
+           espnAhead, picksUntilMyTurn, SOURCES,
            configBlob, applyConfig, readPresets, writePresets, saveConfig,
            SLOTS, STANDARD, P, __els,
            __claimSeat: (n) => localStorage.setItem('otc-seat', String(n)) };
@@ -477,6 +478,92 @@ check('FLEX means RB, WR and TE',
 check('a filter with nobody on your board comes back empty',
   api.myBoardRows(20, 'K').length === 0);
 check('no filter is the whole board', api.myBoardRows(500).length > 200);
+
+/* ── The number beside each player ─────────────────────────────────────────
+   It is how many still-available players the ESPN sheet ranks ahead of him --
+   roughly how many picks until the room gets to him, since the bots draft off
+   that sheet. It has to fall as the board empties. */
+console.log('\nespn-ahead count');
+api.S = settings({ teams: 12, seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+
+let ah = api.espnAhead();
+const espn1 = api.P.find(p => p.rank === 1);
+const espn5 = api.P.find(p => p.rank === 5);
+check('the top player on the sheet has nobody ahead of him', ah[espn1.id] === 0);
+check('the fifth has four ahead of him', ah[espn5.id] === 4, ah[espn5.id]);
+check('every available player gets a count',
+  Object.keys(ah).length === api.P.length);
+
+api.makePick(espn1.id);
+ah = api.espnAhead();
+check('a drafted player drops out of the counts', ah[espn1.id] === undefined);
+check('everyone behind him moves up one', ah[espn5.id] === 3, ah[espn5.id]);
+check('the count is the position in what is left',
+  api.P.filter(p => !api.St.taken[p.id])
+       .every((p, i) => api.espnAhead()[p.id] === i));
+
+/* ── Picks until your next turn ─────────────────────────────────────────────
+   Colours the count above: more of the board ahead of him than picks to wait
+   means he should survive to your next turn. */
+console.log('\npicks until your turn');
+api.S = settings({ teams: 12, type: 'snake', seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+// Seat 1 of a 12-team snake picks 1st and 24th, so 22 picks pass in between.
+check('the wheel waits the full turn', api.picksUntilMyTurn() === 22,
+  api.picksUntilMyTurn());
+
+// Before your first turn it counts the picks in front of you: seat 6 is sixth
+// off the board, so five picks happen first.
+api.S = settings({ teams: 12, type: 'snake', seats: seats(12, { 5: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+check('a middle seat waits for the picks in front of it',
+  api.picksUntilMyTurn() === 5, api.picksUntilMyTurn());
+
+// Once it IS your turn it looks past the pick in hand to the next one, which is
+// the question the colouring actually asks: will he still be there next time?
+while (api.teamAt(api.St.onClock) !== 5) {
+  const t = api.teamAt(api.St.onClock);
+  api.makePick(api.botChoice(t, false).id);
+}
+// Seat 6 picks 6th and 19th in a 12-team snake, so 12 picks pass in between.
+check('on your own clock it measures the gap to your next pick',
+  api.picksUntilMyTurn() === 12, api.picksUntilMyTurn());
+
+api.S = settings({ teams: 12, type: 'linear', seats: seats(12, { 0: 'me' }) });
+api.S.rounds = api.rounds();
+api.startDraft();
+check('a linear draft always waits a full round', api.picksUntilMyTurn() === 11,
+  api.picksUntilMyTurn());
+
+api.S = settings({ teams: 12, seats: seats(12, { 0: 'bot' }) });
+api.S.rounds = api.rounds();
+api.normalizeSeats();
+api.startDraft();
+api.MySeat = -1;
+check('a watcher waits forever', api.picksUntilMyTurn() === Infinity);
+
+/* ── The lists behind the blend ─────────────────────────────────────────── */
+console.log('\nsource rankings');
+check('the three sources are named as asked',
+  api.SOURCES.map(x => x.label).join(', ') ===
+  'My blend, DraftKings, Yapper, Jacob Gibbs, ESPN',
+  api.SOURCES.map(x => x.label).join(', '));
+const onBoard = api.P.filter(p => p.mine > 0);
+check('every player on your board has a DraftKings rank',
+  onBoard.every(p => p.dk > 0));
+check('Yapper covers its top 150 and no more',
+  api.P.filter(p => p.yap > 0).length === 150 &&
+  api.P.every(p => p.yap === 0 || p.yap <= 150));
+check('Jacob Gibbs stops inside his top 199',
+  api.P.every(p => p.jg === 0 || p.jg <= 199));
+check('a player off a short list reads as zero, not missing',
+  api.P.every(p => typeof p.yap === 'number' && typeof p.jg === 'number'));
+check('the sources actually disagree with each other',
+  onBoard.some(p => p.yap && p.jg && Math.abs(p.yap - p.jg) >= 20));
 
 /* ── Reading a live room ────────────────────────────────────────────────────
    Every client rebuilds the whole draft from the room snapshot, so this is the

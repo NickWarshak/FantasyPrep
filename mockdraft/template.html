@@ -355,10 +355,31 @@ button { cursor: pointer; border: 0; background: none; }
 .mrow .who .m { font: 400 10px/1.3 var(--mono); color: var(--ink-dim); }
 .medge {
   font: 700 11px/1 var(--mono); padding: 3px 5px; border-radius: 4px;
+  min-width: 26px; text-align: center;
   background: rgba(134, 162, 186, .16); color: var(--ink-mid);
 }
-.medge.is-value { background: rgba(52, 211, 166, .15); color: var(--RB); }
-.medge.is-reach { background: rgba(255, 162, 75, .15); color: var(--TE); }
+.medge.is-lasts { background: rgba(52, 211, 166, .15); color: var(--RB); }
+.medge.is-going { background: rgba(255, 162, 75, .15); color: var(--TE); }
+
+.mrow { cursor: pointer; }
+.mrow:hover { background: var(--raise); }
+.mitem.is-open .mrow { background: var(--raise); }
+
+.msrc {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px 0;
+  padding: 9px 12px 11px 45px;
+  background: var(--ground); border-bottom: 1px solid var(--line-lo);
+}
+.msrc .srow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 3px 10px 3px 0; }
+.msrc .srow span { font: 600 11px/1.3 var(--sans); letter-spacing: .03em; color: var(--ink-dim); }
+.msrc .srow b { font: 700 12px/1.3 var(--mono); color: var(--ink); }
+.msrc .srow b em { font: 400 10px/1.3 var(--sans); font-style: normal; color: var(--ink-dim); }
+
+.rail-key {
+  float: right; font: 600 10px/1 var(--sans); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-dim);
+}
 
 .rail-sub {
   padding: 9px 12px 5px; background: var(--ground);
@@ -928,7 +949,8 @@ const ROOM0 = (function () {
    in rank order, so `P` doubles as the board's value ordering. */
 const P = (/*PLAYERS*/[]).map(function (r, i) {
   return { id: i, rank: r[0], name: r[1], pos: r[2], prank: r[3], team: r[4],
-           av: r[5], bye: r[6], mine: r[7] || 0 };
+           av: r[5], bye: r[6],
+           mine: r[7] || 0, dk: r[8] || 0, yap: r[9] || 0, jg: r[10] || 0 };
 });
 const BY_NAME = {};
 P.forEach(function (p) { BY_NAME[p.name.toLowerCase()] = p; });
@@ -950,6 +972,17 @@ const FLEX_POS = ['RB', 'WR', 'TE'];
 /* A personal board is optional: build.py leaves every rank at 0 when there is
    no NicksRankings.csv, and the strip hides itself rather than showing nothing. */
 const HAS_MINE = P.some(function (p) { return p.mine > 0; });
+
+/* The lists behind the blend, and how deep each one goes. A source that stops
+   short simply does not rank most of the pool, which is worth saying out loud
+   rather than showing a bare dash. */
+const SOURCES = [
+  { k: 'mine', label: 'My blend', depth: 0 },
+  { k: 'dk',   label: 'DraftKings', depth: 0 },
+  { k: 'yap',  label: 'Yapper', depth: 150 },
+  { k: 'jg',   label: 'Jacob Gibbs', depth: 199 },
+  { k: 'rank', label: 'ESPN', depth: 300 },
+];
 
 function freshSettings() {
   return {
@@ -1104,6 +1137,34 @@ function myBoardRows(limit, filter) {
     if (filter === 'FLEX') return FLEX_POS.indexOf(p.pos) >= 0;
     return !filter || filter === 'ALL' || p.pos === filter;
   }).sort(function (a, b) { return a.mine - b.mine; }).slice(0, limit);
+}
+
+/* For every player still on the board, how many other available players the
+   ESPN sheet ranks ahead of him. P is already in ESPN order, so this is just
+   his position in the remaining pool. Zero means he is the best player left by
+   the sheet the bots draft from, so he goes next. */
+function espnAhead() {
+  const m = {};
+  let n = 0;
+  for (let i = 0; i < P.length; i++) {
+    if (St.taken[P[i].id]) continue;
+    m[P[i].id] = n++;
+  }
+  return m;
+}
+
+/* How many picks happen before your next turn. Used to colour the counts above:
+   a player with more of the board ahead of him than there are picks to wait
+   should still be there when you come round again. */
+function picksUntilMyTurn() {
+  if (MySeat < 0) return Infinity;
+  let n = 0;
+  for (let i = St.onClock; i < totalPicks(); i++) {
+    if (St.filled[i] !== undefined) continue;        // spent on a keeper
+    if (teamAt(i) === MySeat) { if (i > St.onClock) return n; continue; }
+    n++;
+  }
+  return Infinity;
 }
 
 function available() {
@@ -1291,7 +1352,7 @@ function newState() {
     onClock: 0, deadline: 0, paused: false, auto: false,
     tab: 'mine', filter: 'ALL', q: '', hideTaken: true, landed: -1,
     timer: null, botAt: 0, scrolledTo: -1, pausedLeft: 0, pausedBot: 0,
-    lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '',
+    lastHuman: -1, railTeam: Math.max(0, MySeat), busy: false, warn: '', openRow: null,
   };
   for (let t = 0; t < S.teams; t++) st.rosters.push([]);
   return st;
@@ -2081,26 +2142,42 @@ function myBoardHTML(rows) {
   const canPick = canPickNow();
   const scope = St.filter === 'ALL' ? 'Best available'
               : (St.filter === 'DST' ? 'DEF' : St.filter) + ' left';
+  const ahead = espnAhead();
+  const wait = picksUntilMyTurn();
   return '<div class="rail-sub"><span class="eyebrow">' + scope +
-    ' &middot; your rankings</span></div>' +
+    ' &middot; your rankings</span><span class="rail-key">ahead on ESPN</span></div>' +
     rows.map(function (p) {
-      const edge = p.rank - p.mine;
-      const cls = edge >= 8 ? ' is-value' : edge <= -8 ? ' is-reach' : '';
-      const sign = edge > 0 ? '+' + edge : String(edge);
-      const title = edge > 0
-        ? 'You have him ' + edge + ' spots higher than ESPN, so the room should let him last.'
-        : edge < 0
-        ? 'ESPN has him ' + (-edge) + ' spots higher, so the room takes him before you would.'
-        : 'You and ESPN agree on him.';
-      return '<div class="mrow p-' + p.pos + '">' +
-        '<div class="mrk">' + p.mine + '</div>' +
-        '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
-          '<div class="m">' + POS_LABEL[p.pos] + ' &middot; ' + esc(p.team) +
-          ' &middot; ESPN ' + p.rank + '</div></div>' +
-        '<div class="medge' + cls + '" title="' + esc(title) + '">' + sign + '</div>' +
-        (canPick ? '<button class="mini go" data-mbd="' + p.id + '">Draft</button>' : '') +
+      const n = ahead[p.id];
+      // Green where more of the board sits ahead of him than there are picks to
+      // wait, so he should survive to your next turn; amber where he will not.
+      const cls = wait === Infinity ? '' : n > wait ? ' is-lasts' : ' is-going';
+      const title = 'ESPN ranks ' + n + ' available ' + (n === 1 ? 'player' : 'players') +
+        ' ahead of him.' + (wait === Infinity ? '' :
+        n > wait ? ' You wait ' + wait + ' picks, so he should still be there.'
+                 : ' You wait ' + wait + ' picks, so he is likely gone.');
+      const open = St.openRow === p.id;
+      return '<div class="mitem' + (open ? ' is-open' : '') + '">' +
+        '<div class="mrow p-' + p.pos + '" data-mb="' + p.id + '" title="Tap for every list">' +
+          '<div class="mrk">' + p.mine + '</div>' +
+          '<div class="who"><div class="n">' + esc(p.name) + '</div>' +
+            '<div class="m">' + POS_LABEL[p.pos] + ' &middot; ' + esc(p.team) +
+            ' &middot; bye ' + p.bye + '</div></div>' +
+          '<div class="medge' + cls + '" title="' + esc(title) + '">' + n + '</div>' +
+          (canPick ? '<button class="mini go" data-mbd="' + p.id + '">Draft</button>' : '') +
+        '</div>' +
+        (open ? sourcesHTML(p) : '') +
         '</div>';
     }).join('');
+}
+
+/* Where each list behind the blend has this player. */
+function sourcesHTML(p) {
+  return '<div class="msrc">' + SOURCES.map(function (src) {
+    const v = p[src.k];
+    const val = v ? '#' + v
+      : '<em>' + (src.depth ? 'outside top ' + src.depth : 'unranked') + '</em>';
+    return '<div class="srow"><span>' + src.label + '</span><b>' + val + '</b></div>';
+  }).join('') + '</div>';
 }
 
 function slotRow(s, showRank, keeperIds) {
@@ -2765,7 +2842,12 @@ el('pool-list').addEventListener('click', function (e) {
 });
 el('rail-body').addEventListener('click', function (e) {
   const draft = e.target.closest('[data-mbd]');
-  if (draft && canPickNow()) makePick(+draft.dataset.mbd);
+  if (draft) { if (canPickNow()) makePick(+draft.dataset.mbd); return; }
+  const row = e.target.closest('[data-mb]');
+  if (!row) return;
+  const id = +row.dataset.mb;
+  St.openRow = St.openRow === id ? null : id;    // one open at a time
+  renderRail();
 });
 
 el('rail-team').addEventListener('change', function (e) {
